@@ -1,0 +1,6 @@
+--- DB DEBUG START ---
+DATABASE URL: sqlite:///./depilarte.db
+Tables found: ['cita_servicios', 'citas', 'clientes', 'detalle_sesiones', 'movimientos_inventario', 'pagos', 'paquetes_spa', 'presupuestos', 'productos_inventario', 'recetas_ingredientes', 'recetas_servicio', 'servicios', 'sesiones', 'transacciones']
+✅ Table 'paquetes_spa' exists.
+Row count in 'paquetes_spa': 0
+⚠️ Table exists but is empty!

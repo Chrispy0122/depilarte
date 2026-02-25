@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+sqlalchemy
+jinja2
+python-multipart
+aiofiles
+openpyxl
+fuzzywuzzy
+rapidfuzz
+httpx
+python-dotenv
+email-validator
+websockets
+Pillow
+libsql-client
+sqlalchemy-libsql

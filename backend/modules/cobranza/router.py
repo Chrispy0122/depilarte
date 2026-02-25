@@ -1,0 +1,808 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from backend.database import get_db
+from . import models, services
+from backend.modules.agenda import models as agenda_models
+from backend.modules.pacientes import models as pacientes_models
+from pydantic import BaseModel
+from datetime import datetime, date, time, timedelta
+from sqlalchemy import func, or_
+from typing import Optional
+from backend.modules.inventario import services as inventario_services
+from backend.modules.inventario import models as inventario_models
+import traceback # For debugging 500 errors
+
+router = APIRouter(
+    prefix="/api/cobranza",
+    tags=["Cobranza"]
+)
+
+class PagoCreate(BaseModel):
+    cita_id: int
+    cliente_id: Optional[int] = None  # Required for flash appointments when cita_id=0
+    monto_pagado: float
+    metodo: str
+    referencia: Optional[str] = None
+    usar_wallet: bool = False
+    abono_wallet: float = 0.0  # Extra amount to add to wallet
+    proxima_cita: Optional[date] = None # New Field
+
+@router.get("/tasa-bcv")
+async def get_tasa_bcv():
+    tasa = await services.obtener_tasa_bcv()
+    return {"tasa": tasa}
+
+@router.get("/pendientes")
+def get_citas_por_cobrar(db: Session = Depends(get_db)):
+    # 1. FECHA DE HOY (Venezuela Time: UTC-4)
+    # Ajuste manual a Hora Venezuela (UTC - 4 horas)
+    utc_now = datetime.utcnow()
+    venezuela_now = utc_now - timedelta(hours=4)
+    hoy_venezuela = venezuela_now.date()
+    
+    # Debug print (Optional, remove in prod)
+    # print(f"Server Date: {date.today()} | Venezuela Date: {hoy_venezuela}")
+    
+    # 2. FILTRO AMPLIADO
+    # - Fecha: HOY (Venezuela)
+    # - Status: Confirmada o Asistio (Solo pacientes que ya están listos para pagar)
+    # - Excluir: 'pagada', 'cancelada', 'pendiente', 'agendada'
+    
+    estados_activos = ['confirmada', 'asistio']
+    
+    citas = db.query(agenda_models.Cita).join(agenda_models.Cita.cliente).filter(
+        func.date(agenda_models.Cita.fecha_hora_inicio) == hoy_venezuela,
+        func.lower(agenda_models.Cita.estado).in_(estados_activos),
+    ).all()
+    
+    resultados = []
+    
+    for cita in citas:
+        # Determine wallet status
+        tiene_wallet = False
+        if cita.cliente and cita.cliente.saldo_wallet > 0:
+            tiene_wallet = True
+
+        # Calculate Retention suggestion
+        proxima_cita_texto = "No definida"
+        if cita.cliente and cita.cliente.frecuencia_visitas:
+            fecha_sug = hoy_venezuela + timedelta(days=cita.cliente.frecuencia_visitas)
+            # Format: "En 21 días (16 Feb)"
+            # Note: strftime %b is locale dependent, sticking to simple format or english for now
+            meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]
+            mes_str = meses[fecha_sug.month - 1]
+            proxima_cita_texto = f"En {cita.cliente.frecuencia_visitas} días ({fecha_sug.day} {mes_str})"
+            
+        # NEW: Calculate monto from servicios (M:N relationship)
+        monto_total = 0.0
+        servicios_nombres = []
+        if cita.servicios and len(cita.servicios) > 0:
+            for servicio in cita.servicios:
+                monto_total += servicio.precio_sesion
+                servicios_nombres.append(servicio.nombre)
+            servicio_str = ", ".join(servicios_nombres)
+        else:
+            servicio_str = "Sin servicio"
+            
+        resultados.append({
+            "cita_id": cita.id,
+            "cliente_id": cita.cliente_id,
+            "paciente_nombre": cita.cliente.nombre_completo if cita.cliente else "Desconocido",
+            "hora": cita.fecha_hora_inicio.strftime("%H:%M"),
+            "servicio": servicio_str,  # NOW: Actual service names
+            "monto_esperado": monto_total,  # NOW: Calculated from servicios
+            "tiene_wallet": tiene_wallet,
+            "proxima_cita_texto": proxima_cita_texto
+        })
+        
+    return resultados
+
+@router.get("/pacientes-del-dia")
+def get_pacientes_del_dia(db: Session = Depends(get_db)):
+    # ROLLBACK: Retornar TODOS los pacientes activos para permitir cobro libre.
+    # Se elimina el filtro de fecha y status.
+    
+    pacientes = db.query(pacientes_models.Cliente).order_by(pacientes_models.Cliente.nombre_completo.asc()).limit(100).all()
+    
+    resultados = []
+    for p in pacientes:
+        resultados.append({
+            "cita_id": 0, # No hay cita especifica vinculada en este modo "directorio"
+            "cliente_id": p.id,
+            "paciente_nombre": p.nombre_completo,
+            "hora": "---", 
+            "servicio": "General",
+            "monto_esperado": 0.0
+        })
+        
+    return resultados
+
+@router.get("/")
+def listar_pagos(db: Session = Depends(get_db)):
+    # List recent payments with Client data
+    pagos = db.query(models.Pago).\
+        join(models.Pago.cita).\
+        join(agenda_models.Cita.cliente).\
+        order_by(models.Pago.id.desc()).limit(50).all()
+        
+    historial = []
+    for pago in pagos:
+        # User requested nested client object for frontend convenience
+        cliente_obj = {
+            "nombre": pago.cita.cliente.nombre_completo,
+            "apellido": "", # DB stores full name in one field
+            "id": pago.cita.cliente.id
+        }
+        
+        historial.append({
+            "id": pago.id,
+            "fecha": pago.cita.fecha_hora_inicio.date(), 
+            "cliente": cliente_obj, # Nested as requested
+            "monto": pago.monto,
+            "metodo": pago.metodo,
+            "referencia": pago.referencia
+        })
+    return historial
+
+@router.get("/exportar-excel")
+def exportar_excel(db: Session = Depends(get_db)):
+    """Genera un archivo Excel con el historial de cobros"""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill
+    from io import BytesIO
+    from fastapi.responses import StreamingResponse
+
+    # 1. Obtener datos (mismo query que listar_pagos pero sin limite o con limite mayor)
+    pagos = db.query(models.Pago).\
+        join(models.Pago.cita).\
+        join(agenda_models.Cita.cliente).\
+        order_by(models.Pago.id.desc()).limit(1000).all()
+    
+    # 2. Crear Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Historial de Cobros"
+    
+    # Encabezados
+    headers = ["ID Pago", "Fecha", "Cliente", "Cédula", "Monto ($)", "Método", "Referencia"]
+    ws.append(headers)
+    
+    # Estilo Encabezado
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="2B7A58", end_color="2B7A58", fill_type="solid")
+    
+    for cell in ws[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        
+    # Datos
+    for pago in pagos:
+        ws.append([
+            pago.id,
+            pago.cita.fecha_hora_inicio.date(),
+            pago.cita.cliente.nombre_completo,
+            pago.cita.cliente.cedula,
+            pago.monto,
+            pago.metodo,
+            pago.referencia or ""
+        ])
+        
+    # Ajustar ancho columnas
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+        
+    # 3. Guardar en memoria
+    excel_file = BytesIO()
+    wb.save(excel_file)
+    excel_file.seek(0)
+    
+    # 4. Retornar respuesta
+    filename = f"Cobros_Depilarte_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    
+    return StreamingResponse(
+        excel_file, 
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+from .schemas import CobroCreate
+from .models import Cobro, DetalleCobro, Pago
+
+@router.post("/")
+def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
+    """
+    Registra una venta (Cobro) con múltiples items.
+    Soporta precios override y tipos de venta.
+    """
+    
+    # 1. Calcular total real (Precio de lista)
+    try:
+        grand_total = 0.0
+        for item in cobro_in.items:
+            grand_total += item.precio_aplicado
+            
+        # --- LOGICA CORREGIDA: ABONO = WALLET TOP-UP ---
+        # monto_total_venta = Precio de los servicios (lo que costó)
+        # monto_wallet_usado = Lo que se pagó con saldo a favor
+        # monto_abonado (Input) = Lo que se recargó EXTRA a la wallet
+        # total (Dinero Físico) = (Precio - WalletUsado) + RecargaExtra
+        
+        wallet_used = cobro_in.monto_wallet_usado or 0.0
+        wallet_topup = cobro_in.monto_abonado or 0.0
+        
+        cash_for_service = max(0.0, grand_total - wallet_used)
+        total_cash_in = cash_for_service + wallet_topup
+            
+        # 1.5 Auto-assign Staff (Single Specialist/Receptionist Policy)
+        from backend.modules.staff.models import Empleado
+        
+        spec_emp = db.query(Empleado).filter(or_(Empleado.rol == 'especialista', Empleado.rol == 'ambos'), Empleado.activo == 1).first()
+        rec_emp = db.query(Empleado).filter(or_(Empleado.rol == 'recepcionista', Empleado.rol == 'ambos'), Empleado.activo == 1).first()
+        
+        spec_id = spec_emp.id if spec_emp else None
+        rec_id = rec_emp.id if rec_emp else None
+
+        # 2. Crear Header
+        nuevo_cobro = Cobro(
+            cliente_id=cobro_in.cliente_id,
+            fecha=datetime.now(),
+            metodo_pago=cobro_in.metodo_pago,
+            referencia=cobro_in.referencia,
+            # New Fields Corrected
+            monto_total_venta=grand_total, # Full Price
+            monto_abonado=wallet_topup,    # Wallet Top-Up
+            deuda=0.0,                     # No debt
+            total=total_cash_in            # Real Money In
+        )
+        db.add(nuevo_cobro)
+        db.commit()
+        db.refresh(nuevo_cobro)
+        
+        # 2.5 Update Wallet Logic
+        # DEDUCT used amount
+        if wallet_used > 0:
+            cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cobro_in.cliente_id).first()
+            if cliente:
+                cliente.saldo_wallet -= wallet_used
+                
+        # ADD Top-up amount
+        if wallet_topup > 0:
+            cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cobro_in.cliente_id).first()
+            if cliente:
+                cliente.saldo_wallet += wallet_topup
+        
+        # 3. Crear Detalles
+        from backend.modules.servicios.models import PaqueteSpa
+        
+        for item in cobro_in.items:
+            # Get Service Name snapshot
+            servicio = db.query(PaqueteSpa).filter(PaqueteSpa.id == item.servicio_id).first()
+            nombre_servicio = servicio.nombre if servicio else "Servicio Eliminado"
+            original_price = servicio.sesion if item.tipo_venta == 'sesion' else servicio.paquete_4_sesiones
+            
+            # --- COMMISSION LOGIC ---
+            # Get fixed commission rates from Service
+            comision_recepcionista = servicio.comision_recepcionista if servicio else 0.0
+            comision_especialista = servicio.comision_especialista if servicio else 0.0
+            
+            # Determine actual amounts based on AUTOMATIC staff presence
+            monto_com_recep = comision_recepcionista if rec_id else 0.0
+            monto_com_esp = comision_especialista if spec_id else 0.0
+
+            detalle = DetalleCobro(
+                cobro_id=nuevo_cobro.id,
+                servicio_id=item.servicio_id,
+                servicio_nombre=nombre_servicio,
+                tipo_venta=item.tipo_venta,
+                precio_unitario=original_price or 0.0,
+                precio_aplicado=item.precio_aplicado,
+                cantidad=1,
+                # Staff & Commissions (AUTO ASSIGNED)
+                recepcionista_id=rec_id,
+                especialista_id=spec_id,
+                monto_comision_recepcionista=monto_com_recep,
+                monto_comision_especialista=monto_com_esp
+            )
+            db.add(detalle)
+            
+            # --- LOGIC PORT: INVENTORY CONSUMPTION ---
+            # Consumir receta si existe (Inventory Logic)
+            receta = inventario_services.obtener_receta_por_servicio(db, item.servicio_id)
+            if receta:
+                 inventario_services.consumir_receta(
+                    db, 
+                    receta.id, 
+                    referencia=f"Cobro #{nuevo_cobro.id} - {nombre_servicio}"
+                )
+
+        # 4. Actualizar Próxima Cita (Legacy Logic)
+        cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cobro_in.cliente_id).first()
+        if cliente:
+            if cobro_in.fecha_proxima:
+                # Parse YYYY-MM-DD
+                try:
+                    y, m, d = map(int, cobro_in.fecha_proxima.split('-'))
+                    cliente.fecha_proxima_estimada = date(y, m, d)
+                except:
+                    pass # Ignore invalid date format
+            else:
+                # Auto
+                frec = cliente.frecuencia_visitas if cliente.frecuencia_visitas else 21
+                cliente.fecha_proxima_estimada = date.today() + timedelta(days=frec)
+
+        db.commit()
+        
+        return {
+            "mensaje": "Cobro registrado correctamente",
+            "cobro_id": nuevo_cobro.id,
+            "total": grand_total,
+            "abonado": wallet_topup,
+            "deuda": 0.0
+        }
+    except Exception as e:
+        db.rollback()
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Error procesando cobro: {str(e)}")
+
+# --- LEGACY /pagar ENDPOINT KEPT FOR BACKWARD COMPAT IF NEEDED ---
+@router.post("/pagar")
+def procesar_pago(pago: PagoCreate, db: Session = Depends(get_db)):
+    cita = None
+    
+    # 1. Handle "Flash Appointment" creation if no cita_id provided
+    if not pago.cita_id or pago.cita_id == 0:
+        if not pago.cliente_id:
+             raise HTTPException(status_code=400, detail="Debe indicar cita_id o cliente_id")
+        
+        # Create ad-hoc appointment for this payment
+        # This keeps the DB consistent (Payment -> Cita -> Client) without forcing the user to use the Calendar
+        new_cita = agenda_models.Cita(
+            cliente_id=pago.cliente_id,
+            fecha_hora_inicio=datetime.now(),
+            fecha_hora_fin=datetime.now() + timedelta(minutes=30), # Default duration
+            estado=agenda_models.EstadoCita.CONFIRMADA # Auto-confirm
+            # NOTE: No servicios assigned to flash appointments - monto comes from pago.monto_pagado
+        )
+        db.add(new_cita)
+        db.commit()
+        db.refresh(new_cita)
+        cita = new_cita
+        pago.cita_id = new_cita.id # Link payment to this new appointment
+        
+    else:
+        # Existing Logic
+        cita = db.query(agenda_models.Cita).filter(agenda_models.Cita.id == pago.cita_id).first()
+        if not cita:
+            raise HTTPException(status_code=404, detail="Cita no encontrada")
+
+    # Buscar Cliente (from Cita, which ensures consistency)
+    cliente = cita.cliente
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente asociado a la cita no encontrado")
+
+    # Calcular monto total de la cita desde servicios (M:N)
+    total_a_pagar = 0.0
+    if cita.servicios and len(cita.servicios) > 0:
+        for servicio in cita.servicios:
+            total_a_pagar += servicio.precio_sesion
+    
+    # Fallback: if cita has no services, use the amount being paid
+    if total_a_pagar <= 0: 
+        total_a_pagar = pago.monto_pagado
+
+    saldo_usado_wallet = 0.0
+    
+    # 1. Lógica Wallet (Descuento)
+    if pago.usar_wallet and cliente.saldo_wallet > 0:
+        # Logic remains same: deduct available from total
+        if cliente.saldo_wallet >= total_a_pagar:
+            saldo_usado_wallet = total_a_pagar
+        else:
+            saldo_usado_wallet = cliente.saldo_wallet
+            
+    # El monto que el usuario PAGA REALMENTE (Cash/Zelle) + Wallet usado
+    total_cubierto = saldo_usado_wallet + pago.monto_pagado
+    
+    # 2. Lógica Overpayment (A abonar a Wallet) - SOLO para sobrepago no intencional
+    if total_cubierto > total_a_pagar:
+        excedente = total_cubierto - total_a_pagar
+        cliente.saldo_wallet += excedente
+    
+    # 3. Lógica Abono Intencional a Wallet
+    if pago.abono_wallet > 0:
+        cliente.saldo_wallet += pago.abono_wallet
+    
+    # 4. Descontar del Wallet lo usado
+    if saldo_usado_wallet > 0:
+        cliente.saldo_wallet -= saldo_usado_wallet
+
+    # 4. ACTUALIZAR FECHA PRÓXIMA CITA
+    # If provided manually, use it
+    if pago.proxima_cita:
+        cliente.fecha_proxima_estimada = pago.proxima_cita
+    else:
+        # AUTO-CALCULATE from frecuencia_visitas
+        # Default: 21 days if not set
+        frecuencia = cliente.frecuencia_visitas if cliente.frecuencia_visitas else 21
+        cliente.fecha_proxima_estimada = date.today() + timedelta(days=frecuencia)
+
+    # Registrar el Pago Real
+    nuevo_pago = models.Pago(
+        cita_id=cita.id,
+        monto=pago.monto_pagado, 
+        metodo=pago.metodo,
+        referencia=pago.referencia
+    )
+    db.add(nuevo_pago)
+    
+    # Registrar consumo de Wallet si hubo
+    if saldo_usado_wallet > 0:
+        pago_wallet = models.Pago(
+            cita_id=cita.id,
+            monto=saldo_usado_wallet,
+            metodo="WALLET",
+            referencia=f"Wallet debit: {saldo_usado_wallet}"
+        )
+        db.add(pago_wallet)
+
+    # Actualizar estado a PAGADA para que no vuelva a aparecer en pendientes
+    if total_cubierto >= total_a_pagar:
+        cita.estado = agenda_models.EstadoCita.PAGADA
+        
+        # --- CONSUMO AUTOMÁTICO DE INVENTARIO (BOM) ---
+        if cita.servicios:
+            for servicio in cita.servicios:
+                # Buscar receta activa para el servicio
+                receta = inventario_services.obtener_receta_por_servicio(db, servicio.id)
+                if receta:
+                    inventario_services.consumir_receta(
+                        db, 
+                        receta.id, 
+                        referencia=f"Cita #{cita.id} - {servicio.nombre}"
+                    )
+
+    db.commit()
+    return {
+        "mensaje": "Pago procesado exitosamente",
+        "total_pagado_real": pago.monto_pagado,
+        "wallet_usado": saldo_usado_wallet,
+        "cita_id_generada": cita.id
+    }
+
+@router.get("/hoy")
+def obtener_cobros_hoy(
+    fecha: str = None, # Optional YYYY-MM-DD
+    db: Session = Depends(get_db)
+):
+    """
+    Retorna los cobros realizados en una fecha específica.
+    Si no se envía fecha, retorna los de HOY.
+    """
+    try:
+        if fecha:
+            try:
+                hoy = datetime.strptime(fecha, "%Y-%m-%d").date()
+            except ValueError:
+                 raise HTTPException(status_code=400, detail="Formato de fecha inválido. Usar YYYY-MM-DD")
+        else:
+            hoy = datetime.now().date()
+            
+        start_of_day = datetime.combine(hoy, time.min)
+        end_of_day = datetime.combine(hoy, time.max)
+        
+        # print(f"DEBUG API CAJA: Querying {start_of_day} to {end_of_day}")
+        
+        cobros = db.query(Cobro).filter(
+            Cobro.fecha >= start_of_day,
+            Cobro.fecha <= end_of_day
+        ).order_by(Cobro.fecha.desc()).all()
+        
+        # Calculate daily totals
+        # Total Real Money In = Sum(c.total) which now equals (ServiceCash + TopUp)
+        total_dia = sum((c.total or 0.0) for c in cobros)
+        total_comisiones = 0.0
+        
+        detalle_cobros = []
+        for c in cobros:
+            # Calculate commissions for this cobro
+            comision_cobro = 0.0
+            msg_servicios = []
+            for det in c.detalles:
+                comision_cobro += (det.monto_comision_recepcionista or 0.0) + (det.monto_comision_especialista or 0.0)
+                msg_servicios.append(det.servicio_nombre or "Servicio")
+                
+            total_comisiones += comision_cobro
+            
+            # Use new meanings
+            # monto_total_venta = Service Price (List Price)
+            # monto_abonado = Wallet Top-Up
+            # total = Total Cash In (Service Cash + Top Up)
+            
+            cash_in = c.total or 0.0
+            wallet_topup = c.monto_abonado or 0.0
+            cash_service = max(0.0, cash_in - wallet_topup)
+            
+            detalle_cobros.append({
+                "id": c.id,
+                "hora": c.fecha.strftime("%H:%M"),
+                "cliente": c.cliente.nombre_completo if c.cliente else "Desconocido",
+                "monto_total": cash_service, # VISUAL FIX: Show Cash Paid for Service
+                "monto_abonado": wallet_topup,   # Wallet Top-Up
+                "deuda": 0.0, 
+                "monto": cash_in, # Cash In (Total)
+                "metodo": c.metodo_pago,
+                "servicios": ", ".join(msg_servicios),
+                "referencia": c.referencia or "-",
+                "comisiones_generadas": comision_cobro
+            })
+            
+        return {
+            "fecha": hoy.isoformat(),
+            "total_cobrado": total_dia,
+            "total_comisiones": total_comisiones,
+            "cobros": detalle_cobros
+        }
+    except Exception as e:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)} | Trace: {traceback.format_exc()}")
+
+@router.get("/nomina/historico")
+def obtener_nomina_historico(
+    start_date: str, # YYYY-MM-DD
+    end_date: str,   # YYYY-MM-DD
+    db: Session = Depends(get_db)
+):
+    """
+    Reporte de Nómina REESCRITO (Strict Mode).
+    Estrategia: Dos consultas separadas para evitar conflictos de agregación.
+    Fusion: Python Dictionary Merge.
+    """
+    try:
+        f_inicio = datetime.strptime(start_date, "%Y-%m-%d")
+        f_fin = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido. Usar YYYY-MM-DD")
+
+    from backend.modules.staff.models import Empleado
+    from backend.modules.servicios.models import PaqueteSpa
+    import re
+    
+    # --- HELPER FUNCTIONS ---
+    def parse_zonas(zonas_str):
+        if not zonas_str: return 0
+        try:
+            # "4 a 5" -> [4, 5] -> max 5
+            nums = [int(n) for n in re.findall(r'\d+', str(zonas_str))]
+            return max(nums) if nums else 0
+        except:
+            return 0
+            
+    nomina = {} 
+    
+    def get_or_create_emp(emp_id):
+        if emp_id not in nomina:
+            # Fetch Employee Metadata ONCE
+            emp = db.query(Empleado).filter(Empleado.id == emp_id).first()
+            if emp:
+                nomina[emp_id] = {
+                    "empleado_id": emp.id,
+                    "nombre": emp.nombre_completo,
+                    "rol": emp.rol, # Roles can be 'ambos', so this is just their default role
+                    "total_pagar": 0.0,
+                    "total_zonas": 0,
+                    "total_limpiezas": 0,
+                    "total_masajes": 0,
+                    "detalle_items": [] # Optional debug
+                }
+        return nomina.get(emp_id)
+
+    # --- PASO 1: RECEPCIONISTAS ---
+    # Traer todos los items donde hay recepcionista asignada
+    detalles_rec = db.query(DetalleCobro).join(Cobro).filter(
+        Cobro.fecha >= f_inicio,
+        Cobro.fecha <= f_fin,
+        DetalleCobro.recepcionista_id != None
+    ).all()
+    
+    for d in detalles_rec:
+        emp_data = get_or_create_emp(d.recepcionista_id)
+        if not emp_data: continue
+        
+        # 1. Sumar Dinero (EXCLUSIVAMENTE Recep)
+        emp_data["total_pagar"] += (d.monto_comision_recepcionista or 0.0)
+        
+        # 2. Sumar Volumen
+        svc = d.servicio # Lazy load ok
+        if svc:
+            cat = str(svc.categoria).lower().strip()
+            
+            if cat == "depilacion":
+                z = parse_zonas(svc.num_zonas)
+                emp_data["total_zonas"] += z
+                
+            elif cat == "facial":
+                emp_data["total_limpiezas"] += 1
+                
+            elif cat == "corporal":
+                emp_data["total_masajes"] += 1
+
+    # --- PASO 2: ESPECIALISTAS ---
+    # Traer todos los items donde hay especialista asignada
+    detalles_spec = db.query(DetalleCobro).join(Cobro).filter(
+        Cobro.fecha >= f_inicio,
+        Cobro.fecha <= f_fin,
+        DetalleCobro.especialista_id != None
+    ).all()
+    
+    for d in detalles_spec:
+        emp_data = get_or_create_emp(d.especialista_id)
+        if not emp_data: continue
+        
+        # 1. Sumar Dinero (EXCLUSIVAMENTE Spec)
+        emp_data["total_pagar"] += (d.monto_comision_especialista or 0.0)
+        
+        # 2. Sumar Volumen (Mismo servicio, pero cuenta para el especialista tambien)
+        svc = d.servicio
+        if svc:
+            cat = str(svc.categoria).lower().strip()
+            
+            if cat == "depilacion":
+                z = parse_zonas(svc.num_zonas)
+                emp_data["total_zonas"] += z
+                
+            elif cat == "facial":
+                emp_data["total_limpiezas"] += 1
+                
+            elif cat == "corporal":
+                emp_data["total_masajes"] += 1
+
+    # --- RETURN ---
+    return list(nomina.values())
+
+@router.get("/exportar")
+def exportar_caja_excel(
+    fecha: str = None, 
+    db: Session = Depends(get_db)
+):
+    """
+    Genera y descarga un Excel con el reporte de Caja de una fecha.
+    """
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from io import BytesIO
+        from fastapi.responses import StreamingResponse
+
+        # 1. Determine Date
+        if fecha:
+            try:
+                target_date = datetime.strptime(fecha, "%Y-%m-%d").date()
+            except:
+                raise HTTPException(status_code=400, detail="Fecha inválida")
+        else:
+            target_date = datetime.now().date()
+            
+        # 2. Query Data
+        start = datetime.combine(target_date, time.min)
+        end = datetime.combine(target_date, time.max)
+        
+        cobros = db.query(Cobro).filter(
+            Cobro.fecha >= start,
+            Cobro.fecha <= end
+        ).order_by(Cobro.fecha.asc()).all()
+        
+        # 3. Build Excel
+        wb = Workbook()
+        ws = wb.active
+        ws.title = f"Caja {target_date}"
+        
+        # Styles
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="2B7A58", end_color="2B7A58", fill_type="solid") # Brand Green
+        center = Alignment(horizontal="center", vertical="center")
+        thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+        
+        # Headers
+        headers = ["Hora", "Cliente", "Servicios", "Metodo Pago", "Referencia", "Total Servicio ($)", "Abono a Wallet", "Recepcionista", "Especialista"]
+        ws.append(headers)
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center
+            cell.border = thin_border
+            
+        # Data
+        total_ingreso_dia = 0.0
+        total_deuda_dia = 0.0
+        
+        for c in cobros:
+            # Aggregate services and staff
+            svcs = []
+            receps = set()
+            specs = set()
+            
+            for d in c.detalles:
+                svcs.append(d.servicio_nombre or "?")
+                if d.recepcionista: receps.add(d.recepcionista.nombre_completo)
+                if d.especialista: specs.add(d.especialista.nombre_completo)
+            
+            str_svcs = ", ".join(svcs)
+            str_recep = ", ".join(receps)
+            str_spec = ", ".join(specs)
+            
+            # Calculate Fields Correctly
+            # price = c.monto_total_venta or 0.0 # List Price (Ignored for Cash Report)
+            
+            cash_in = c.total or 0.0
+            wallet_topup = c.monto_abonado or 0.0
+            cash_service = max(0.0, cash_in - wallet_topup)
+            
+            row = [
+                c.fecha.strftime("%H:%M"),
+                c.cliente.nombre_completo if c.cliente else "Anonimo",
+                str_svcs,
+                c.metodo_pago,
+                c.referencia or "-",
+                cash_service,   # Total Servicio (Cash Only)
+                wallet_topup,   # Abono a Wallet
+                str_recep,
+                str_spec
+            ]
+            ws.append(row)
+            total_ingreso_dia += (c.total or 0.0)
+            total_deuda_dia = 0.0 # Unused
+            
+            # Apply borders to all columns (now 10 columns)
+            for i in range(1, 11):
+                ws.cell(row=ws.max_row, column=i).border = thin_border
+
+        # Footer Total
+        last_row = ws.max_row + 1
+        ws.cell(row=last_row, column=6).value = "TOTAL DIA:"
+        ws.cell(row=last_row, column=6).font = Font(bold=True)
+        ws.cell(row=last_row, column=6).alignment = Alignment(horizontal="right")
+        
+        # Total Ingreso
+        ws.cell(row=last_row, column=7).value = total_ingreso_dia
+        ws.cell(row=last_row, column=7).font = Font(bold=True, color="2B7A58")
+        ws.cell(row=last_row, column=7).border = thin_border
+        
+        # Total Deuda
+        ws.cell(row=last_row, column=8).value = total_deuda_dia
+        ws.cell(row=last_row, column=8).font = Font(bold=True, color="FF0000")
+        ws.cell(row=last_row, column=8).border = thin_border
+
+        # Columns Width
+        ws.column_dimensions['B'].width = 25
+        ws.column_dimensions['C'].width = 40
+        ws.column_dimensions['G'].width = 15
+        ws.column_dimensions['H'].width = 15
+        
+        # Save to Buffer
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        
+        filename = f"Caja_Depilarte_{target_date}.xlsx"
+        
+        return StreamingResponse(
+            buffer, 
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        print(f"Export Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

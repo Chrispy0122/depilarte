@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depilarte - Servicios</title>
+
+    <!-- Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/servicios.css">
+
+    <!-- Security Check -->
+    <script>
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = '/';
+        }
+    </script>
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Overlay for Mobile Sidebar -->
+        <div class="overlay" id="sidebarOverlay"></div>
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-spa"></i>
+                </div>
+                <div>
+                    <h1>Depilarte</h1>
+                    <p>Clinic Dashboard</p>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="index.html" class="menu-item">
+                    <i class="fa-solid fa-border-all"></i> Inicio
+                </a>
+                <a href="agenda.html" class="menu-item">
+                    <i class="fa-regular fa-calendar"></i> Agenda
+                </a>
+                <a href="servicios.html" class="menu-item active">
+                    <i class="fa-solid fa-list-check"></i> Servicios
+                </a>
+                <a href="pacientes.html" class="menu-item">
+                    <i class="fa-solid fa-users"></i> Pacientes
+                </a>
+                <a href="cobranza.html" class="menu-item">
+                    <i class="fa-solid fa-money-bill-1-wave"></i> Cobranza
+                </a>
+                <a href="inventario.html" class="menu-item">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div
+                    style="text-align: center; padding: 15px 10px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.75rem; color: #64748b;">
+                        <span style="font-weight: 300;">Powered by</span>
+                        <img src="img/senu-logo.png" alt="SEÑU" style="width: 75px; height: auto;">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <header class="top-header" style="align-items: center;">
+                <div class="header-left" style="display: flex; align-items: center; gap: 15px;">
+                    <button class="menu-toggle-btn d-md-none" id="menuToggle"
+                        style="background:none; border:none; font-size:1.5rem; color:var(--text-dark);">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h2 class="module-title">Catálogo</h2>
+                        <p class="module-subtitle d-none d-sm-block">Gestiona tratamientos y paquetes</p>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Desktop Button (Hidden on Mobile) -->
+                    <button class="btn-primary-custom d-none d-md-flex" id="btnNewService">
+                        <i class="fa-solid fa-plus me-2"></i> Nuevo Servicio
+                    </button>
+                </div>
+            </header>
+
+            <!-- TOOLBAR: SEARCH & FILTERS -->
+            <section class="toolbar-section">
+                <!-- Search -->
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar por nombre o código..." autocomplete="off">
+                </div>
+
+                <!-- Category Pills -->
+                <div class="filters-pills" id="categoryFilters">
+                    <button class="pill active" data-category="all">Todos</button>
+                    <button class="pill" data-category="depilacion">Depilación</button>
+                    <button class="pill" data-category="facial">Facial</button>
+                    <button class="pill" data-category="corporal">Corporal</button>
+                    <button class="pill" data-category="fototerapia">Fototerapia</button>
+                </div>
+
+                <!-- Right Tools: Status & View Mode -->
+                <div class="toolbar-actions">
+                    <!-- Status Tabs -->
+                    <div class="status-tabs">
+                        <button class="tab-btn active" data-status="active">Activos</button>
+                        <button class="tab-btn" data-status="inactive">Inactivos</button>
+                    </div>
+
+                    <!-- View Toggle -->
+                    <div class="view-toggles">
+                        <button class="view-btn active" id="viewListBtn" title="Vista Lista">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                        <button class="view-btn" id="viewGridBtn" title="Vista Tarjetas">
+                            <i class="fa-solid fa-border-all"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONTENT AREA -->
+            <section class="services-content">
+                <!-- EMPTY STATE -->
+                <div id="emptyState" class="empty-state hidden">
+                    <div class="empty-icon">
+                        <i class="fa-solid fa-magnifying-glass-minus"></i>
+                    </div>
+                    <h3>No se encontraron resultados</h3>
+                    <p>Intenta con otros filtros o busca otro término.</p>
+                </div>
+
+                <!-- GRID VIEW (Cards) - Primary View -->
+                <div id="gridViewContainer" class="view-container grid-view">
+                    <div class="cards-grid" id="servicesGrid">
+                        <!-- JS Injection -> Filled by buildServiceCardHTML() -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAB MOBILE (Floating Action Button) -->
+            <button class="fab-new-appt d-md-none" id="fabNewService">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </main>
+
+        <!-- OFFCANVAS (Side Panel) -->
+        <div class="offcanvas-overlay" id="offcanvasOverlay"></div>
+        <aside class="offcanvas-panel" id="serviceOffcanvas">
+            <div class="offcanvas-header">
+                <h3 id="offcanvasTitle">Detalles del Servicio</h3>
+                <button class="close-offcanvas" id="btnCloseOffcanvas">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="offcanvas-body">
+                <form id="serviceForm" class="service-form">
+                    <!-- Read Only Info Header -->
+                    <div class="form-header-info">
+                        <div class="info-badge" id="formCodeBadge">CODE</div>
+                        <span class="status-indicator active" id="formStatusIndicator">Activo</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nombre del Servicio</label>
+                        <input type="text" id="formNombre" class="form-control" placeholder="Ej. Cara Completa">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Código</label>
+                            <input type="text" id="formCodigo" class="form-control" placeholder="Ej. CAR">
+                        </div>
+                        <div class="form-group">
+                            <label>Categoría</label>
+                            <select id="formCategoria" class="form-control">
+                                <option value="depilacion">Depilación</option>
+                                <option value="facial">Facial</option>
+                                <option value="corporal">Corporal</option>
+                                <option value="fototerapia">Fototerapia</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">Precios</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Precio Sesión ($)</label>
+                            <input type="number" step="0.01" id="formPrecioSesion" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Pack 4 Sesiones ($)</label>
+                            <input type="number" step="0.01" id="formPrecioPack" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">Detalles Técnicos</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nº Zonas</label>
+                            <input type="text" id="formZonas" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Sesiones Rec.</label>
+                            <input type="text" id="formSesionesRec" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">Comisiones Staff</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Recepción ($)</label>
+                            <input type="number" step="0.01" id="formComisionRec" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Especialista ($)</label>
+                            <input type="number" step="0.01" id="formComisionEsp" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-actions-bottom">
+                        <button type="button" class="btn-cancel" id="btnCancelForm">Cancelar</button>
+                        <button type="submit" class="btn-save">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+    </div>
+
+    <script src="js/servicios.js"></script>
+</body>
+
+</html>

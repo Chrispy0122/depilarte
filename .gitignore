@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+venv_*/
+*.spec
+
+# Database
+*.db
+*.sqlite3
+basededatos.txt
+schema_dump.sql
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Distribution
+build/
+dist/
+manifest/

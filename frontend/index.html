@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depilarte - Dashboard</title>
+
+    <!-- Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Security Check (Immediate Redirect) -->
+    <script>
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = '/';
+        }
+    </script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-spa"></i>
+                </div>
+                <div>
+                    <h1>Depilarte</h1>
+                    <p>Clinic Dashboard</p>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="index.html" class="menu-item active">
+                    <i class="fa-solid fa-border-all"></i> Inicio
+                </a>
+                <a href="agenda.html" class="menu-item">
+                    <i class="fa-regular fa-calendar"></i> Agenda
+                </a>
+                <a href="servicios.html" class="menu-item">
+                    <i class="fa-solid fa-list-check"></i> Servicios
+                </a>
+                <a href="pacientes.html" class="menu-item">
+                    <i class="fa-solid fa-users"></i> Pacientes
+                </a>
+                <a href="cobranza.html" class="menu-item">
+                    <i class="fa-solid fa-money-bill-1-wave"></i> Cobranza
+                </a>
+                <a href="inventario.html" class="menu-item">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div
+                    style="text-align: center; padding: 15px 10px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.75rem; color: #64748b;">
+                        <span style="font-weight: 300;">Powered by</span>
+                        <img src="img/senu-logo.png" alt="SEÑU" style="width: 75px; height: auto;">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- OVERLAY FOR MOBILE -->
+        <div class="overlay" id="sidebarOverlay"></div>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- HEADER -->
+            <header class="top-header">
+                <!-- Hamburger Button (Mobile Only) -->
+                <button class="menu-toggle-btn" id="menuToggle">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div>
+                    <span class="greeting-subtitle">Buenos días</span>
+                    <h2 style="font-weight: 800; color: #be185d; letter-spacing: -0.5px;">Depilarte</h2>
+                    <p class="date-subtitle" id="currentDate">Cargando fecha...</p>
+                </div>
+                <div class="header-actions">
+                    <!-- Cleaned up as requested -->
+                </div>
+            </header>
+
+            <!-- STATS / CHARTS SECTION (2 Cards Only) -->
+            <section class="charts-grid">
+                <!-- Card 1: Citas Confirmadas -->
+                <div class="card chart-card" id="card-confirmadas" style="background-color: #fbcfe8 !important;">
+                    <div class="card-header">
+                        <div class="icon-box green-bg" style="background-color: #EFFFF8; color: #2B7A58;">
+                            <i class="fa-solid fa-check-double"></i>
+                        </div>
+                        <span class="badge-success">Hoy</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="stat-label" style="color: #333;">Citas Confirmadas</p>
+                        <h3 class="stat-value" style="color: #000;">8</h3>
+                        <div class="chart-container" style="height: 120px;">
+                            <canvas id="confirmedChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Por Agendar -->
+                <div class="card chart-card" id="card-por-agendar" style="background-color: #bbf7d0;">
+                    <div class="card-header">
+                        <div class="icon-box salmon-bg">
+                            <i class="fa-regular fa-clock"></i>
+                        </div>
+                        <span class="badge-pending"
+                            style="background-color: #FFF5F6; color: #FF8C94; padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem;">Pendientes</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="stat-text">
+                            <p class="stat-label">Por Agendar</p>
+                            <h3 class="stat-value">4</h3>
+                        </div>
+                        <!-- Use a flexible container for centered donut/bar -->
+                        <div class="chart-container" style="height: 120px;">
+                            <canvas id="pendingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BOTTOM CONTENT: GRID 1 COL (Patient List Only) -->
+            <section class="bottom-grid">
+                <!-- COL 1: Weekly Follow-up (Full Width) -->
+                <div class="card list-card">
+                    <div class="card-title-row">
+                        <h3>Seguimiento Semanal</h3>
+                        <div class="week-nav-controls" style="display: flex; gap: 10px; align-items: center;">
+                            <button id="btnPrevWeek" class="arrow-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span id="currentWeekLabel"
+                                style="font-weight: 600; font-size: 0.9rem; min-width: 150px; text-align: center;">Semana
+                                Actual</span>
+                            <button id="btnNextWeek" class="arrow-btn"><i
+                                    class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div class="patient-list" id="patientList"
+                        style="max-height: 400px; overflow-y: auto; scrollbar-width: thin;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/JS/script.js"></script>
+</body>
+
+</html>

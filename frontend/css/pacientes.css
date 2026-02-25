@@ -1,0 +1,1044 @@
+/* --- PACIENTES MODULE STYLES (REFINED) --- */
+
+/* Hero Search & Grid (Keep existing directory styles) */
+.hero-search-section {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+@media (min-width: 769px) {
+    .search-container {
+        max-width: 600px;
+    }
+}
+
+.search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 15px 20px 15px 50px;
+    border: 2px solid #F0F0F0;
+    border-radius: 30px;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.3s;
+    background: #FAFAFA;
+}
+
+.search-container input:focus {
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 5px 15px rgba(255, 140, 148, 0.1);
+}
+
+.filters-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.filter-chip {
+    padding: 8px 20px;
+    border-radius: 20px;
+    background: #F5F6FA;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: 0.2s;
+    border: 1px solid transparent;
+}
+
+.filter-chip:hover {
+    background: #EFEFEF;
+}
+
+.filter-chip.active {
+    background: var(--text-dark);
+    color: white;
+}
+
+.filter-chip.debt.active {
+    background: #FF8C94;
+}
+
+.filter-chip.credit.active {
+    background: #A8E6CF;
+    color: #2B7A58;
+}
+
+.patient-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    padding-bottom: 50px;
+}
+
+.patient-card-dir {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: 0.2s;
+    border: 1px solid #F5F6FA;
+}
+
+.patient-card-dir:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary-light);
+}
+
+.dir-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.dir-info {
+    flex: 1;
+}
+
+.dir-info h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.dir-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.btn-view-profile {
+    font-size: 0.8rem;
+    color: var(--primary);
+    background: transparent;
+    border: 1px solid var(--primary-light);
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.btn-view-profile:hover {
+    background: var(--primary-light);
+}
+
+
+/* --- PROFILE MODAL (STACKED LAYOUT) --- */
+.profile-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #F9F9FC;
+    z-index: 2000;
+    overflow-y: auto;
+    display: none;
+    padding: 30px;
+}
+
+.profile-modal-overlay.active {
+    display: block;
+    animation: fadeIn 0.3s;
+}
+
+.profile-modal-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 50px;
+}
+
+/* Breadcrumb */
+.profile-top-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.back-link {
+    background: none;
+    border: none;
+    font-size: inherit;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.back-link:hover {
+    color: var(--text-dark);
+}
+
+.nav-current {
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+/* Header Card */
+.profile-header-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.02);
+    margin-bottom: 30px;
+}
+
+.ph-left {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.ph-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.ph-info h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-dark);
+}
+
+.ph-meta {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.ph-tag {
+    background: #F0F0F0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ph-detail {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.ph-contact {
+    display: flex;
+    gap: 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.ph-contact span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ph-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 15px;
+}
+
+.current-balance {
+    text-align: right;
+}
+
+.cb-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+}
+
+.cb-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #A8E6CF;
+    /* Reference Green */
+    color: #2B7A58;
+}
+
+/* Using darker green for readability, or adjust based on image */
+.cb-amount {
+    color: #5DD39E;
+}
+
+/* Brighter green like image */
+
+.btn-edit-profile {
+    background: #FF8C94;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-edit-profile:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Tabs Bar */
+.profile-tabs-bar {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 0px;
+    border-bottom: 1px solid #EAEAEA;
+    padding-left: 20px;
+}
+
+.tab-item {
+    background: none;
+    border: none;
+    padding-bottom: 15px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    position: relative;
+    border-bottom: 3px solid transparent;
+    transition: 0.2s;
+}
+
+.tab-item:hover {
+    color: var(--text-dark);
+}
+
+.tab-item.active {
+    color: #FF8C94;
+    border-bottom-color: #FF8C94;
+}
+
+.tab-badge {
+    background: #FFF0F1;
+    color: #FF8C94;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 5px;
+    font-weight: 700;
+}
+
+/* Content Card */
+.profile-content-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.02);
+    margin-top: 30px;
+}
+
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.card-header-row h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.card-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-outline {
+    background: white;
+    border: 1px solid #E0E0E0;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-outline:hover {
+    background: #F9F9F9;
+    border-color: #D0D0D0;
+}
+
+/* Refined Table */
+.refined-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.refined-table th {
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #F0F0F0;
+}
+
+.refined-table td {
+    padding: 20px;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    border-bottom: 1px solid #F9F9F9;
+    vertical-align: middle;
+}
+
+.refined-table tr:hover td {
+    background-color: #FAFAFA;
+}
+
+/* Zone Tags - Pill Style */
+.zone-pill {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 6px;
+    background: #F4F6F8;
+    color: var(--text-dark);
+}
+
+.zone-pill.purple {
+    background: #F3E8FF;
+    color: #7E22CE;
+}
+
+/* Example accent */
+.zone-pill.pink {
+    background: #FFF0F1;
+    color: #D64545;
+}
+
+/* Payment Badges */
+.pay-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.pay-pill.green {
+    background: #E6FFFA;
+    color: #2B7A58;
+}
+
+/* Descontado del Abono */
+.pay-pill.gray {
+    background: #F3F4F6;
+    color: #4B5563;
+}
+
+/* Mix/Cash */
+
+.table-amount {
+    font-weight: 700;
+}
+
+.table-date-cell {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.menu-dots {
+    color: #CCC;
+    cursor: pointer;
+}
+
+.menu-dots:hover {
+    color: var(--text-dark);
+}
+
+/* Pagination */
+.pagination-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    border-top: 1px solid #F0F0F0;
+    padding-top: 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-page {
+    background: white;
+    border: 1px solid #E0E0E0;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--text-dark);
+}
+
+.btn-page:hover:not(:disabled) {
+    background: #F5F5F5;
+}
+
+.btn-page:disabled {
+    color: #CCC;
+    cursor: default;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .profile-header-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .ph-right {
+        width: 100%;
+        align-items: flex-start;
+        flex-direction: row;
+        justify-content: space-between;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+
+    .profile-tabs-bar {
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+/* --- NEW PATIENT MODAL --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    /* Semi-transparent dark */
+    z-index: 3000;
+    /* Above profile modal */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    width: 95%;
+    max-width: 900px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+    /* FIX: Scrollable Content */
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-overlay.active .modal-card {
+    transform: translateY(0);
+}
+
+/* Form Layout for Scroll */
+#formNewPatient {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    /* Contain children */
+}
+
+.tabs-content {
+    flex: 1;
+    overflow-y: auto;
+    /* Scroll ONLY here */
+    padding: 10px 5px;
+    /* prevent cut off shadows */
+}
+
+.modal-actions {
+    padding-top: 20px;
+    background: white;
+    flex-shrink: 0;
+    /* Keep footer fixed size */
+}
+
+.modal-header {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    color: var(--text-dark);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.form-group input {
+    padding: 12px 15px;
+    border: 2px solid #F0F0F0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: 0.2s;
+}
+
+.form-group input:focus {
+    border-color: var(--primary);
+    background: white;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-cancel {
+    background: #F5F6FA;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-save {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 140, 148, 0.4);
+}
+
+.btn-primary-add {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(255, 140, 148, 0.3);
+    transition: 0.2s;
+}
+
+.btn-primary-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 140, 148, 0.4);
+}
+
+/* --- RESPONSIVE MODAL FIXES --- */
+@media (max-width: 768px) {
+    .modal-card {
+        padding: 20px;
+        width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
+        /* Scroll inside modal if too tall */
+    }
+
+    .modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    /* Scrollable Tabs */
+    .profile-tabs-bar {
+        gap: 15px;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 5px;
+        /* Space for scrollbar */
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 20px;
+    }
+
+    .profile-tabs-bar::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .profile-tabs-bar::-webkit-scrollbar-thumb {
+        background: #eee;
+        border-radius: 4px;
+    }
+
+    .tab-item {
+        font-size: 0.85rem;
+        padding-bottom: 10px;
+    }
+
+    /* Stack Forms */
+    /* Smart Grid: Adapts to available space (1, 2, or 3 cols) */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+
+    /* Fix specific grids in Health Tab (using attribute selector for inline styles or general override) */
+    #tab-salud div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Adjust Checkbox groups */
+    .form-group[style*="flex-direction: row"] {
+        flex-wrap: wrap;
+        /* Allow wrapping */
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+        /* Cancel at bottom */
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-save,
+    .btn-cancel {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+    }
+}
+
+/* Mobile FAB Extension */
+.fab-new-appt {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #FF8C8C;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(255, 140, 140, 0.4);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: 0.3s;
+}
+
+.fab-new-appt:active {
+    transform: scale(0.95);
+}
+
+/* --- RESPONSIVE MOBILE FIX (CSS ONLY) --- */
+@media (max-width: 768px) {
+
+    /* Layout */
+    .dashboard-container {
+        flex-direction: column;
+    }
+
+    .main-content {
+        padding: 20px 15px;
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Sidebar Off-canvas */
+    .sidebar {
+        position: fixed;
+        left: -320px;
+        top: 0;
+        bottom: 0;
+        height: 100%;
+        z-index: 1000;
+        border-radius: 0;
+        transition: left 0.3s ease;
+        background: #fff;
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar.active {
+        left: 0;
+    }
+
+    /* Header & Toggle */
+    .top-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    .menu-toggle-btn {
+        display: block;
+        /* Show hamburger in patients too */
+    }
+
+    .header-actions {
+        margin-left: auto;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .search-wrapper {
+        width: 100%;
+    }
+
+    .search-wrapper input {
+        width: 100%;
+    }
+
+    /* Patient Grid */
+    .patient-grid-container {
+        display: flex !important;
+        flex-direction: column;
+        width: 100%;
+        gap: 15px;
+    }
+
+    .patient-card-dir {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Profile Modal Header */
+    .profile-header-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    /* Table Responsiveness for History */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .history-table {
+        min-width: 600px;
+        /* Force scroll on very tiny screens rather than squishing text */
+    }
+
+    /* Profile Modal Internals (Ver Perfil) */
+    .profile-modal-content {
+        width: 100% !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
+
+    .modal-body-scroll .patient-classic-header>div:first-child {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 15px;
+    }
+
+    .modal-body-scroll .patient-classic-header>div:first-child>div {
+        text-align: center !important;
+    }
+
+    .modal-body-scroll .patient-classic-header>div:first-child .pch-wallet {
+        text-align: center !important;
+    }
+
+    /* Contact Info Grid */
+    .modal-body-scroll .patient-classic-header>div[style*="grid-template-columns"],
+    .modal-body-scroll .patient-classic-header>div:nth-child(2) {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+        padding: 15px !important;
+    }
+
+    /* Medical Info Grids */
+    .modal-body-scroll>div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 30px !important;
+    }
+
+    .modal-body-scroll h3 {
+        text-align: center;
+        background: #f8fafc;
+        padding: 10px;
+        border-radius: 8px;
+        border-bottom: none !important;
+    }
+
+    /* Profile History Table to Cards */
+    .history-section .table-responsive {
+        overflow-x: hidden !important;
+    }
+
+    .history-section .refined-table,
+    .history-section .refined-table tbody,
+    .history-section .refined-table tr,
+    .history-section .refined-table td {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .history-section .refined-table thead {
+        display: none !important;
+    }
+
+    .history-section .refined-table tr {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        padding: 15px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .history-section .refined-table td {
+        padding: 8px 0 !important;
+        text-align: left !important;
+        border-bottom: none !important;
+    }
+
+    /* Date row styling */
+    .history-section .refined-table td:nth-child(1) {
+        border-bottom: 1px dashed #e2e8f0 !important;
+        padding-bottom: 12px !important;
+        display: flex !important;
+        justify-content: flex-start !important;
+    }
+
+    .history-section .refined-table td:nth-child(1)>div {
+        display: flex !important;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    .history-section .refined-table td:nth-child(1)>div i {
+        margin-bottom: 0 !important;
+    }
+
+    /* Services row */
+    .history-section .refined-table td:nth-child(2) {
+        border-bottom: 1px dashed #e2e8f0 !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
+
+    /* Price row */
+    .history-section .refined-table td:nth-child(3) {
+        text-align: right !important;
+        padding-top: 10px !important;
+    }
+
+    .history-section .refined-table td:nth-child(3)>div {
+        display: inline-block;
+    }
+}
