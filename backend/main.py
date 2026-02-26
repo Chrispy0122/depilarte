@@ -52,11 +52,21 @@ app.include_router(staff_router) # Internally prefixed: /api/staff
 # --- STATIC FILES & FRONTEND ROUTING ---
 from fastapi.responses import FileResponse
 
-# Resolve absolute path to frontend
-frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend"))
+# Obtener la ruta del directorio actual (backend)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Subir un nivel y entrar a frontend
+frontend_path = os.path.join(os.path.dirname(current_dir), "frontend")
+# Subir un nivel y entrar a frontend/static
+static_path = os.path.join(os.path.dirname(current_dir), "frontend", "static")
+
+if os.path.exists(static_path):
+    # 1. Montar /static apuntando a frontend/static (JS, CSS, imágenes, manifest)
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
+else:
+    print(f"WARNING: Static path not found at {static_path}")
 
 if os.path.exists(frontend_path):
-    # 1. Custom Routes for cleaner URLs
+    # 2. Rutas HTML específicas
     @app.get("/")
     async def serve_login():
         return FileResponse(os.path.join(frontend_path, "login.html"))
@@ -65,8 +75,9 @@ if os.path.exists(frontend_path):
     async def serve_dashboard():
         return FileResponse(os.path.join(frontend_path, "index.html"))
 
-    # 2. Mount everything else (CSS, JS, other HTMLs) static
-    # html=False prevents it from automatically serving index.html at "/", which conflicts with our login route
+    # 3. Montar todo el resto del frontend (otros HTMLs, etc.)
+    # html=False evita conflicto con la ruta "/" de login
     app.mount("/", StaticFiles(directory=frontend_path, html=False), name="frontend")
 else:
     print(f"WARNING: Frontend path not found at {frontend_path}")
+
