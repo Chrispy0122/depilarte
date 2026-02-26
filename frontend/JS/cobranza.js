@@ -841,7 +841,8 @@ if (!btnProcessPayment) {
 
             // Partial Payment Logic Removed. "Abono" is now Wallet Top-Up.
             monto_abonado: parseFloat(abono.toFixed(2)),
-            monto_wallet_usado: parseFloat(deduction.toFixed(2))
+            monto_wallet_usado: parseFloat(deduction.toFixed(2)),
+            tasa_bcv: bcvRate > 0 ? bcvRate : null  // Guardar tasa del día
         };
 
         console.log("📤 Sending payment payload:", payload);
@@ -941,8 +942,14 @@ async function fetchCajaHoy() {
                     <td style="padding: 12px; color: #666;">${c.hora}</td>
                     <td style="padding: 12px; font-weight: 600; color: #333;">${c.cliente}</td>
                     <td style="padding: 12px; font-size: 0.85rem; color: #555;">${c.servicios}</td>
-                    <td style="padding: 12px; text-align: right; font-weight: 600;">$${c.monto_total ? c.monto_total.toFixed(2) : (c.monto || 0).toFixed(2)}</td>
-                    <td style="padding: 12px; text-align: right; color: #2B7A58; font-weight: 700;">$${c.monto_abonado ? c.monto_abonado.toFixed(2) : '0.00'}</td>
+                    <td style="padding: 12px; text-align: right; font-weight: 600;">
+                        $${(c.monto_total ?? c.monto ?? 0).toFixed(2)}
+                        ${c.tasa_bcv ? `<div style="font-size:0.78rem; color:#888; font-weight:400;">Bs ${((c.monto_total ?? c.monto ?? 0) * c.tasa_bcv).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>` : ''}
+                    </td>
+                    <td style="padding: 12px; text-align: right; color: #2B7A58; font-weight: 700;">
+                        $${(c.monto_abonado ?? 0).toFixed(2)}
+                        ${c.tasa_bcv ? `<div style="font-size:0.78rem; color:#888; font-weight:400;">Bs ${((c.monto_abonado ?? 0) * c.tasa_bcv).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>` : ''}
+                    </td>
                     <td style="padding: 12px;">${c.metodo}</td>
                     <td style="padding: 12px; font-size: 0.85rem; color: #888;">${c.referencia || '-'}</td>
                 `;

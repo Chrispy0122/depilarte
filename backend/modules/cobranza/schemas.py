@@ -19,3 +19,4 @@ class CobroCreate(BaseModel):
     # Partial Payment
     monto_abonado: Optional[float] = None # Now refers to Wallet Top-Up
     monto_wallet_usado: Optional[float] = 0.0
+    tasa_bcv: Optional[float] = None # Tasa BCV al momento del cobro

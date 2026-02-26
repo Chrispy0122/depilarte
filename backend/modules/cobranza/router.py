@@ -262,7 +262,8 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             monto_total_venta=grand_total, # Full Price
             monto_abonado=wallet_topup,    # Wallet Top-Up
             deuda=0.0,                     # No debt
-            total=total_cash_in            # Real Money In
+            total=total_cash_in,           # Real Money In
+            tasa_bcv=cobro_in.tasa_bcv     # Tasa BCV histórica del día
         )
         db.add(nuevo_cobro)
         db.commit()
@@ -543,7 +544,8 @@ def obtener_cobros_hoy(
                 "metodo": c.metodo_pago,
                 "servicios": ", ".join(msg_servicios),
                 "referencia": c.referencia or "-",
-                "comisiones_generadas": comision_cobro
+                "comisiones_generadas": comision_cobro,
+                "tasa_bcv": c.tasa_bcv or None  # Tasa BCV histórica
             })
             
         return {
@@ -705,90 +707,198 @@ def exportar_caja_excel(
         wb = Workbook()
         ws = wb.active
         ws.title = f"Caja {target_date}"
-        
-        # Styles
-        header_font = Font(bold=True, color="FFFFFF")
-        header_fill = PatternFill(start_color="2B7A58", end_color="2B7A58", fill_type="solid") # Brand Green
-        center = Alignment(horizontal="center", vertical="center")
-        thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
-        
-        # Headers
-        headers = ["Hora", "Cliente", "Servicios", "Metodo Pago", "Referencia", "Total Servicio ($)", "Abono a Wallet", "Recepcionista", "Especialista"]
-        ws.append(headers)
-        
-        for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col_num)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = center
-            cell.border = thin_border
-            
-        # Data
-        total_ingreso_dia = 0.0
-        total_deuda_dia = 0.0
-        
-        for c in cobros:
-            # Aggregate services and staff
-            svcs = []
+
+        # ── Helpers de estilo ──────────────────────────────
+        from openpyxl.utils import get_column_letter
+
+        def make_border(style='thin'):
+            s = Side(style=style)
+            return Border(left=s, right=s, top=s, bottom=s)
+
+        def cell_style(ws, row, col, value=None, bold=False, font_color="000000",
+                       bg=None, align="left", wrap=False, border=True, num_fmt=None):
+            c = ws.cell(row=row, column=col, value=value)
+            c.font = Font(bold=bold, color=font_color, name="Calibri", size=10)
+            if bg:
+                c.fill = PatternFill(start_color=bg, end_color=bg, fill_type="solid")
+            c.alignment = Alignment(horizontal=align, vertical="center", wrap_text=wrap)
+            if border:
+                c.border = make_border()
+            if num_fmt:
+                c.number_format = num_fmt
+            return c
+
+        # ── Colores de la paleta ───────────────────────────
+        CLR_GREEN_DARK  = "2B7A58"   # verde Depilarte
+        CLR_GREEN_LIGHT = "E8F5E9"   # fondo verde suave
+        CLR_BLUE_DARK   = "1565C0"   # azul para Bs
+        CLR_BLUE_LIGHT  = "E3F2FD"   # fondo azul suave
+        CLR_GRAY_DARK   = "455A64"   # gris oscuro
+        CLR_GRAY_LIGHT  = "ECEFF1"   # fondo gris suave
+        CLR_WHITE       = "FFFFFF"
+        CLR_TITLE_BG    = "1B4F3A"   # verde muy oscuro para título
+        CLR_ROW_ALT     = "F5F5F5"   # alternancia de filas
+
+        TOTAL_COLS = 12
+
+        # ── FILA 1: Título principal ───────────────────────
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=TOTAL_COLS)
+        title_cell = ws.cell(row=1, column=1)
+        title_cell.value = "DEPILARTE  ·  Reporte de Caja Diaria"
+        title_cell.font = Font(bold=True, color=CLR_WHITE, name="Calibri", size=14)
+        title_cell.fill = PatternFill(start_color=CLR_TITLE_BG, end_color=CLR_TITLE_BG, fill_type="solid")
+        title_cell.alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[1].height = 30
+
+        # ── FILA 2: Subtítulo con fecha ────────────────────
+        meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                 "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+        fecha_str = f"{target_date.day} de {meses[target_date.month-1]} de {target_date.year}"
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=TOTAL_COLS)
+        sub_cell = ws.cell(row=2, column=1)
+        sub_cell.value = f"Fecha: {fecha_str}   |   Generado: {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        sub_cell.font = Font(italic=True, color=CLR_WHITE, name="Calibri", size=10)
+        sub_cell.fill = PatternFill(start_color=CLR_GREEN_DARK, end_color=CLR_GREEN_DARK, fill_type="solid")
+        sub_cell.alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[2].height = 20
+
+        # ── FILA 3: Vacía de separación ────────────────────
+        ws.row_dimensions[3].height = 6
+
+        # ── FILA 4: Encabezados de columnas por sección ───
+        # Sección INFO (cols 1-5): verde oscuro
+        # Sección USD  (cols 6-7): verde medio
+        # Sección Bs   (cols 8-9): azul
+        # Sección BCV  (col 10):   gris
+        # Sección Staff(cols 11-12): gris oscuro
+
+        header_defs = [
+            # (col, texto, bg, alineación)
+            (1,  "Hora",                 CLR_GREEN_DARK, "center"),
+            (2,  "Cliente",              CLR_GREEN_DARK, "left"),
+            (3,  "Servicios",            CLR_GREEN_DARK, "left"),
+            (4,  "Método de Pago",       CLR_GREEN_DARK, "center"),
+            (5,  "Referencia",           CLR_GREEN_DARK, "center"),
+            (6,  "Total Servicio ($)",   "217A4E",       "right"),
+            (7,  "Abono Wallet ($)",     "217A4E",       "right"),
+            (8,  "Total Servicio (Bs)",  CLR_BLUE_DARK,  "right"),
+            (9,  "Abono Wallet (Bs)",    CLR_BLUE_DARK,  "right"),
+            (10, "Tasa BCV",             CLR_GRAY_DARK,  "center"),
+            (11, "Recepcionista",        CLR_GRAY_DARK,  "center"),
+            (12, "Especialista",         CLR_GRAY_DARK,  "center"),
+        ]
+
+        ws.row_dimensions[4].height = 22
+        for col, text, bg, align in header_defs:
+            c = ws.cell(row=4, column=col, value=text)
+            c.font = Font(bold=True, color=CLR_WHITE, name="Calibri", size=10)
+            c.fill = PatternFill(start_color=bg, end_color=bg, fill_type="solid")
+            c.alignment = Alignment(horizontal=align, vertical="center", wrap_text=True)
+            c.border = make_border()
+
+        # ── FILAS DE DATOS ─────────────────────────────────
+        total_usd = 0.0
+        total_bs  = 0.0
+
+        for idx, c in enumerate(cobros):
+            data_row = 5 + idx
+
+            # Calcular valores
+            cash_in      = c.total or 0.0
+            wallet_topup = c.monto_abonado or 0.0
+            cash_service = max(0.0, cash_in - wallet_topup)
+            tasa         = c.tasa_bcv
+
+            cash_service_bs  = round(cash_service  * tasa, 2) if tasa else None
+            wallet_topup_bs  = round(wallet_topup  * tasa, 2) if tasa else None
+
+            total_usd += cash_service
+            if cash_service_bs is not None:
+                total_bs += cash_service_bs
+
+            # Nombres servicios / personal
+            svcs   = []
             receps = set()
-            specs = set()
-            
+            specs  = set()
             for d in c.detalles:
                 svcs.append(d.servicio_nombre or "?")
                 if d.recepcionista: receps.add(d.recepcionista.nombre_completo)
-                if d.especialista: specs.add(d.especialista.nombre_completo)
-            
-            str_svcs = ", ".join(svcs)
-            str_recep = ", ".join(receps)
-            str_spec = ", ".join(specs)
-            
-            # Calculate Fields Correctly
-            # price = c.monto_total_venta or 0.0 # List Price (Ignored for Cash Report)
-            
-            cash_in = c.total or 0.0
-            wallet_topup = c.monto_abonado or 0.0
-            cash_service = max(0.0, cash_in - wallet_topup)
-            
-            row = [
-                c.fecha.strftime("%H:%M"),
-                c.cliente.nombre_completo if c.cliente else "Anonimo",
-                str_svcs,
-                c.metodo_pago,
-                c.referencia or "-",
-                cash_service,   # Total Servicio (Cash Only)
-                wallet_topup,   # Abono a Wallet
-                str_recep,
-                str_spec
-            ]
-            ws.append(row)
-            total_ingreso_dia += (c.total or 0.0)
-            total_deuda_dia = 0.0 # Unused
-            
-            # Apply borders to all columns (now 10 columns)
-            for i in range(1, 11):
-                ws.cell(row=ws.max_row, column=i).border = thin_border
+                if d.especialista:  specs.add(d.especialista.nombre_completo)
 
-        # Footer Total
-        last_row = ws.max_row + 1
-        ws.cell(row=last_row, column=6).value = "TOTAL DIA:"
-        ws.cell(row=last_row, column=6).font = Font(bold=True)
-        ws.cell(row=last_row, column=6).alignment = Alignment(horizontal="right")
-        
-        # Total Ingreso
-        ws.cell(row=last_row, column=7).value = total_ingreso_dia
-        ws.cell(row=last_row, column=7).font = Font(bold=True, color="2B7A58")
-        ws.cell(row=last_row, column=7).border = thin_border
-        
-        # Total Deuda
-        ws.cell(row=last_row, column=8).value = total_deuda_dia
-        ws.cell(row=last_row, column=8).font = Font(bold=True, color="FF0000")
-        ws.cell(row=last_row, column=8).border = thin_border
+            # Color de fila alternado
+            row_bg = CLR_ROW_ALT if idx % 2 == 0 else CLR_WHITE
 
-        # Columns Width
-        ws.column_dimensions['B'].width = 25
-        ws.column_dimensions['C'].width = 40
-        ws.column_dimensions['G'].width = 15
-        ws.column_dimensions['H'].width = 15
+            # Columnas INFO
+            for col, val, align, wrap in [
+                (1, c.fecha.strftime("%H:%M"),                       "center", False),
+                (2, c.cliente.nombre_completo if c.cliente else "?", "left",   False),
+                (3, ", ".join(svcs),                                 "left",   True ),
+                (4, c.metodo_pago,                                   "center", False),
+                (5, c.referencia or "-",                             "center", False),
+            ]:
+                cell_style(ws, data_row, col, val, bg=row_bg, align=align, wrap=wrap)
+
+            # Columnas USD
+            for col, val in [(6, cash_service), (7, wallet_topup)]:
+                cell_style(ws, data_row, col, val,
+                           bg=CLR_GREEN_LIGHT, align="right",
+                           num_fmt='"$"#,##0.00')
+
+            # Columnas Bs
+            for col, val in [(8, cash_service_bs), (9, wallet_topup_bs)]:
+                cell_style(ws, data_row, col, val,
+                           bg=CLR_BLUE_LIGHT, align="right",
+                           num_fmt='"Bs "#,##0.00' if val is not None else None)
+
+            # Tasa BCV
+            cell_style(ws, data_row, 10, tasa,
+                       bg=CLR_GRAY_LIGHT, align="center",
+                       num_fmt="#,##0.00" if tasa else None)
+
+            # Personal
+            for col, val in [(11, ", ".join(receps) or "-"), (12, ", ".join(specs) or "-")]:
+                cell_style(ws, data_row, col, val, bg=CLR_GRAY_LIGHT, align="center")
+
+            ws.row_dimensions[data_row].height = 18
+
+        # ── FILA TOTALES ───────────────────────────────────
+        total_row = 5 + len(cobros)
+        ws.row_dimensions[total_row].height = 22
+
+        # Merge etiqueta
+        ws.merge_cells(start_row=total_row, start_column=1, end_row=total_row, end_column=5)
+        label = ws.cell(row=total_row, column=1, value="TOTAL DEL DÍA")
+        label.font = Font(bold=True, color=CLR_WHITE, name="Calibri", size=11)
+        label.fill = PatternFill(start_color=CLR_TITLE_BG, end_color=CLR_TITLE_BG, fill_type="solid")
+        label.alignment = Alignment(horizontal="right", vertical="center")
+        label.border = make_border()
+
+        # Total USD
+        cell_style(ws, total_row, 6, total_usd, bold=True,
+                   font_color=CLR_WHITE, bg=CLR_GREEN_DARK, align="right",
+                   num_fmt='"$"#,##0.00')
+        # Vacío Wallet $
+        cell_style(ws, total_row, 7, None, bg=CLR_GREEN_DARK, border=True)
+
+        # Total Bs
+        cell_style(ws, total_row, 8, total_bs if total_bs > 0 else None,
+                   bold=True, font_color=CLR_WHITE, bg=CLR_BLUE_DARK, align="right",
+                   num_fmt='"Bs "#,##0.00' if total_bs > 0 else None)
+        cell_style(ws, total_row, 9, None, bg=CLR_BLUE_DARK, border=True)
+
+        # Celdas vacías finales fila totales
+        for col in [10, 11, 12]:
+            cell_style(ws, total_row, col, None, bg=CLR_GRAY_LIGHT, border=True)
+
+        # ── ANCHOS DE COLUMNA ──────────────────────────────
+        col_widths = {1:8, 2:26, 3:38, 4:15, 5:16,
+                      6:18, 7:18, 8:20, 9:20, 10:11, 11:20, 12:20}
+        for col, width in col_widths.items():
+            ws.column_dimensions[get_column_letter(col)].width = width
+
+        # Congelar encabezados (fila 4)
+        ws.freeze_panes = "A5"
+
         
         # Save to Buffer
         buffer = BytesIO()

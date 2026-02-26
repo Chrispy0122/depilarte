@@ -29,6 +29,7 @@ class Cobro(Base):
     monto_total_venta = Column(Float, default=0.0) # Precio real total
     monto_abonado = Column(Float, default=0.0) # Lo que pagó hoy
     deuda = Column(Float, default=0.0) # Lo que debe
+    tasa_bcv = Column(Float, nullable=True) # Tasa BCV al momento del cobro
 
     # Relationships
     cliente = relationship("backend.modules.pacientes.models.Cliente")
