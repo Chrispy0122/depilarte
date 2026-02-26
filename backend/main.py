@@ -49,6 +49,38 @@ app.include_router(inventario_router) # Internally prefixed: /api/inventario
 app.include_router(servicios_router) # Internally prefixed: /api/servicios
 app.include_router(staff_router) # Internally prefixed: /api/staff
 
+# --- DEBUG ROUTE (temporal - diagnostico en Render) ---
+@app.get("/debug-path")
+def debug_path():
+    import os
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.dirname(current_dir)
+
+    def list_dir_safe(path):
+        result = []
+        if os.path.exists(path):
+            for r, dirs, files in os.walk(path):
+                for f in files:
+                    result.append(os.path.join(r, f).replace(root_dir, ""))
+        return result
+
+    static_path   = os.path.join(root_dir, "frontend", "static")
+    frontend_path = os.path.join(root_dir, "frontend")
+
+    return {
+        "current_dir": current_dir,
+        "root_dir": root_dir,
+        "frontend_path": frontend_path,
+        "frontend_exists": os.path.exists(frontend_path),
+        "static_path": static_path,
+        "static_exists": os.path.exists(static_path),
+        "files_in_static": list_dir_safe(static_path),
+        "files_in_frontend_root": [
+            f for f in list_dir_safe(frontend_path)
+            if not f.startswith("/frontend/static")
+        ]
+    }
+
 # --- STATIC FILES & FRONTEND ROUTING ---
 from fastapi.responses import FileResponse
 
