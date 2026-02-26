@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
@@ -7,7 +7,8 @@ import sys
 # Ensure backend directory is in path (sometimes needed for absolute imports if running from root)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.database import engine, Base
+from sqlalchemy import text
+from backend.database import engine, Base, get_db
 
 # --- IMPORT MODELS FOR SQLALCHEMY (MANDATORY) ---
 # This registers the models with Base.metadata so create_all() works.
@@ -48,6 +49,17 @@ app.include_router(dashboard_router) # Internally prefixed: /api/dashboard
 app.include_router(inventario_router) # Internally prefixed: /api/inventario
 app.include_router(servicios_router) # Internally prefixed: /api/servicios
 app.include_router(staff_router) # Internally prefixed: /api/staff
+
+# --- FIX TEMPORAL: Migracion Aiven ---
+@app.get("/fix-tasa-bcv")
+def fix_tasa_bcv(db=Depends(get_db)):
+    try:
+        db.execute(text("ALTER TABLE cobros ADD COLUMN tasa_bcv FLOAT;"))
+        db.commit()
+        return {"status": "ok", "message": "Columna tasa_bcv agregada con exito a Aiven"}
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
 
 # --- DEBUG ROUTE (temporal - diagnostico en Render) ---
 @app.get("/debug-path")
