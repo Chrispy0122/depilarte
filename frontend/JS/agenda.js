@@ -324,12 +324,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Confirmar nueva fecha
         overlay.querySelector('#dp-btn-confirm-reagendar').addEventListener('click', async () => {
-            const fechaRaw = overlay.querySelector('#dp-nueva-fecha').value;
+            const fechaRaw = overlay.querySelector('#dp-nueva-fecha').value; // "YYYY-MM-DDTHH:MM"
             if (!fechaRaw) {
                 dpToast('Selecciona una nueva fecha y hora.', 'warning');
                 return;
             }
-            const isoFecha = new Date(fechaRaw).toISOString();
+            // Enviar como datetime local sin conversión a UTC (consistente con el resto del sistema)
+            const isoFecha = fechaRaw + ':00'; // "YYYY-MM-DDTHH:MM:00"
             try {
                 const res = await fetch(`${API_URL}/agenda/reagendar/${citaId}`, {
                     method: 'PUT',
