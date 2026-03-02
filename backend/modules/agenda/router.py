@@ -206,6 +206,32 @@ def get_ultimo_tratamiento(paciente_id: int, db: Session = Depends(get_db)):
         return {"servicios_ids": []}
     return {"servicios_ids": [s.id for s in ultima_cita.servicios]}
 
+# --- Endpoint: Reagendar Cita ---
+
+@router.put("/reagendar/{cita_id}")
+def reagendar_cita(cita_id: int, data: schemas.CitaReagendar, db: Session = Depends(get_db)):
+    """
+    Mueve una cita a una nueva fecha/hora preservando duración, paciente y tratamientos.
+    Resetea el estado a 'pendiente'.
+    """
+    cita = (
+        db.query(models.Cita)
+        .options(joinedload(models.Cita.servicios))
+        .filter(models.Cita.id == cita_id)
+        .first()
+    )
+    if not cita:
+        raise HTTPException(status_code=404, detail="Cita no encontrada")
+
+    duracion = cita.fecha_hora_fin - cita.fecha_hora_inicio
+    cita.fecha_hora_inicio = data.fecha_hora_inicio
+    cita.fecha_hora_fin = data.fecha_hora_inicio + duracion
+    cita.estado = "pendiente"
+
+    db.commit()
+    db.refresh(cita)
+    return {"ok": True, "id": cita.id}
+
 # --- Módulo Presupuestos (Disabled for now) ---
 # @router.post("/presupuestos", response_model=schemas.Presupuesto)
 # def create_budget(presupuesto: schemas.PresupuestoCreate, db: Session = Depends(get_db)):

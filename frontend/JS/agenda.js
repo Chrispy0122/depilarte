@@ -230,44 +230,124 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CUSTOM CONFIRM DIALOG ---
     // Now handled globally by dialogs.js (dpConfirm)
 
-    // CANCEL APPOINTMENT LOGIC
-    window.cancelAppointment = async (id) => {
-        const confirmed = await dpConfirm({
-            title: '¿Cancelar esta cita?',
-            message: 'Desaparecerá de la agenda permanentemente.',
-            type: 'danger',
-            okText: 'Sí, cancelar',
-            cancelText: 'No, volver',
-            icon: 'fa-solid fa-calendar-xmark'
-        });
-        if (!confirmed) return;
-        console.log("=== CANCELLING APPOINTMENT ===", id);
-        try {
-            const res = await fetch(`${API_URL}/agenda/appointments/${id}/status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: 'CANCELLED' })
-            });
-            console.log("Cancel response status:", res.status);
+    // CANCEL / REAGENDAR APPOINTMENT LOGIC
+    window.cancelAppointment = (id) => handleCancelAction(id); // Backward compat alias
 
-            if (res.ok) {
-                console.log("Appointment cancelled successfully!");
-                calendar.refetchEvents();
-                // Close modals
-                const modalAction = bootstrap.Modal.getInstance(document.getElementById('modalActions'));
-                if (modalAction) modalAction.hide();
+    function handleCancelAction(citaId) {
+        // Close the actions modal first
+        const modalAction = bootstrap.Modal.getInstance(document.getElementById('modalActions'));
+        if (modalAction) modalAction.hide();
 
-                const modalNew = bootstrap.Modal.getInstance(document.getElementById('modalNew'));
-                if (modalNew) modalNew.hide();
-            } else {
-                const err = await res.json();
-                console.error("Error cancelling:", err);
-                dpToast("Error al cancelar: " + JSON.stringify(err), 'error');
-            }
-        } catch (e) {
-            console.error("Exception in cancelAppointment:", e);
+        // Build 3-option modal
+        const overlay = document.createElement('div');
+        overlay.className = 'dp-confirm-overlay';
+        overlay.innerHTML = `
+            <div class="dp-confirm-box" style="max-width:420px;width:92%;">
+                <div class="dp-confirm-bar danger"></div>
+                <div class="dp-confirm-content">
+                    <div class="dp-confirm-icon-wrap warning">
+                        <i class="fa-solid fa-calendar-xmark"></i>
+                    </div>
+                    <div class="dp-confirm-title">¿Qué deseas hacer con esta cita?</div>
+                    <div class="dp-confirm-msg" style="margin-bottom:16px;">Puedes eliminarla definitivamente o moverla a una nueva fecha.</div>
+
+                    <!-- REAGENDAR PANEL (hidden) -->
+                    <div id="dp-reagendar-panel" style="display:none; margin-bottom:16px; text-align:left;">
+                        <label style="display:block; font-size:0.85rem; font-weight:600; color:#1e293b; margin-bottom:6px;">
+                            <i class="fa-regular fa-calendar" style="color:#6366f1;"></i> Nueva fecha y hora
+                        </label>
+                        <input type="datetime-local" id="dp-nueva-fecha"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-family:'Poppins',sans-serif; font-size:0.9rem;">
+                        <button id="dp-btn-confirm-reagendar" class="dp-confirm-btn dp-btn-ok info"
+                            style="width:100%; margin-top:10px; background:linear-gradient(135deg,#6366f1,#8b5cf6);">
+                            <i class="fa-solid fa-check"></i> Confirmar Nueva Fecha
+                        </button>
+                    </div>
+
+                    <!-- MAIN BUTTONS -->
+                    <div class="dp-confirm-btns" id="dp-main-btns">
+                        <button class="dp-confirm-btn dp-btn-cancel" id="dp-btn-cerrar">Cerrar</button>
+                        <button class="dp-confirm-btn dp-btn-ok danger" id="dp-btn-eliminar" style="flex:1.2;">
+                            <i class="fa-solid fa-trash-can"></i> Eliminar
+                        </button>
+                        <button class="dp-confirm-btn" id="dp-btn-reagendar"
+                            style="flex:1.2; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff;">
+                            <i class="fa-solid fa-calendar-days"></i> Reagendar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('dp-show')));
+
+        function closeOverlay() {
+            overlay.classList.remove('dp-show');
+            overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
         }
-    };
+
+        // Cerrar
+        overlay.querySelector('#dp-btn-cerrar').addEventListener('click', closeOverlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
+
+        // Eliminar definitivamente (flujo original)
+        overlay.querySelector('#dp-btn-eliminar').addEventListener('click', async () => {
+            closeOverlay();
+            try {
+                const res = await fetch(`${API_URL}/agenda/appointments/${citaId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado: 'CANCELLED' })
+                });
+                if (res.ok) {
+                    calendar.refetchEvents();
+                    dpToast('Cita eliminada de la agenda.', 'success');
+                } else {
+                    const err = await res.json();
+                    dpToast('Error al eliminar: ' + JSON.stringify(err), 'error');
+                }
+            } catch (e) {
+                dpToast('Error de conexión.', 'error');
+            }
+        });
+
+        // Reagendar: mostrar panel de fecha
+        overlay.querySelector('#dp-btn-reagendar').addEventListener('click', () => {
+            overlay.querySelector('#dp-main-btns').style.display = 'none';
+            const panel = overlay.querySelector('#dp-reagendar-panel');
+            panel.style.display = 'block';
+            // Precargar con fecha/hora actual
+            const now = new Date();
+            now.setSeconds(0, 0);
+            overlay.querySelector('#dp-nueva-fecha').value = now.toISOString().slice(0, 16);
+        });
+
+        // Confirmar nueva fecha
+        overlay.querySelector('#dp-btn-confirm-reagendar').addEventListener('click', async () => {
+            const fechaRaw = overlay.querySelector('#dp-nueva-fecha').value;
+            if (!fechaRaw) {
+                dpToast('Selecciona una nueva fecha y hora.', 'warning');
+                return;
+            }
+            const isoFecha = new Date(fechaRaw).toISOString();
+            try {
+                const res = await fetch(`${API_URL}/agenda/reagendar/${citaId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fecha_hora_inicio: isoFecha })
+                });
+                if (res.ok) {
+                    closeOverlay();
+                    calendar.refetchEvents();
+                    dpToast('¡Cita reagendada exitosamente!', 'success');
+                } else {
+                    dpToast('Error al reagendar la cita.', 'error');
+                }
+            } catch (e) {
+                dpToast('Error de conexión.', 'error');
+            }
+        });
+    }
 
     // CONFIRM APPOINTMENT LOGIC
     window.confirmAppointment = async (id) => {
@@ -319,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Bind Actions
         btnConfirm.onclick = () => confirmAppointment(event.id);
-        btnCancel.onclick = () => cancelAppointment(event.id);
+        btnCancel.onclick = () => handleCancelAction(event.id);
 
         // Logic: If already confirmed, maybe hide confirm? User said "confirma y cancelar".
         // If confirmed, likely we don't need to confirm again, but showing "Status: Confirmado" might be nice.

@@ -48,3 +48,6 @@ class Cita(BaseModel):
 
     class Config:
         orm_mode = True
+
+class CitaReagendar(BaseModel):
+    fecha_hora_inicio: datetime
