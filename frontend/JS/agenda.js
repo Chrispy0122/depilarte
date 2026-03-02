@@ -227,9 +227,20 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.show();
     };
 
+    // --- CUSTOM CONFIRM DIALOG ---
+    // Now handled globally by dialogs.js (dpConfirm)
+
     // CANCEL APPOINTMENT LOGIC
     window.cancelAppointment = async (id) => {
-        if (!confirm("¿Cancelar esta cita? Desaparecerá de la agenda.")) return;
+        const confirmed = await dpConfirm({
+            title: '¿Cancelar esta cita?',
+            message: 'Desaparecerá de la agenda permanentemente.',
+            type: 'danger',
+            okText: 'Sí, cancelar',
+            cancelText: 'No, volver',
+            icon: 'fa-solid fa-calendar-xmark'
+        });
+        if (!confirmed) return;
         console.log("=== CANCELLING APPOINTMENT ===", id);
         try {
             const res = await fetch(`${API_URL}/agenda/appointments/${id}/status`, {
@@ -251,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 const err = await res.json();
                 console.error("Error cancelling:", err);
-                alert("Error al cancelar: " + JSON.stringify(err));
+                dpToast("Error al cancelar: " + JSON.stringify(err), 'error');
             }
         } catch (e) {
             console.error("Exception in cancelAppointment:", e);
@@ -282,11 +293,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 const err = await res.json();
                 console.error("Error confirming:", err);
-                alert("Error al confirmar: " + JSON.stringify(err));
+                dpToast("Error al confirmar: " + JSON.stringify(err), 'error');
             }
         } catch (e) {
             console.error("Exception in confirmAppointment:", e);
-            alert("Error de conexión: " + e.message);
+            dpToast("Error de conexión: " + e.message, 'error');
         }
     };
 
@@ -338,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Selected Time:", time);
 
         if (!selectedDate || !time) {
-            alert("Fecha/Hora inválida");
+            dpToast("Fecha/Hora inválida", 'warning');
             console.error("Missing date or time!");
             return;
         }
@@ -357,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Servicios IDs (filtered):", serviciosIds);
 
         if (serviciosIds.length === 0) {
-            alert("Seleccione al menos un tratamiento");
+            dpToast("Seleccione al menos un tratamiento", 'warning');
             console.error("No services selected!");
             return;
         }
@@ -366,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Cliente ID:", clienteId);
 
         if (!clienteId || isNaN(clienteId)) {
-            alert("Seleccione un cliente");
+            dpToast("Seleccione un cliente", 'warning');
             console.error("No client selected!");
             return;
         }
@@ -384,8 +395,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (eventId) {
-                // UPDATE (Not fully implemented in backend yet for fields other than status, but here for structure)
-                alert("Edición completa no implementada en backend. Solo Status.");
+                // UPDATE
+                dpToast("Edición completa no implementada aún.", 'warning');
             } else {
                 // CREATE (POST)
                 console.log("Making POST request to:", `${API_URL}/agenda/`);
@@ -406,12 +417,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     const err = await res.json();
                     console.error("Error response:", err);
-                    alert("Error al guardar: " + JSON.stringify(err));
+                    dpToast("Error al guardar: " + JSON.stringify(err), 'error');
                 }
             }
         } catch (e) {
             console.error("Exception caught:", e);
-            alert("Error de conexión: " + e.message);
+            dpToast("Error de conexión: " + e.message, 'error');
         }
     });
 
@@ -471,6 +482,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 placeholder: 'Seleccione Tratamiento(s)',
                 multiple: true,
                 closeOnSelect: false
+            });
+
+            // AUTOCOMPLETE: Al cambiar el paciente, prellenar sus últimos tratamientos
+            $('#cliente-select').on('change', async function () {
+                const pacienteId = $(this).val();
+                // Limpiar selección actual de tratamientos
+                $('#servicio_id').val([]).trigger('change');
+                if (!pacienteId) return;
+                try {
+                    const res = await fetch(`${API_URL}/agenda/ultimo-tratamiento/${pacienteId}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (data.servicios_ids && data.servicios_ids.length > 0) {
+                        // Select2 necesita strings, no números
+                        $('#servicio_id').val(data.servicios_ids.map(String)).trigger('change');
+                    }
+                } catch (e) {
+                    // Silencioso: si falla, dejar el campo vacío para selección manual
+                }
             });
 
             // Listener for Service Change -> Update Duration

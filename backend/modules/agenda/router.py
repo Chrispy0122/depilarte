@@ -187,6 +187,25 @@ def populate_services_debug(db: Session = Depends(get_db)):
     db.commit()
     return {"status": "populated", "added": added}
 
+# --- Endpoint: Último Tratamiento por Paciente ---
+
+@router.get("/ultimo-tratamiento/{paciente_id}")
+def get_ultimo_tratamiento(paciente_id: int, db: Session = Depends(get_db)):
+    """
+    Retorna los IDs de los servicios de la cita más reciente del paciente.
+    Si no tiene citas previas, retorna lista vacía.
+    """
+    ultima_cita = (
+        db.query(models.Cita)
+        .options(joinedload(models.Cita.servicios))
+        .filter(models.Cita.cliente_id == paciente_id)
+        .order_by(models.Cita.fecha_hora_inicio.desc())
+        .first()
+    )
+    if not ultima_cita or not ultima_cita.servicios:
+        return {"servicios_ids": []}
+    return {"servicios_ids": [s.id for s in ultima_cita.servicios]}
+
 # --- Módulo Presupuestos (Disabled for now) ---
 # @router.post("/presupuestos", response_model=schemas.Presupuesto)
 # def create_budget(presupuesto: schemas.PresupuestoCreate, db: Session = Depends(get_db)):
