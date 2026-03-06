@@ -89,23 +89,15 @@ if (btnNewPatient) {
     });
 }
 
-// Paso 2a: eligió "Limpieza Facial"
-const btnTipoLimpieza = document.getElementById('btnTipoLimpieza');
-if (btnTipoLimpieza) {
-    btnTipoLimpieza.addEventListener('click', () => {
-        document.getElementById('modalTipoHistoria').classList.remove('active');
-        abrirFormNuevoPaciente('limpieza');
-    });
-}
-
-// Paso 2b: eligió "Depilación Corporal"
-const btnTipoDepilacion = document.getElementById('btnTipoDepilacion');
-if (btnTipoDepilacion) {
-    btnTipoDepilacion.addEventListener('click', () => {
-        document.getElementById('modalTipoHistoria').classList.remove('active');
-        abrirFormNuevoPaciente('depilacion');
-    });
-}
+// Paso 2a & 2b: delegación sobre document para los botones del selector
+// (El modal HTML está después del <script>, así que getElementById retorna null en tiempo de ejecución.
+//  Event delegation resuelve eso correctamente.)
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('#btnTipoLimpieza, #btnTipoDepilacion');
+    if (!btn) return;
+    document.getElementById('modalTipoHistoria').classList.remove('active');
+    abrirFormNuevoPaciente(btn.id === 'btnTipoLimpieza' ? 'limpieza' : 'depilacion');
+});
 
 /**
  * Abre el modalNewPatient configurado para el tipo elegido.
