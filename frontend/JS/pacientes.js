@@ -967,12 +967,13 @@ document.addEventListener('click', function (e) {
 
 // ── Form submit (POST or PUT) ─────────────────────────────────────────────────
 
-const formDep = document.getElementById('formHistoriaDepilacion');
-if (formDep) {
-    formDep.addEventListener('submit', async function (e) {
+// Delegar el evento submit sobre document ya que el form de depilación puede no existir al cargar el script
+document.addEventListener('submit', async function (e) {
+    if (e.target && e.target.id === 'formHistoriaDepilacion') {
         e.preventDefault();
         if (!_depPacienteId) return;
 
+        const formDep = e.target;
         const fd = new FormData(formDep);
         // Checkboxes: unchecked items won't appear in FormData, so we check differently
         const getCheck = name => !!formDep.querySelector(`[name="${name}"]`)?.checked;
@@ -1032,5 +1033,5 @@ if (formDep) {
         } catch (err) {
             dpToast('Error: ' + err.message, 'error');
         }
-    });
-}
+    }
+});
