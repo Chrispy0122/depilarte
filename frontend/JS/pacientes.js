@@ -78,14 +78,72 @@ window.loadClientProfile = async function (id) {
 
 
 
-// --- NEW PATIENT MODAL HANDLERS ---
-// --- NEW PATIENT MODAL HANDLERS ---
+// ═══════════════════════════════════════════════════════════════════════════
+// REGISTRAR PACIENTE — FLUJO BIFURCADO (Limpieza vs Depilación)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Paso 1: clic en "Registrar Paciente" → mostrar selector, NO abrir el form
 if (btnNewPatient) {
     btnNewPatient.addEventListener('click', () => {
-        modalNewPatient.classList.add('active');
-        // Reset to Tab 1
-        switchTab('tab-personal', modalNewPatient);
+        document.getElementById('modalTipoHistoria').classList.add('active');
     });
+}
+
+// Paso 2a: eligió "Limpieza Facial"
+const btnTipoLimpieza = document.getElementById('btnTipoLimpieza');
+if (btnTipoLimpieza) {
+    btnTipoLimpieza.addEventListener('click', () => {
+        document.getElementById('modalTipoHistoria').classList.remove('active');
+        abrirFormNuevoPaciente('limpieza');
+    });
+}
+
+// Paso 2b: eligió "Depilación Corporal"
+const btnTipoDepilacion = document.getElementById('btnTipoDepilacion');
+if (btnTipoDepilacion) {
+    btnTipoDepilacion.addEventListener('click', () => {
+        document.getElementById('modalTipoHistoria').classList.remove('active');
+        abrirFormNuevoPaciente('depilacion');
+    });
+}
+
+/**
+ * Abre el modalNewPatient configurado para el tipo elegido.
+ * tipo: 'limpieza' | 'depilacion'
+ */
+function abrirFormNuevoPaciente(tipo) {
+    // 1. Registrar tipo
+    const inputTipo = document.getElementById('inputTipoHistoria');
+    if (inputTipo) inputTipo.value = tipo;
+
+    // 2. Configurar título y botón guardar
+    const header = modalNewPatient.querySelector('.modal-header h2');
+    const btnGuardar = document.getElementById('btnGuardarNuevoPaciente');
+
+    if (tipo === 'limpieza') {
+        if (header) header.textContent = '🌿 Historia Clínica — Limpieza Facial';
+        if (btnGuardar) btnGuardar.style.background = 'linear-gradient(135deg,#15803d,#16a34a)';
+
+        // Mostrar tab "Salud & Hábitos" y "Diagnóstico Facial"
+        const btnSalud = modalNewPatient.querySelector('[data-tab="tab-salud"]');
+        const btnFacial = modalNewPatient.querySelector('[data-tab="tab-facial"]');
+        if (btnSalud) btnSalud.style.display = '';
+        if (btnFacial) btnFacial.style.display = '';
+
+    } else {
+        if (header) header.textContent = '💜 Historia Clínica — Depilación Corporal';
+        if (btnGuardar) btnGuardar.style.background = 'linear-gradient(135deg,#7e22ce,#9333ea)';
+
+        // Ocultar tabs de limpieza (Salud y Diagnóstico Facial), solo Datos Personales
+        const btnSalud = modalNewPatient.querySelector('[data-tab="tab-salud"]');
+        const btnFacial = modalNewPatient.querySelector('[data-tab="tab-facial"]');
+        if (btnSalud) btnSalud.style.display = 'none';
+        if (btnFacial) btnFacial.style.display = 'none';
+    }
+
+    // 3. Abrir modal reseteado al Tab 1
+    modalNewPatient.classList.add('active');
+    switchTab('tab-personal', modalNewPatient);
 }
 
 if (btnCancelNew) {
@@ -93,6 +151,7 @@ if (btnCancelNew) {
         modalNewPatient.classList.remove('active');
     });
 }
+
 
 // Tab Switching Logic
 // switchTab is now context-aware: pass a container element to scope
@@ -212,6 +271,8 @@ if (formNewPatient) {
             saldo_wallet: 0.0
         };
 
+        const tipoHistoria = formData.get('tipo_historia') || 'limpieza';
+
         try {
             const response = await fetch(`${API_URL}/pacientes/`, {
                 method: 'POST',
@@ -224,12 +285,33 @@ if (formNewPatient) {
                 throw new Error(errData.detail || 'Error al guardar paciente');
             }
 
-            // Success
-            dpToast('¡Historia Clínica guardada exitosamente!', 'success');
+            const nuevoPaciente = await response.json();
+
+            // Si el tipo elegido es "depilacion", crear registro vacío de historia depilación
+            if (tipoHistoria === 'depilacion' && nuevoPaciente.id) {
+                try {
+                    await fetch(`${API_URL}/pacientes/${nuevoPaciente.id}/historia-depilacion`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})  // registro vacío — la especialista lo completa luego
+                    });
+                } catch (depErr) {
+                    console.warn('Historia depilación no creada automáticamente:', depErr);
+                }
+                dpToast('💜 Paciente registrada con Historia de Depilación', 'success');
+            } else {
+                dpToast('🌿 Paciente registrada con Historia de Limpieza Facial', 'success');
+            }
+
             modalNewPatient.classList.remove('active');
             formNewPatient.reset();
-            switchTab('tab-personal', modalNewPatient); // Reset tabs
-            fetchPatients(); // Reload list
+            // Restaurar tabs por si fueron ocultados
+            const btnSalud = modalNewPatient.querySelector('[data-tab="tab-salud"]');
+            const btnFacial = modalNewPatient.querySelector('[data-tab="tab-facial"]');
+            if (btnSalud) btnSalud.style.display = '';
+            if (btnFacial) btnFacial.style.display = '';
+            switchTab('tab-personal', modalNewPatient);
+            fetchPatients();
 
         } catch (error) {
             console.error("Registration Error:", error);
@@ -237,6 +319,7 @@ if (formNewPatient) {
         }
     });
 }
+
 
 
 async function fetchPatients() {

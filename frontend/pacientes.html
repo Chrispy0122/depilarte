@@ -677,14 +677,17 @@
 
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" id="btnCancelNew">Cancelar</button>
-                    <button type="submit" class="btn-save">Guardar Historia</button>
+                    <button type="submit" class="btn-save" id="btnGuardarNuevoPaciente">Guardar Historia</button>
+                    <!-- Tipo de historia seleccionada (limpieza | depilacion) -->
+                    <input type="hidden" name="tipo_historia" id="inputTipoHistoria" value="limpieza">
                 </div>
-            </form>
         </div>
+        </form>
+    </div>
     </div>
 
     <script src="JS/dialogs.js"></script>
-    <script src="JS/pacientes.js?v=6"></script>
+    <script src="JS/pacientes.js?v=7"></script>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- MODAL: HISTORIA DEPILACIÓN (Crear / Editar) -->
@@ -801,6 +804,43 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: SELECTOR TIPO HISTORIA (Limpieza vs Depilación) ═══ -->
+    <div class="modal-overlay" id="modalTipoHistoria" style="z-index: 10001;">
+        <div class="modal-card" style="max-width: 540px; text-align: center;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #0f172a, #1e3a5f); padding: 18px 24px;">
+                <h2 style="color:#fff; margin:0; font-size:1.15rem;">¿Qué historia clínica deseas registrar?</h2>
+                <button onclick="document.getElementById('modalTipoHistoria').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.15); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer;">✕</button>
+            </div>
+            <div style="padding: 30px 24px; display: flex; gap: 18px; justify-content: center;">
+
+                <!-- Opción 1: Limpieza Facial -->
+                <button id="btnTipoLimpieza"
+                    style="flex: 1; background: linear-gradient(135deg, #15803d, #16a34a); color:#fff; border:none; border-radius:16px; padding: 28px 16px; cursor:pointer; font-size:1rem; font-weight:700; box-shadow: 0 6px 20px rgba(21,128,61,0.35); transition: transform 0.2s, box-shadow 0.2s;"
+                    onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 28px rgba(21,128,61,0.45)'"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 20px rgba(21,128,61,0.35)'">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">🧖‍♀️</div>
+                    <div>Limpieza Facial</div>
+                    <div style="font-size:0.78rem; font-weight:400; margin-top:6px; opacity:0.88;">Historia Clínica
+                        Facial<br>Diagnóstico de piel y hábitos</div>
+                </button>
+
+                <!-- Opción 2: Depilación Corporal -->
+                <button id="btnTipoDepilacion"
+                    style="flex: 1; background: linear-gradient(135deg, #7e22ce, #9333ea); color:#fff; border:none; border-radius:16px; padding: 28px 16px; cursor:pointer; font-size:1rem; font-weight:700; box-shadow: 0 6px 20px rgba(126,34,206,0.35); transition: transform 0.2s, box-shadow 0.2s;"
+                    onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 28px rgba(126,34,206,0.45)'"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 20px rgba(126,34,206,0.35)'">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">🪒</div>
+                    <div>Depilación Corporal</div>
+                    <div style="font-size:0.78rem; font-weight:400; margin-top:6px; opacity:0.88;">Historia Clínica
+                        Corporal<br>Antecedentes y dermatológicos</div>
+                </button>
+
+            </div>
         </div>
     </div>
 
