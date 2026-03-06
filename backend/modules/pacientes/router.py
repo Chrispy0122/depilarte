@@ -268,3 +268,59 @@ def historial_cliente(cliente_id: int, db: Session = Depends(get_db)):
         })
         
     return historial
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# HISTORIA DEPILACIÓN
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/{paciente_id}/historia-depilacion", response_model=schemas.HistoriaDepilacion)
+def get_historia_depilacion(paciente_id: int, db: Session = Depends(get_db)):
+    """Retorna la historia de depilación del paciente. 404 si no existe."""
+    if not db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first():
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    h = db.query(models.HistoriaDepilacion).filter(
+        models.HistoriaDepilacion.paciente_id == paciente_id
+    ).first()
+    if not h:
+        raise HTTPException(status_code=404, detail="Sin historia de depilación")
+    return h
+
+
+@router.post("/{paciente_id}/historia-depilacion", response_model=schemas.HistoriaDepilacion)
+def crear_historia_depilacion(
+    paciente_id: int,
+    data: schemas.HistoriaDepilacionCreate,
+    db: Session = Depends(get_db)
+):
+    """Crea la historia de depilación (una por paciente)."""
+    if not db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first():
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    if db.query(models.HistoriaDepilacion).filter(
+        models.HistoriaDepilacion.paciente_id == paciente_id
+    ).first():
+        raise HTTPException(status_code=409, detail="Ya existe. Use PUT para editar.")
+    nueva = models.HistoriaDepilacion(**data.dict(), paciente_id=paciente_id)
+    db.add(nueva)
+    db.commit()
+    db.refresh(nueva)
+    return nueva
+
+
+@router.put("/{paciente_id}/historia-depilacion", response_model=schemas.HistoriaDepilacion)
+def editar_historia_depilacion(
+    paciente_id: int,
+    data: schemas.HistoriaDepilacionCreate,
+    db: Session = Depends(get_db)
+):
+    """Actualiza la historia de depilación existente."""
+    h = db.query(models.HistoriaDepilacion).filter(
+        models.HistoriaDepilacion.paciente_id == paciente_id
+    ).first()
+    if not h:
+        raise HTTPException(status_code=404, detail="Sin historia. Use POST primero.")
+    for field, val in data.dict(exclude_unset=True).items():
+        setattr(h, field, val)
+    db.commit()
+    db.refresh(h)
+    return h

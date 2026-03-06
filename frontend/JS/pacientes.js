@@ -477,7 +477,7 @@ window.openProfile = async function (id) {
     // Show Modal immediately with loading state
     profileModal.classList.add('active');
     // Always reset to Pestaña 1 (Datos del Perfil) when opening
-    switchTab('tab-perfil', profileModal);
+    switchTab('tab-limpieza', profileModal);
 
     // Set loading state in UI
     document.getElementById('lbl-nombre').textContent = "Cargando...";
@@ -686,6 +686,8 @@ window.openProfile = async function (id) {
             });
         }
 
+        // ── Historia Depilación: load after main profile data ──
+        await depilacionLoad(id);
 
     } catch (e) {
         console.error("Error cargando perfil:", e);
@@ -701,3 +703,215 @@ window.openProfile = async function (id) {
         }
     }
 };
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HISTORIA DEPILACIÓN MODULE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _depPacienteId = null;    // ID del paciente activo en el perfil
+let _depExiste = false;   // true → ya tiene historia (usar PUT), false → usar POST
+
+// ── Badge helpers ─────────────────────────────────────────────────────────────
+
+const DEP_ANTECEDENTES = {
+    epilepsia: 'Epilepsia', ovario_poliquistico: 'Ovario Poliquístico', asma: 'Asma',
+    gastricos: 'Gástricos', hipertension: 'Hipertensión', hepaticos: 'Hepáticos',
+    alergias: 'Alergias', hirsutismo: 'Hirsutismo', respiratorios: 'Respiratorios',
+    diabetes: 'Diabetes', artritis: 'Artritis', cancer: 'Cáncer',
+    analgesicos: 'Analgésicos', antibioticos: 'Antibióticos'
+};
+const DEP_DERMATO = {
+    bronceado: 'Bronceado', acne: 'Acné', fuma: 'Fuma', alcohol: 'Alcohol',
+    blanqueamientos_piel: 'Blanqueamientos', biopolimeros: '⚠️ Biopolímeros',
+    botox: 'Botox', plasma: 'Plasma', dermatitis: 'Dermatitis', tatuajes: 'Tatuajes',
+    vitaminas: 'Vitaminas', hilos_tensores: 'Hilos Tensores', acido_hialuronico: 'Ác. Hialurónico'
+};
+
+function _buildBadges(data, map, container) {
+    const el = document.getElementById(container);
+    if (!el) return;
+    const active = Object.keys(map).filter(k => data[k]);
+    if (active.length === 0) {
+        el.innerHTML = '<span style="color:#aaa;font-size:0.85rem;">Ninguno registrado</span>';
+        return;
+    }
+    el.innerHTML = active.map(k => {
+        const isWarn = k === 'biopolimeros';
+        return `<span style="background:${isWarn ? '#fee2e2' : '#ede9fe'};color:${isWarn ? '#dc2626' : '#7e22ce'};padding:3px 10px;border-radius:20px;font-size:0.8rem;font-weight:600;">${map[k]}</span>`;
+    }).join('');
+}
+
+function _setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val || '-';
+}
+
+// ── Render summary view ───────────────────────────────────────────────────────
+
+function depilacionRender(data) {
+    document.getElementById('dep-cargando').style.display = 'none';
+
+    if (!data) {
+        document.getElementById('dep-vacio').style.display = 'block';
+        document.getElementById('dep-resumen').style.display = 'none';
+        _depExiste = false;
+        return;
+    }
+
+    _depExiste = true;
+    document.getElementById('dep-vacio').style.display = 'none';
+    document.getElementById('dep-resumen').style.display = 'block';
+
+    _buildBadges(data, DEP_ANTECEDENTES, 'dep-antecedentes-badges');
+    _buildBadges(data, DEP_DERMATO, 'dep-dermato-badges');
+
+    _setVal('dep-tipo-piel', data.tipo_piel);
+    _setVal('dep-aspecto-piel', data.aspecto_piel);
+    _setVal('dep-medicamentos', data.medicamentos_consumidos_ultimo_mes);
+    _setVal('dep-anticonceptivo', data.metodo_anticonceptivo);
+    _setVal('dep-metodo', data.metodo_depilacion_utilizado);
+    _setVal('dep-otros', data.otros);
+}
+
+// ── Load (called by openProfile) ──────────────────────────────────────────────
+
+async function depilacionLoad(pacienteId) {
+    _depPacienteId = pacienteId;
+
+    // Reset states
+    document.getElementById('dep-cargando').style.display = 'block';
+    document.getElementById('dep-vacio').style.display = 'none';
+    document.getElementById('dep-resumen').style.display = 'none';
+
+    try {
+        const res = await fetch(`${API_URL}/pacientes/${pacienteId}/historia-depilacion`);
+        if (res.status === 404) {
+            depilacionRender(null);
+        } else if (res.ok) {
+            depilacionRender(await res.json());
+        } else {
+            depilacionRender(null);
+        }
+    } catch (err) {
+        console.warn('Error cargando historia depilación:', err);
+        depilacionRender(null);
+    }
+}
+
+// ── Open modal (shared for Agregar + Editar) ──────────────────────────────────
+
+async function depilacionAbrirModal() {
+    const modal = document.getElementById('modalHistoriaDepilacion');
+    const form = document.getElementById('formHistoriaDepilacion');
+    if (!modal || !form) return;
+    form.reset();
+
+    document.getElementById('dep-modal-titulo').textContent =
+        _depExiste ? '✏️ Editar Historia de Depilación' : '➕ Nueva Historia de Depilación';
+
+    if (_depExiste && _depPacienteId) {
+        try {
+            const res = await fetch(`${API_URL}/pacientes/${_depPacienteId}/historia-depilacion`);
+            if (res.ok) {
+                const d = await res.json();
+                // Fill checkboxes (name matches field name exactly)
+                Object.keys({ ...DEP_ANTECEDENTES, ...DEP_DERMATO }).forEach(key => {
+                    const el = form.querySelector(`[name="${key}"]`);
+                    if (el && el.type === 'checkbox') el.checked = !!d[key];
+                });
+                // Fill selects
+                const setSelect = (name, val) => {
+                    const el = form.querySelector(`[name="${name}"]`);
+                    if (el && val) el.value = val;
+                };
+                setSelect('tipo_piel', d.tipo_piel);
+                setSelect('aspecto_piel', d.aspecto_piel);
+                // Fill text inputs
+                ['medicamentos_consumidos_ultimo_mes', 'metodo_anticonceptivo',
+                    'metodo_depilacion_utilizado', 'otros'].forEach(f => {
+                        const el = form.querySelector(`[name="${f}"]`);
+                        if (el && d[f]) el.value = d[f];
+                    });
+            }
+        } catch (err) { console.warn('Pre-fill error:', err); }
+    }
+
+    modal.classList.add('active');
+}
+
+// Button listeners (using event delegation because they may not exist at parse time)
+document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'btn-dep-agregar') depilacionAbrirModal();
+    if (e.target && e.target.id === 'btn-dep-editar') depilacionAbrirModal();
+});
+
+// ── Form submit (POST or PUT) ─────────────────────────────────────────────────
+
+const formDep = document.getElementById('formHistoriaDepilacion');
+if (formDep) {
+    formDep.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (!_depPacienteId) return;
+
+        const fd = new FormData(formDep);
+        // Checkboxes: unchecked items won't appear in FormData, so we check differently
+        const getCheck = name => !!formDep.querySelector(`[name="${name}"]`)?.checked;
+
+        const payload = {
+            // Antecedentes
+            epilepsia: getCheck('epilepsia'),
+            ovario_poliquistico: getCheck('ovario_poliquistico'),
+            asma: getCheck('asma'),
+            gastricos: getCheck('gastricos'),
+            hipertension: getCheck('hipertension'),
+            hepaticos: getCheck('hepaticos'),
+            alergias: getCheck('alergias'),
+            hirsutismo: getCheck('hirsutismo'),
+            respiratorios: getCheck('respiratorios'),
+            diabetes: getCheck('diabetes'),
+            artritis: getCheck('artritis'),
+            cancer: getCheck('cancer'),
+            analgesicos: getCheck('analgesicos'),
+            antibioticos: getCheck('antibioticos'),
+            // Dermatológicos
+            tipo_piel: fd.get('tipo_piel') || null,
+            aspecto_piel: fd.get('aspecto_piel') || null,
+            bronceado: getCheck('bronceado'),
+            acne: getCheck('acne'),
+            fuma: getCheck('fuma'),
+            alcohol: getCheck('alcohol'),
+            blanqueamientos_piel: getCheck('blanqueamientos_piel'),
+            biopolimeros: getCheck('biopolimeros'),
+            botox: getCheck('botox'),
+            plasma: getCheck('plasma'),
+            dermatitis: getCheck('dermatitis'),
+            tatuajes: getCheck('tatuajes'),
+            vitaminas: getCheck('vitaminas'),
+            hilos_tensores: getCheck('hilos_tensores'),
+            acido_hialuronico: getCheck('acido_hialuronico'),
+            // Observaciones
+            medicamentos_consumidos_ultimo_mes: fd.get('medicamentos_consumidos_ultimo_mes') || null,
+            metodo_anticonceptivo: fd.get('metodo_anticonceptivo') || null,
+            metodo_depilacion_utilizado: fd.get('metodo_depilacion_utilizado') || null,
+            otros: fd.get('otros') || null,
+        };
+
+        const method = _depExiste ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(`${API_URL}/pacientes/${_depPacienteId}/historia-depilacion`, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error((await res.json()).detail || 'Error al guardar');
+            const saved = await res.json();
+            dpToast('✅ Historia de Depilación guardada', 'success');
+            document.getElementById('modalHistoriaDepilacion').classList.remove('active');
+            depilacionRender(saved);
+        } catch (err) {
+            dpToast('Error: ' + err.message, 'error');
+        }
+    });
+}

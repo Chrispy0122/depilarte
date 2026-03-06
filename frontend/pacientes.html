@@ -215,12 +215,13 @@
                 <!-- PROFILE TABS BAR -->
                 <div class="profile-tabs-bar"
                     style="padding: 0 20px; margin-bottom: 0; border-bottom: 1px solid #e2e8f0;">
-                    <button class="tab-item active" data-tab="tab-perfil">🧾 Datos del Perfil</button>
+                    <button class="tab-item active" data-tab="tab-limpieza">🌿 Historia Limpieza</button>
+                    <button class="tab-item" data-tab="tab-depilacion">💜 Historia Depilación</button>
                     <button class="tab-item" data-tab="tab-historial">📜 Historial de visitas y pago</button>
                 </div>
 
-                <!-- ═══ TAB 1: DATOS DEL PERFIL ═══ -->
-                <div id="tab-perfil" class="tab-pane" style="padding: 20px;">
+                <!-- ═══ TAB 1: HISTORIA LIMPIEZA (antes "Datos del Perfil") ═══ -->
+                <div id="tab-limpieza" class="tab-pane" style="padding: 20px;">
 
                     <!-- 1. DATA HEADER (Clean Text Profile) -->
                     <div class="patient-classic-header" style="display: block; text-align: left;">
@@ -388,10 +389,87 @@
                         </div>
                     </div>
 
+                </div> <!-- end tab-limpieza -->
 
-                </div> <!-- end tab-perfil -->
+                <!-- ═══ TAB 2: HISTORIA DEPILACIÓN ═══ -->
+                <div id="tab-depilacion" class="tab-pane" style="display: none; padding: 20px;">
+                    <!-- Contenido renderizado por JS -->
+                    <div id="dep-cargando" style="text-align:center; padding: 40px; color:#94a3b8;">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;"></i>
+                        <p style="margin-top:10px;">Cargando historia de depilación...</p>
+                    </div>
 
-                <!-- ═══ TAB 2: HISTORIAL DE VISITAS Y PAGO ═══ -->
+                    <!-- Estado: SIN historia -->
+                    <div id="dep-vacio" style="display:none; text-align:center; padding: 50px 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">💜</div>
+                        <h3 style="color: #7e22ce; margin-bottom: 8px;">Sin Historia de Depilación</h3>
+                        <p style="color: #94a3b8; margin-bottom: 25px; font-size: 0.95rem;">
+                            Este paciente aún no tiene su historia clínica de depilación registrada.
+                        </p>
+                        <button id="btn-dep-agregar"
+                            style="background: linear-gradient(135deg,#7e22ce,#9333ea); color:#fff; border:none; border-radius:12px; padding:14px 32px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow: 0 4px 15px rgba(126,34,206,0.3); transition: transform 0.2s;"
+                            onmouseover="this.style.transform='translateY(-2px)'"
+                            onmouseout="this.style.transform='translateY(0)'">
+                            ➕ Llenar Historia de Depilación
+                        </button>
+                    </div>
+
+                    <!-- Estado: CON historia (resumen) -->
+                    <div id="dep-resumen" style="display:none;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                            <h3 style="margin:0; color:#7e22ce; font-size:1.1rem;">💜 Historia Clínica de Depilación
+                            </h3>
+                            <button id="btn-dep-editar"
+                                style="background:#7e22ce; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:0.9rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                ✏️ Editar
+                            </button>
+                        </div>
+
+                        <!-- Bloque 2: Antecedentes -->
+                        <div
+                            style="margin-bottom:20px; background:#fdf4ff; border:1px solid #e9d5ff; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#7e22ce; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                ⚕️ Antecedentes Personales</h4>
+                            <div id="dep-antecedentes-badges" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                        </div>
+
+                        <!-- Bloque 3: Dermatológicos -->
+                        <div
+                            style="margin-bottom:20px; background:#f5f0ff; border:1px solid #ddd6fe; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#7e22ce; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                🔎 Dermatológicos</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                                <div class="p-data-item"><span class="label">Tipo Piel:</span> <span class="value"
+                                        id="dep-tipo-piel">-</span></div>
+                                <div class="p-data-item"><span class="label">Aspecto:</span> <span class="value"
+                                        id="dep-aspecto-piel">-</span></div>
+                            </div>
+                            <div id="dep-dermato-badges" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                        </div>
+
+                        <!-- Bloque 4: Observaciones -->
+                        <div style="background:#faf5ff; border:1px solid #e9d5ff; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#7e22ce; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                📝 Observaciones</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                <div class="p-data-item"><span class="label">Medicamentos:</span> <span class="value"
+                                        id="dep-medicamentos">-</span></div>
+                                <div class="p-data-item"><span class="label">Anticonceptivo:</span> <span class="value"
+                                        id="dep-anticonceptivo">-</span></div>
+                                <div class="p-data-item"><span class="label">Método Depilación:</span> <span
+                                        class="value" id="dep-metodo">-</span></div>
+                                <div class="p-data-item"><span class="label">Otros:</span> <span class="value"
+                                        id="dep-otros">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- end tab-depilacion -->
+
+                <!-- ═══ TAB 3: HISTORIAL DE VISITAS Y PAGO ═══ -->
                 <div id="tab-historial" class="tab-pane" style="display: none; padding: 20px;">
 
                     <div class="history-section">
@@ -606,7 +684,127 @@
     </div>
 
     <script src="JS/dialogs.js"></script>
-    <script src="JS/pacientes.js?v=4"></script>
+    <script src="JS/pacientes.js?v=6"></script>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL: HISTORIA DEPILACIÓN (Crear / Editar) -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalHistoriaDepilacion" style="z-index: 9999;">
+        <div class="modal-card" style="max-width: 780px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #7e22ce, #9333ea); padding: 18px 24px;">
+                <h2 style="color:#fff; margin:0; font-size:1.2rem;" id="dep-modal-titulo">💜 Historia de Depilación</h2>
+                <button onclick="document.getElementById('modalHistoriaDepilacion').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer; line-height:1;">✕</button>
+            </div>
+
+            <form id="formHistoriaDepilacion" style="padding: 22px; max-height: 76vh; overflow-y: auto;">
+
+                <!-- ── Bloque 2: Antecedentes Personales ── -->
+                <h4
+                    style="color:#7e22ce; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #e9d5ff; padding-bottom:6px;">
+                    ⚕️ 2. Antecedentes Personales
+                </h4>
+                <div
+                    style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; background:#fdf4ff; padding:14px; border-radius:10px; margin-bottom:18px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="epilepsia"> Epilepsia</label>
+                    <label><input type="checkbox" name="ovario_poliquistico"> Ovario Poliquístico</label>
+                    <label><input type="checkbox" name="asma"> Asma</label>
+                    <label><input type="checkbox" name="gastricos"> Gástricos</label>
+                    <label><input type="checkbox" name="hipertension"> Hipertensión</label>
+                    <label><input type="checkbox" name="hepaticos"> Hepáticos</label>
+                    <label><input type="checkbox" name="alergias"> Alergias</label>
+                    <label><input type="checkbox" name="hirsutismo"> Hirsutismo</label>
+                    <label><input type="checkbox" name="respiratorios"> Respiratorios</label>
+                    <label><input type="checkbox" name="diabetes"> Diabetes</label>
+                    <label><input type="checkbox" name="artritis"> Artritis</label>
+                    <label><input type="checkbox" name="cancer"> Cáncer</label>
+                    <label><input type="checkbox" name="analgesicos"> Analgésicos</label>
+                    <label><input type="checkbox" name="antibioticos"> Antibióticos</label>
+                </div>
+
+                <!-- ── Bloque 3: Dermatológicos ── -->
+                <h4
+                    style="color:#7e22ce; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #e9d5ff; padding-bottom:6px;">
+                    🔎 3. Dermatológicos (Especialista)
+                </h4>
+                <!-- Tipo Piel + Aspecto (selects) -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Tipo Piel</label>
+                        <select name="tipo_piel" class="custom-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Seca">Seca</option>
+                            <option value="Grasa">Grasa</option>
+                            <option value="Mixta">Mixta</option>
+                            <option value="Sensible">Sensible</option>
+                            <option value="Normal">Normal</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Aspecto Piel</label>
+                        <select name="aspecto_piel" class="custom-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Hidratada">H — Hidratada</option>
+                            <option value="Deshidratada">D — Deshidratada</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Checkboxes dermatológicos en grid 3 col -->
+                <div
+                    style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; background:#f5f0ff; padding:14px; border-radius:10px; margin-bottom:18px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="bronceado"> Bronceado</label>
+                    <label><input type="checkbox" name="acne"> Acné</label>
+                    <label><input type="checkbox" name="fuma"> Fuma</label>
+                    <label><input type="checkbox" name="alcohol"> Alcohol</label>
+                    <label><input type="checkbox" name="blanqueamientos_piel"> Blanqueamientos Piel</label>
+                    <label><input type="checkbox" name="biopolimeros" style="accent-color:#ef4444;"> ⚠️
+                        Biopolímeros</label>
+                    <label><input type="checkbox" name="botox"> Botox</label>
+                    <label><input type="checkbox" name="plasma"> Plasma</label>
+                    <label><input type="checkbox" name="dermatitis"> Dermatitis</label>
+                    <label><input type="checkbox" name="tatuajes"> Tatuajes</label>
+                    <label><input type="checkbox" name="vitaminas"> Vitaminas</label>
+                    <label><input type="checkbox" name="hilos_tensores"> Hilos Tensores</label>
+                    <label><input type="checkbox" name="acido_hialuronico"> Ác. Hialurónico</label>
+                </div>
+
+                <!-- ── Bloque 4: Observaciones ── -->
+                <h4
+                    style="color:#7e22ce; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #e9d5ff; padding-bottom:6px;">
+                    📝 4. Observaciones
+                </h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Medicamentos (Último Mes)</label>
+                        <input type="text" name="medicamentos_consumidos_ultimo_mes" placeholder="Ej: Ibuprofeno, NO">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Método Anticonceptivo</label>
+                        <input type="text" name="metodo_anticonceptivo" placeholder="Ej: Pastillas, NO">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Método Depilación Utilizado</label>
+                        <input type="text" name="metodo_depilacion_utilizado" placeholder="Ej: Cera, Láser">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Otros</label>
+                        <input type="text" name="otros" placeholder="Observaciones adicionales">
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="margin-top:20px;">
+                    <button type="button" class="btn-cancel"
+                        onclick="document.getElementById('modalHistoriaDepilacion').classList.remove('active')">Cancelar</button>
+                    <button type="submit" class="btn-save" style="background:linear-gradient(135deg,#7e22ce,#9333ea);">
+                        💾 Guardar Historia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </body>
+
 
 </html>
