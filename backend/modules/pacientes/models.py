@@ -64,7 +64,7 @@ class HistoriaDepilacion(Base):
     acido_hialuronico    = Column(Boolean, default=False)
 
     # ── Bloque 4: Observaciones ────────────────────────────────────────────
-    medicamentos_consumidos_ultimo_mes = Column(Text, nullable=True)
+    medicamentos_ultimo_mes            = Column(Text, nullable=True)
     metodo_anticonceptivo              = Column(String(100), nullable=True)
     metodo_depilacion_utilizado        = Column(String(100), nullable=True)
     otros                              = Column(Text, nullable=True)

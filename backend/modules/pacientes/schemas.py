@@ -89,7 +89,7 @@ class HistoriaDepilacionBase(BaseModel):
     acido_hialuronico:    Optional[bool] = False
 
     # Bloque 4: Observaciones
-    medicamentos_consumidos_ultimo_mes: Optional[str] = None
+    medicamentos_ultimo_mes:            Optional[str] = None
     metodo_anticonceptivo:              Optional[str] = None
     metodo_depilacion_utilizado:        Optional[str] = None
     otros:                              Optional[str] = None

@@ -316,7 +316,7 @@ if (formNewPatient) {
                     hilos_tensores: gc('new-dep-hilos_tensores'),
                     acido_hialuronico: gc('new-dep-acido_hialuronico'),
                     // Observaciones
-                    medicamentos_consumidos_ultimo_mes: gt('new-dep-medicamentos'),
+                    medicamentos_ultimo_mes: gt('new-dep-medicamentos'),
                     metodo_anticonceptivo: gt('new-dep-metodo_anticonceptivo'),
                     metodo_depilacion_utilizado: gt('new-dep-metodo_depilacion'),
                     otros: gt('new-dep-otros'),
@@ -887,7 +887,7 @@ function depilacionRender(data) {
 
     _setVal('dep-tipo-piel', data.tipo_piel);
     _setVal('dep-aspecto-piel', data.aspecto_piel);
-    _setVal('dep-medicamentos', data.medicamentos_consumidos_ultimo_mes);
+    _setVal('dep-medicamentos', data.medicamentos_ultimo_mes);
     _setVal('dep-anticonceptivo', data.metodo_anticonceptivo);
     _setVal('dep-metodo', data.metodo_depilacion_utilizado);
     _setVal('dep-otros', data.otros);
@@ -947,7 +947,7 @@ async function depilacionAbrirModal() {
                 setSelect('tipo_piel', d.tipo_piel);
                 setSelect('aspecto_piel', d.aspecto_piel);
                 // Fill text inputs
-                ['medicamentos_consumidos_ultimo_mes', 'metodo_anticonceptivo',
+                ['medicamentos_ultimo_mes', 'metodo_anticonceptivo',
                     'metodo_depilacion_utilizado', 'otros'].forEach(f => {
                         const el = form.querySelector(`[name="${f}"]`);
                         if (el && d[f]) el.value = d[f];
@@ -1011,7 +1011,7 @@ document.addEventListener('submit', async function (e) {
             hilos_tensores: getCheck('hilos_tensores'),
             acido_hialuronico: getCheck('acido_hialuronico'),
             // Observaciones
-            medicamentos_consumidos_ultimo_mes: fd.get('medicamentos_consumidos_ultimo_mes') || null,
+            medicamentos_ultimo_mes: fd.get('medicamentos_ultimo_mes') || null,
             metodo_anticonceptivo: fd.get('metodo_anticonceptivo') || null,
             metodo_depilacion_utilizado: fd.get('metodo_depilacion_utilizado') || null,
             otros: fd.get('otros') || null,
