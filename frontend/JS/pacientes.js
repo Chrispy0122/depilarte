@@ -28,9 +28,7 @@ const btnNewPatient = document.getElementById('btnNewPatient');
 const btnCancelNew = document.getElementById('btnCancelNew');
 const formNewPatient = document.getElementById('formNewPatient');
 
-// History Modal
-const modalHistory = document.getElementById('modalHistory');
-const btnCloseHistory = document.getElementById('btnCloseHistory');
+// (History Modal removed – historial now lives inside the profile tab)
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,8 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
             profileModal.classList.remove('active');
         });
     }
-
-    modalHistory.classList.remove('active');
 
     // --- MOBILE SIDEBAR LOGIC ---
     const menuToggle = document.getElementById('menuToggle');
@@ -150,7 +146,6 @@ if (profileModalEl) {
 // Close on click outside
 window.onclick = function (event) {
     if (event.target == modalNewPatient) modalNewPatient.classList.remove('active');
-    if (event.target == modalHistory) modalHistory.classList.remove('active');
 }
 
 // Handle Form Submit
@@ -348,15 +343,10 @@ function renderDirectory(data) {
                         </span>
                     </div>
                 
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button class="btn-view-profile btn-ver-perfil" data-id="${p.id}" style="flex:1;">
+                    <div style="margin-top:10px;">
+                    <button class="btn-view-profile btn-ver-perfil" data-id="${p.id}" style="width:100%;">
                         Ver Perfil
                     </button>
-                    <button class="btn-view-history" onclick="openHistory(${p.id})" 
-                                style="background: #e0f2fe; color: #0284c7; border: none; border-radius: 6px; padding: 0 12px; cursor: pointer;"
-                                title="Ver Historial">
-                            <i class="fa-solid fa-clock-rotate-left"></i>
-                        </button>
                     </div>
                 </div>
             `;
@@ -477,60 +467,7 @@ function updateWalletChart(players, filterType) {
     });
 }
 
-// --- HISTORY LOGIC ---
-window.openHistory = async function (id) {
-    const p = patientsDB.find(x => x.id === id);
-    if (!p) return;
-
-    // Set Header
-    document.getElementById('histClientName').textContent = p.name;
-    const walletEl = document.getElementById('histClientWallet');
-    walletEl.textContent = `Saldo Wallet: $${p.walletBalance.toFixed(2)}`;
-
-    // Clear Table
-    const tbody = document.getElementById('histTableBody');
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
-
-    modalHistory.classList.add('active');
-
-    // Fetch History
-    try {
-        const res = await fetch(`${API_URL}/pacientes/${id}/historial`);
-        if (!res.ok) throw new Error("Error cargando historial");
-        const history = await res.json();
-
-        tbody.innerHTML = '';
-
-        if (history.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Este cliente aún no tiene visitas registradas.</td></tr>';
-            return;
-        }
-
-        history.forEach(item => {
-            const tr = document.createElement('tr');
-
-            // Format payments list
-            const pagosHtml = item.pagos.map(pay => `<div style="font-size:0.85rem;">${pay}</div>`).join('');
-
-            const attendedTag = item.asistio
-                ? '<span class="status-done" style="font-size:0.75rem;">Asistió</span>'
-                : '<span class="status-pending" style="font-size:0.75rem;">Pendiente</span>';
-
-            tr.innerHTML = `
-                <td>${item.fecha}</td>
-                <td>${item.motivo}</td>
-                <td style="font-weight:bold;">$${item.monto_total.toFixed(2)}</td>
-                <td>${pagosHtml}</td>
-                <td>${attendedTag}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-    } catch (e) {
-        console.error(e);
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos.</td></tr>';
-    }
-};
+// openHistory removed – historial is now inside the profile modal tab (tab-historial)
 
 // --- PROFILE MODAL LOGIC (RESTORED & ENHANCED) ---
 // --- PROFILE MODAL LOGIC (RESTORED & ENHANCED) ---

@@ -417,43 +417,6 @@
         </div>
     </div>
 
-    <!-- HISTORY MODAL (NEW) -->
-    <div class="modal-overlay" id="modalHistory">
-        <div class="modal-card" style="max-width: 800px; width: 90%;">
-            <div class="modal-header">
-                <h2>Historial de Visitas y Pagos</h2>
-                <button class="btn-close-modal" id="btnCloseHistory"><i class="fa-solid fa-times"></i></button>
-            </div>
-
-            <div style="padding: 20px; background: #f9fafb; border-bottom: 1px solid #eee;">
-                <h3 id="histClientName" style="margin: 0; color: var(--text-dark);">Cliente</h3>
-                <span id="histClientWallet" style="font-weight: 600; color: var(--primary);">Saldo Wallet: $0.00</span>
-            </div>
-
-            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                <table class="refined-table">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Motivo / Tratamiento</th>
-                            <th>Monto Cobrado</th>
-                            <th>Método(s) de Pago</th>
-                            <th>Asistencia</th>
-                        </tr>
-                    </thead>
-                    <tbody id="histTableBody">
-                        <!-- Loaded by JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="modal-actions" style="justify-content: flex-end;">
-                <button type="button" class="btn-cancel"
-                    onclick="document.getElementById('modalHistory').classList.remove('active')">Cerrar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- NEW PATIENT MODAL (TABBED CLINICAL HISTORY) -->
     <div class="modal-overlay" id="modalNewPatient">
         <div class="modal-card" style="max-width: 900px;">
