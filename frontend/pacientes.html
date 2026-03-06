@@ -210,196 +210,210 @@
                 <button class="btn-close-modal" id="closeProfileBtn"><i class="fa-solid fa-times"></i></button>
             </div>
 
-            <div class="modal-body-scroll" style="padding: 20px;">
-                <!-- 1. DATA HEADER (Classic) -->
-                <!-- 1. DATA HEADER (Clean Text Profile) -->
-                <div class="patient-classic-header" style="display: block; text-align: left;">
+            <div class="modal-body-scroll" style="padding: 0;">
 
-                    <!-- HIGH PRIORITY INFO -->
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                        <div>
-                            <h1 id="lbl-nombre" style="margin: 0; font-size: 2rem; color: #333; font-weight: 700;">
-                                Nombre Paciente</h1>
-                            <div style="font-size: 1.1rem; color: #555; margin-top: 5px;">
-                                <i class="fa-regular fa-id-card"></i> <span id="lbl-cedula"
-                                    style="font-weight: 600;">V-00.000.000</span>
+                <!-- PROFILE TABS BAR -->
+                <div class="profile-tabs-bar"
+                    style="padding: 0 20px; margin-bottom: 0; border-bottom: 1px solid #e2e8f0;">
+                    <button class="tab-item active" data-tab="tab-perfil">🧾 Datos del Perfil</button>
+                    <button class="tab-item" data-tab="tab-historial">📜 Historial de visitas y pago</button>
+                </div>
+
+                <!-- ═══ TAB 1: DATOS DEL PERFIL ═══ -->
+                <div id="tab-perfil" class="tab-pane" style="padding: 20px;">
+
+                    <!-- 1. DATA HEADER (Clean Text Profile) -->
+                    <div class="patient-classic-header" style="display: block; text-align: left;">
+
+                        <!-- HIGH PRIORITY INFO -->
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                            <div>
+                                <h1 id="lbl-nombre" style="margin: 0; font-size: 2rem; color: #333; font-weight: 700;">
+                                    Nombre Paciente</h1>
+                                <div style="font-size: 1.1rem; color: #555; margin-top: 5px;">
+                                    <i class="fa-regular fa-id-card"></i> <span id="lbl-cedula"
+                                        style="font-weight: 600;">V-00.000.000</span>
+                                </div>
                             </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div
-                                style="background: #e0f2fe; color: #0369a1; padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; display: inline-block;">
-                                N° HIST: <span id="lbl-historia" style="font-size: 1.4rem;">000</span>
-                            </div>
-                            <div class="pch-wallet"
-                                style="margin-top: 10px; border: none; background: none; padding: 0; text-align: right;">
-                                <div style="font-size: 0.85rem; color: #888;">Saldo Wallet</div>
-                                <div id="lbl-wallet" style="font-size: 1.3rem; font-weight: 700; color: #333;">$0.00
+                            <div style="text-align: right;">
+                                <div
+                                    style="background: #e0f2fe; color: #0369a1; padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; display: inline-block;">
+                                    N° HIST: <span id="lbl-historia" style="font-size: 1.4rem;">000</span>
+                                </div>
+                                <div class="pch-wallet"
+                                    style="margin-top: 10px; border: none; background: none; padding: 0; text-align: right;">
+                                    <div style="font-size: 0.85rem; color: #888;">Saldo Wallet</div>
+                                    <div id="lbl-wallet" style="font-size: 1.3rem; font-weight: 700; color: #333;">$0.00
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- CONTACT & PERSONAL INFO GRID -->
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <!-- Col 1 -->
+                            <div>
+                                <label
+                                    style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Teléfono</label>
+                                <div style="font-size: 1.1rem; color: #1e293b; margin-bottom: 10px;">
+                                    <i class="fa-solid fa-phone" style="color: #64748b; margin-right: 5px;"></i> <span
+                                        id="lbl-telefono">...</span>
+                                </div>
+
+                                <label
+                                    style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Correo
+                                    Electrónico</label>
+                                <div style="font-size: 1rem; color: #1e293b;">
+                                    <i class="fa-regular fa-envelope" style="color: #64748b; margin-right: 5px;"></i>
+                                    <span id="lbl-email">...</span>
+                                </div>
+                            </div>
+
+                            <!-- Col 2 -->
+                            <div>
+                                <label
+                                    style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Dirección</label>
+                                <div style="font-size: 1rem; color: #1e293b; margin-bottom: 10px;">
+                                    <i class="fa-solid fa-map-pin" style="color: #64748b; margin-right: 5px;"></i> <span
+                                        id="lbl-direccion">...</span>
+                                </div>
+
+                                <label
+                                    style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Detalles
+                                    Personales</label>
+                                <div style="font-size: 0.95rem; color: #1e293b;">
+                                    <i class="fa-solid fa-cake-candles" style="color: #64748b; margin-right: 5px;"></i>
+                                    <span id="lbl-nacimiento">...</span>
+                                </div>
+                                <div style="font-size: 0.95rem; color: #1e293b; margin-top:4px;">
+                                    <span id="lbl-sexo-civil">...</span>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <!-- CONTACT & PERSONAL INFO GRID -->
+                    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
+
+                    <!-- 2. MEDICAL & LIFESTYLE DATA -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px;">
+
+                        <!-- Left: Lifestyle & Habits -->
+                        <div>
+                            <h3
+                                style="font-size: 1rem; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid #f0f9ff; padding-bottom: 8px;">
+                                🏃 Estilo de Vida
+                            </h3>
+                            <div class="profile-data-list">
+                                <div class="p-data-item"><span class="label">Profesión:</span> <span class="value"
+                                        id="lbl-profesion">...</span></div>
+                                <div class="p-data-item"><span class="label">Hijos:</span> <span class="value"
+                                        id="lbl-hijos">...</span></div>
+                                <div class="p-data-item"><span class="label">Fuma:</span> <span class="value"
+                                        id="lbl-fuma">...</span></div>
+                                <div class="p-data-item"><span class="label">Alcohol:</span> <span class="value"
+                                        id="lbl-alcohol">...</span></div>
+                                <div class="p-data-item"><span class="label">Comida Chatarra:</span> <span class="value"
+                                        id="lbl-chatarra">...</span></div>
+                                <div class="p-data-item"><span class="label">Agua Diaria:</span> <span class="value"
+                                        id="lbl-agua">...</span></div>
+                                <div class="p-data-item"><span class="label">Sueño:</span> <span class="value"
+                                        id="lbl-sueno">...</span></div>
+                                <div class="p-data-item"><span class="label">Actividad Física:</span> <span
+                                        class="value" id="lbl-actividad">...</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Medical Antecedents -->
+                        <div>
+                            <h3
+                                style="font-size: 1rem; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid #f0f9ff; padding-bottom: 8px;">
+                                ⚕️ Antecedentes Médicos
+                            </h3>
+                            <div class="profile-data-list">
+                                <div class="p-data-item"><span class="label">Diabetes (Fam):</span> <span class="value"
+                                        id="lbl-diabetes">...</span></div>
+                                <div class="p-data-item"><span class="label">Hipertensión (Fam):</span> <span
+                                        class="value" id="lbl-hipertension">...</span></div>
+                                <div class="p-data-item"><span class="label">Alergias:</span> <span class="value"
+                                        id="lbl-alergias">...</span></div>
+                                <div class="p-data-item"><span class="label">Ovarios Poliq.:</span> <span class="value"
+                                        id="lbl-ovarios">...</span></div>
+                                <div class="p-data-item"><span class="label">Hormonales:</span> <span class="value"
+                                        id="lbl-hormonas">...</span></div>
+                                <div class="p-data-item"><span class="label">Anticonceptivos:</span> <span class="value"
+                                        id="lbl-anticonceptivos">...</span></div>
+                            </div>
+
+                            <h3
+                                style="font-size: 1rem; color: #ef4444; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px solid #fee2e2; padding-bottom: 8px;">
+                                ⚠️ Estéticos Previos
+                            </h3>
+                            <div class="profile-data-list">
+                                <div class="p-data-item"><span class="label">Biopolímeros:</span> <span class="value"
+                                        id="lbl-biopolimeros" style="font-weight:bold;">...</span></div>
+                                <div class="p-data-item"><span class="label">Implantes:</span> <span class="value"
+                                        id="lbl-implantes">...</span></div>
+                                <div class="p-data-item"><span class="label">Botox:</span> <span class="value"
+                                        id="lbl-botox">...</span></div>
+                                <div class="p-data-item"><span class="label">Hialurónico:</span> <span class="value"
+                                        id="lbl-hialuronico">...</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. DIAGNOSIS -->
                     <div
-                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <!-- Col 1 -->
-                        <div>
-                            <label
-                                style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Teléfono</label>
-                            <div style="font-size: 1.1rem; color: #1e293b; margin-bottom: 10px;">
-                                <i class="fa-solid fa-phone" style="color: #64748b; margin-right: 5px;"></i> <span
-                                    id="lbl-telefono">...</span>
-                            </div>
-
-                            <label
-                                style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Correo
-                                Electrónico</label>
-                            <div style="font-size: 1rem; color: #1e293b;">
-                                <i class="fa-regular fa-envelope" style="color: #64748b; margin-right: 5px;"></i> <span
-                                    id="lbl-email">...</span>
+                        style="background: #fdf2f8; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #fbcfe8;">
+                        <h3 style="font-size: 1.1rem; color: #be185d; margin-bottom: 15px;">🔍 Diagnóstico de Piel</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="p-data-item"><span class="label">Biotipo Cutáneo:</span> <span class="value"
+                                    id="lbl-biotipo" style="font-weight:bold;">...</span></div>
+                            <div class="p-data-item"><span class="label">Fototipo:</span> <span class="value"
+                                    id="lbl-fototipo" style="font-weight:bold;">...</span></div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <span class="label" style="display:block; margin-bottom:5px;">Patologías Visibles:</span>
+                            <div id="lbl-patologias" style="display:flex; gap:10px; flex-wrap:wrap;">
+                                <!-- Badges rendered by JS -->
                             </div>
                         </div>
-
-                        <!-- Col 2 -->
-                        <div>
-                            <label
-                                style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Dirección</label>
-                            <div style="font-size: 1rem; color: #1e293b; margin-bottom: 10px;">
-                                <i class="fa-solid fa-map-pin" style="color: #64748b; margin-right: 5px;"></i> <span
-                                    id="lbl-direccion">...</span>
-                            </div>
-
-                            <label
-                                style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Detalles
-                                Personales</label>
-                            <div style="font-size: 0.95rem; color: #1e293b;">
-                                <i class="fa-solid fa-cake-candles" style="color: #64748b; margin-right: 5px;"></i>
-                                <span id="lbl-nacimiento">...</span>
-                            </div>
-                            <div style="font-size: 0.95rem; color: #1e293b; margin-top:4px;">
-                                <span id="lbl-sexo-civil">...</span>
-                            </div>
+                        <div style="margin-top: 15px;">
+                            <span class="label" style="display:block; margin-bottom:5px;">Observaciones:</span>
+                            <p id="lbl-observaciones"
+                                style="background:#fff; padding:10px; border-radius:8px; font-style:italic; border:1px solid #ddd;">
+                                ...</p>
                         </div>
                     </div>
 
-                </div>
 
-                <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
+                </div> <!-- end tab-perfil -->
 
-                <!-- 2. MEDICAL & LIFESTYLE DATA (NEW SECTIONS) -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px;">
+                <!-- ═══ TAB 2: HISTORIAL DE VISITAS Y PAGO ═══ -->
+                <div id="tab-historial" class="tab-pane" style="display: none; padding: 20px;">
 
-                    <!-- Left: Lifestyle & Habits -->
-                    <div>
-                        <h3
-                            style="font-size: 1rem; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid #f0f9ff; padding-bottom: 8px;">
-                            🏃 Estilo de Vida
-                        </h3>
-                        <div class="profile-data-list">
-                            <div class="p-data-item"><span class="label">Profesión:</span> <span class="value"
-                                    id="lbl-profesion">...</span></div>
-                            <div class="p-data-item"><span class="label">Hijos:</span> <span class="value"
-                                    id="lbl-hijos">...</span></div>
-                            <div class="p-data-item"><span class="label">Fuma:</span> <span class="value"
-                                    id="lbl-fuma">...</span></div>
-                            <div class="p-data-item"><span class="label">Alcohol:</span> <span class="value"
-                                    id="lbl-alcohol">...</span></div>
-                            <div class="p-data-item"><span class="label">Comida Chatarra:</span> <span class="value"
-                                    id="lbl-chatarra">...</span></div>
-                            <div class="p-data-item"><span class="label">Agua Diaria:</span> <span class="value"
-                                    id="lbl-agua">...</span></div>
-                            <div class="p-data-item"><span class="label">Sueño:</span> <span class="value"
-                                    id="lbl-sueno">...</span></div>
-                            <div class="p-data-item"><span class="label">Actividad Física:</span> <span class="value"
-                                    id="lbl-actividad">...</span></div>
+                    <div class="history-section">
+                        <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                            <table class="refined-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Servicio / Motivo</th>
+                                        <th>Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbl-historial-body">
+                                    <!-- JS renders rows here -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <!-- Right: Medical Antecedents -->
-                    <div>
-                        <h3
-                            style="font-size: 1rem; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid #f0f9ff; padding-bottom: 8px;">
-                            ⚕️ Antecedentes Médicos
-                        </h3>
-                        <div class="profile-data-list">
-                            <div class="p-data-item"><span class="label">Diabetes (Fam):</span> <span class="value"
-                                    id="lbl-diabetes">...</span></div>
-                            <div class="p-data-item"><span class="label">Hipertensión (Fam):</span> <span class="value"
-                                    id="lbl-hipertension">...</span></div>
-                            <div class="p-data-item"><span class="label">Alergias:</span> <span class="value"
-                                    id="lbl-alergias">...</span></div>
-                            <div class="p-data-item"><span class="label">Ovarios Poliq.:</span> <span class="value"
-                                    id="lbl-ovarios">...</span></div>
-                            <div class="p-data-item"><span class="label">Hormonales:</span> <span class="value"
-                                    id="lbl-hormonas">...</span></div>
-                            <div class="p-data-item"><span class="label">Anticonceptivos:</span> <span class="value"
-                                    id="lbl-anticonceptivos">...</span></div>
-                        </div>
+                </div> <!-- end tab-historial -->
 
-                        <h3
-                            style="font-size: 1rem; color: #ef4444; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px solid #fee2e2; padding-bottom: 8px;">
-                            ⚠️ Estéticos Previos
-                        </h3>
-                        <div class="profile-data-list">
-                            <div class="p-data-item"><span class="label">Biopolímeros:</span> <span class="value"
-                                    id="lbl-biopolimeros" style="font-weight:bold;">...</span></div>
-                            <div class="p-data-item"><span class="label">Implantes:</span> <span class="value"
-                                    id="lbl-implantes">...</span></div>
-                            <div class="p-data-item"><span class="label">Botox:</span> <span class="value"
-                                    id="lbl-botox">...</span></div>
-                            <div class="p-data-item"><span class="label">Hialurónico:</span> <span class="value"
-                                    id="lbl-hialuronico">...</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. DIAGNOSIS -->
-                <div
-                    style="background: #fdf2f8; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #fbcfe8;">
-                    <h3 style="font-size: 1.1rem; color: #be185d; margin-bottom: 15px;">🔍 Diagnóstico de Piel</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="p-data-item"><span class="label">Biotipo Cutáneo:</span> <span class="value"
-                                id="lbl-biotipo" style="font-weight:bold;">...</span></div>
-                        <div class="p-data-item"><span class="label">Fototipo:</span> <span class="value"
-                                id="lbl-fototipo" style="font-weight:bold;">...</span></div>
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <span class="label" style="display:block; margin-bottom:5px;">Patologías Visibles:</span>
-                        <div id="lbl-patologias" style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <!-- Badges rendered by JS -->
-                        </div>
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <span class="label" style="display:block; margin-bottom:5px;">Observaciones:</span>
-                        <p id="lbl-observaciones"
-                            style="background:#fff; padding:10px; border-radius:8px; font-style:italic; border:1px solid #ddd;">
-                            ...</p>
-                    </div>
-                </div>
-
-
-                <!-- 4. HISTORY SECTION (Existing) -->
-                <div class="history-section">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary);">📜 Historial de Atención
-                    </h3>
-
-                    <div class="table-responsive">
-                        <table class="refined-table">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Servicio / Motivo</th>
-                                    <th>Monto</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbl-historial-body">
-                                <!-- JS renders rows here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            </div> <!-- end modal-body-scroll -->
         </div>
     </div>
 
@@ -628,6 +642,7 @@
         </div>
     </div>
 
+    <script src="JS/dialogs.js"></script>
     <script src="JS/pacientes.js?v=4"></script>
 </body>
 

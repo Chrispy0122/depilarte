@@ -88,7 +88,7 @@ if (btnNewPatient) {
     btnNewPatient.addEventListener('click', () => {
         modalNewPatient.classList.add('active');
         // Reset to Tab 1
-        switchTab('tab-personal');
+        switchTab('tab-personal', modalNewPatient);
     });
 }
 
@@ -99,26 +99,52 @@ if (btnCancelNew) {
 }
 
 // Tab Switching Logic
-const tabBtns = document.querySelectorAll('.profile-tabs-bar .tab-item');
-tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const targetId = btn.getAttribute('data-tab');
-        if (targetId) switchTab(targetId);
-    });
-});
+// switchTab is now context-aware: pass a container element to scope
+// the tab switch to only that modal (avoids hiding panes from other modals).
+function switchTab(tabId, context) {
+    const ctx = context || document.body;
 
-function switchTab(tabId) {
-    // 1. Remove active from all buttons
-    tabBtns.forEach(b => b.classList.remove('active'));
-    // 2. Hide all panes
-    document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+    // 1. Find the tab-bar that owns the target button (scope within ctx)
+    const activeBtn = ctx.querySelector(`.tab-item[data-tab="${tabId}"]`);
+    if (!activeBtn) return;
+    const tabBar = activeBtn.closest('.profile-tabs-bar');
 
-    // 3. Activate target
-    const activeBtn = document.querySelector(`.tab-item[data-tab="${tabId}"]`);
+    // 2. Deactivate all buttons in this bar
+    if (tabBar) {
+        tabBar.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+    }
+
+    // 3. Find the ancestor that contains both the bar and the panes
+    //    Walk up from the bar to its parent wrapper, then hide all sibling panes
+    const wrapper = tabBar ? tabBar.parentElement : ctx;
+    wrapper.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+
+    // 4. Activate target button and pane
+    activeBtn.classList.add('active');
     const activePane = document.getElementById(tabId);
-
-    if (activeBtn) activeBtn.classList.add('active');
     if (activePane) activePane.style.display = 'block';
+}
+
+// Register tabs for NEW PATIENT modal
+const newPatientModal = document.getElementById('modalNewPatient');
+if (newPatientModal) {
+    newPatientModal.querySelectorAll('.profile-tabs-bar .tab-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-tab');
+            if (targetId) switchTab(targetId, newPatientModal);
+        });
+    });
+}
+
+// Register tabs for PROFILE MODAL
+const profileModalEl = document.getElementById('profileModal');
+if (profileModalEl) {
+    profileModalEl.querySelectorAll('.profile-tabs-bar .tab-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-tab');
+            if (targetId) switchTab(targetId, profileModalEl);
+        });
+    });
 }
 
 // Close on click outside
@@ -204,15 +230,15 @@ if (formNewPatient) {
             }
 
             // Success
-            alert('¡Historia Clínica guardada exitosamente!');
+            dpToast('¡Historia Clínica guardada exitosamente!', 'success');
             modalNewPatient.classList.remove('active');
             formNewPatient.reset();
-            switchTab('tab-personal'); // Reset tabs
+            switchTab('tab-personal', modalNewPatient); // Reset tabs
             fetchPatients(); // Reload list
 
         } catch (error) {
             console.error("Registration Error:", error);
-            alert(`Hubo un error: ${error.message}`);
+            dpToast(`Hubo un error: ${error.message}`, 'error');
         }
     });
 }
@@ -513,6 +539,8 @@ window.openProfile = async function (id) {
 
     // Show Modal immediately with loading state
     profileModal.classList.add('active');
+    // Always reset to Pestaña 1 (Datos del Perfil) when opening
+    switchTab('tab-perfil', profileModal);
 
     // Set loading state in UI
     document.getElementById('lbl-nombre').textContent = "Cargando...";
@@ -725,7 +753,7 @@ window.openProfile = async function (id) {
     } catch (e) {
         console.error("Error cargando perfil:", e);
         // Fallback or Toast
-        alert("Error cargando perfil: " + e.message); // Temporary alert for user to see
+        dpToast("Error cargando perfil: " + e.message, 'error');
         document.getElementById('lbl-nombre').textContent = "Error: " + e.message;
 
         const tbody = document.getElementById('tbl-historial-body');
