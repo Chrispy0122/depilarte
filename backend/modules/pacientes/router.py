@@ -268,3 +268,108 @@ def historial_cliente(cliente_id: int, db: Session = Depends(get_db)):
         })
         
     return historial
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# HISTORIA DEPILACIÓN endpoints
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/{paciente_id}/historia-depilacion", response_model=schemas.HistoriaDepilacion)
+def get_historia_depilacion(paciente_id: int, db: Session = Depends(get_db)):
+    """Obtener la historia de depilación del paciente. Devuelve 404 si no existe."""
+    cliente = db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    
+    historia = db.query(models.HistoriaDepilacion).filter(
+        models.HistoriaDepilacion.paciente_id == paciente_id
+    ).first()
+    
+    if not historia:
+        raise HTTPException(status_code=404, detail="Historia de depilación no encontrada")
+    
+    return historia
+
+
+@router.post("/{paciente_id}/historia-depilacion", response_model=schemas.HistoriaDepilacion)
+def crear_historia_depilacion(
+    paciente_id: int,
+    historia: schemas.HistoriaDepilacionCreate,
+    db: Session = Depends(get_db)
+):
+    """Crear la historia de depilación para un paciente (una por paciente)."""
+    cliente = db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    
+    # Verify it doesn't already exist
+    existente = db.query(models.HistoriaDepilacion).filter(
+        models.HistoriaDepilacion.paciente_id == paciente_id
+    ).first()
+    if existente:
+        raise HTTPException(
+            status_code=409,
+            detail="Este paciente ya tiene una historia de depilación. Use PUT para editarla."
+        )
+    
+    nueva = models.HistoriaDepilacion(
+        **historia.dict(),
+        paciente_id=paciente_id
+    )
+    db.add(nueva)
+    db.commit()
+    db.refresh(nueva)
+    return nueva
+
+
+@router.put("/{paciente_id}/historia-depilacion", response_model=schemas.HistoriaDepilacion)
+def editar_historia_depilacion(
+    paciente_id: int,
+    historia: schemas.HistoriaDepilacionCreate,
+    db: Session = Depends(get_db)
+):
+    """Editar la historia de depilación existente de un paciente."""
+    existente = db.query(models.HistoriaDepilacion).filter(
+        models.HistoriaDepilacion.paciente_id == paciente_id
+    ).first()
+    
+    if not existente:
+        raise HTTPException(
+            status_code=404,
+            detail="Historia de depilación no encontrada. Use POST para crearla."
+        )
+
+    for field, value in historia.dict(exclude_unset=True).items():
+        setattr(existente, field, value)
+    
+    db.commit()
+    db.refresh(existente)
+    return existente
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# HISTORIA LIMPIEZA (JSON) – editar historia_clinica
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.put("/{paciente_id}/historia-limpieza")
+def editar_historia_limpieza(
+    paciente_id: int,
+    payload: dict,
+    db: Session = Depends(get_db)
+):
+    """Editar el JSON historia_clinica del cliente (Historia Facial / Limpieza)."""
+    cliente = db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    
+    # Merge with existing data (don't overwrite keys not in payload)
+    existing = cliente.historia_clinica or {}
+    existing.update(payload)
+    
+    from sqlalchemy.orm.attributes import flag_modified
+    cliente.historia_clinica = existing
+    flag_modified(cliente, "historia_clinica")
+    
+    db.commit()
+    db.refresh(cliente)
+    return {"ok": True, "historia_clinica": cliente.historia_clinica}

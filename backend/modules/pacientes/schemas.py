@@ -1,7 +1,6 @@
 from typing import Optional, List
 from pydantic import BaseModel
 import datetime
-import datetime
 
 
 class ServicioHistorial(BaseModel):
@@ -53,3 +52,59 @@ class HistorialClinico(HistorialClinicoBase):
 
     class Config:
         from_attributes = True
+
+
+# ── Historia Depilación (tabla propia) ──────────────────────────────────────
+
+class HistoriaDepilacionBase(BaseModel):
+    # Antecedentes personales
+    epilepsia:           Optional[bool] = False
+    ovario_poliquistico: Optional[bool] = False
+    asma:                Optional[bool] = False
+    gastricos:           Optional[bool] = False
+    hipertension:        Optional[bool] = False
+    hepaticos:           Optional[bool] = False
+    alergias:            Optional[bool] = False
+    hirsutismo:          Optional[bool] = False
+    respiratorios:       Optional[bool] = False
+    diabetes:            Optional[bool] = False
+    artritis:            Optional[bool] = False
+    cancer:              Optional[bool] = False
+    analgesicos:         Optional[bool] = False
+    antibioticos:        Optional[bool] = False
+
+    # Dermatológicos
+    tipo_piel:            Optional[str]  = None
+    aspecto_piel:         Optional[str]  = None
+    bronceado:            Optional[bool] = False
+    fuma:                 Optional[bool] = False
+    blanqueamientos_piel: Optional[bool] = False
+    botox:                Optional[bool] = False
+    acne:                 Optional[bool] = False
+    alcohol:              Optional[bool] = False
+    biopolimeros:         Optional[bool] = False
+    plasma:               Optional[bool] = False
+    dermatitis:           Optional[bool] = False
+    tatuajes:             Optional[bool] = False
+    vitaminas:            Optional[bool] = False
+    hilos_tensores:       Optional[bool] = False
+    acido_hialuronico:    Optional[bool] = False
+
+    # Observaciones
+    medicamentos_ultimo_mes:     Optional[str] = None
+    metodo_anticonceptivo:       Optional[str] = None
+    metodo_depilacion_utilizado: Optional[str] = None
+    otros:                       Optional[str] = None
+
+
+class HistoriaDepilacionCreate(HistoriaDepilacionBase):
+    pass
+
+
+class HistoriaDepilacion(HistoriaDepilacionBase):
+    id: int
+    paciente_id: int
+
+    class Config:
+        from_attributes = True
+
