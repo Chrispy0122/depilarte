@@ -507,6 +507,10 @@
                 <button class="tab-item active" data-tab="tab-personal">Datos Personales</button>
                 <button class="tab-item" data-tab="tab-salud">Salud y Hábitos</button>
                 <button class="tab-item" data-tab="tab-facial">Diagnóstico Facial</button>
+                <!-- Solo visible cuando tipo = depilacion -->
+                <button class="tab-item" data-tab="tab-depform" id="btn-tab-depform"
+                    style="display:none; background:linear-gradient(135deg,#7e22ce,#9333ea); color:#fff;">💜 Historia
+                    Depilación</button>
             </div>
 
             <form id="formNewPatient">
@@ -673,6 +677,103 @@
                         </div>
                     </div>
 
+                    <!-- TAB 4: HISTORIA DEPILACIÓN (visible solo cuando tipo=depilacion) -->
+                    <div id="tab-depform" class="tab-pane" style="display:none;">
+
+                        <!-- Bloque 2: Antecedentes Personales -->
+                        <h4
+                            style="color:#7e22ce;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;margin:0 0 10px;border-bottom:2px solid #e9d5ff;padding-bottom:6px;">
+                            ⚕️ Antecedentes Personales
+                        </h4>
+                        <div
+                            style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;background:#fdf4ff;padding:14px;border-radius:10px;margin-bottom:18px;font-size:0.9rem;">
+                            <label><input type="checkbox" name="new-dep-epilepsia"> Epilepsia</label>
+                            <label><input type="checkbox" name="new-dep-ovario_poliquistico"> Ovario
+                                Poliquístico</label>
+                            <label><input type="checkbox" name="new-dep-asma"> Asma</label>
+                            <label><input type="checkbox" name="new-dep-gastricos"> Gástricos</label>
+                            <label><input type="checkbox" name="new-dep-hipertension"> Hipertensión</label>
+                            <label><input type="checkbox" name="new-dep-hepaticos"> Hepáticos</label>
+                            <label><input type="checkbox" name="new-dep-alergias"> Alergias</label>
+                            <label><input type="checkbox" name="new-dep-hirsutismo"> Hirsutismo</label>
+                            <label><input type="checkbox" name="new-dep-respiratorios"> Respiratorios</label>
+                            <label><input type="checkbox" name="new-dep-diabetes"> Diabetes</label>
+                            <label><input type="checkbox" name="new-dep-artritis"> Artritis</label>
+                            <label><input type="checkbox" name="new-dep-cancer"> Cáncer</label>
+                            <label><input type="checkbox" name="new-dep-analgesicos"> Analgésicos</label>
+                            <label><input type="checkbox" name="new-dep-antibioticos"> Antibióticos</label>
+                        </div>
+
+                        <!-- Bloque 3: Dermatológicos -->
+                        <h4
+                            style="color:#7e22ce;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;margin:0 0 10px;border-bottom:2px solid #e9d5ff;padding-bottom:6px;">
+                            🔎 Dermatológicos
+                        </h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Tipo Piel</label>
+                                <select name="new-dep-tipo_piel" class="custom-select">
+                                    <option value="">Seleccione...</option>
+                                    <option value="Seca">Seca</option>
+                                    <option value="Grasa">Grasa</option>
+                                    <option value="Mixta">Mixta</option>
+                                    <option value="Sensible">Sensible</option>
+                                    <option value="Normal">Normal</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Aspecto Piel</label>
+                                <select name="new-dep-aspecto_piel" class="custom-select">
+                                    <option value="">Seleccione...</option>
+                                    <option value="Hidratada">H — Hidratada</option>
+                                    <option value="Deshidratada">D — Deshidratada</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div
+                            style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;background:#f5f0ff;padding:14px;border-radius:10px;margin-bottom:18px;font-size:0.9rem;">
+                            <label><input type="checkbox" name="new-dep-bronceado"> Bronceado</label>
+                            <label><input type="checkbox" name="new-dep-acne"> Acné</label>
+                            <label><input type="checkbox" name="new-dep-fuma"> Fuma</label>
+                            <label><input type="checkbox" name="new-dep-alcohol"> Alcohol</label>
+                            <label><input type="checkbox" name="new-dep-blanqueamientos_piel"> Blanqueamientos</label>
+                            <label><input type="checkbox" name="new-dep-biopolimeros" style="accent-color:#ef4444;"> ⚠️
+                                Biopolímeros</label>
+                            <label><input type="checkbox" name="new-dep-botox"> Botox</label>
+                            <label><input type="checkbox" name="new-dep-plasma"> Plasma</label>
+                            <label><input type="checkbox" name="new-dep-dermatitis"> Dermatitis</label>
+                            <label><input type="checkbox" name="new-dep-tatuajes"> Tatuajes</label>
+                            <label><input type="checkbox" name="new-dep-vitaminas"> Vitaminas</label>
+                            <label><input type="checkbox" name="new-dep-hilos_tensores"> Hilos Tensores</label>
+                            <label><input type="checkbox" name="new-dep-acido_hialuronico"> Ác. Hialurónico</label>
+                        </div>
+
+                        <!-- Bloque 4: Observaciones -->
+                        <h4
+                            style="color:#7e22ce;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;margin:0 0 10px;border-bottom:2px solid #e9d5ff;padding-bottom:6px;">
+                            📝 Observaciones
+                        </h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Medicamentos (Último Mes)</label>
+                                <input type="text" name="new-dep-medicamentos" placeholder="Ej: Ibuprofeno, NO">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Método Anticonceptivo</label>
+                                <input type="text" name="new-dep-metodo_anticonceptivo" placeholder="Ej: Pastillas, NO">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Método Depilación Utilizado</label>
+                                <input type="text" name="new-dep-metodo_depilacion" placeholder="Ej: Cera, Láser">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Otros</label>
+                                <input type="text" name="new-dep-otros" placeholder="Observaciones adicionales">
+                            </div>
+                        </div>
+
+                    </div> <!-- end tab-depform -->
+
                 </div> <!-- End Tabs Wrapper -->
 
                 <div class="modal-actions">
@@ -687,7 +788,7 @@
     </div>
 
     <script src="JS/dialogs.js"></script>
-    <script src="JS/pacientes.js?v=8"></script>
+    <script src="JS/pacientes.js?v=9"></script>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- MODAL: HISTORIA DEPILACIÓN (Crear / Editar) -->

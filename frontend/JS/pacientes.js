@@ -110,30 +110,29 @@ function abrirFormNuevoPaciente(tipo) {
 
     // 2. Configurar título y botón guardar
     const header = modalNewPatient.querySelector('.modal-header h2');
-    const btnGuardar = document.getElementById('btnGuardarNuevoPaciente');
+    const btnGuarda = document.getElementById('btnGuardarNuevoPaciente');
+    const btnSalud = modalNewPatient.querySelector('[data-tab="tab-salud"]');
+    const btnFacial = modalNewPatient.querySelector('[data-tab="tab-facial"]');
+    const btnDepTab = document.getElementById('btn-tab-depform');
 
     if (tipo === 'limpieza') {
         if (header) header.textContent = '🌿 Historia Clínica — Limpieza Facial';
-        if (btnGuardar) btnGuardar.style.background = 'linear-gradient(135deg,#15803d,#16a34a)';
-
-        // Mostrar tab "Salud & Hábitos" y "Diagnóstico Facial"
-        const btnSalud = modalNewPatient.querySelector('[data-tab="tab-salud"]');
-        const btnFacial = modalNewPatient.querySelector('[data-tab="tab-facial"]');
+        if (btnGuarda) btnGuarda.style.background = 'linear-gradient(135deg,#15803d,#16a34a)';
+        // Mostrar tabs de limpieza, ocultar pestaña depilación
         if (btnSalud) btnSalud.style.display = '';
         if (btnFacial) btnFacial.style.display = '';
+        if (btnDepTab) btnDepTab.style.display = 'none';
 
     } else {
         if (header) header.textContent = '💜 Historia Clínica — Depilación Corporal';
-        if (btnGuardar) btnGuardar.style.background = 'linear-gradient(135deg,#7e22ce,#9333ea)';
-
-        // Ocultar tabs de limpieza (Salud y Diagnóstico Facial), solo Datos Personales
-        const btnSalud = modalNewPatient.querySelector('[data-tab="tab-salud"]');
-        const btnFacial = modalNewPatient.querySelector('[data-tab="tab-facial"]');
+        if (btnGuarda) btnGuarda.style.background = 'linear-gradient(135deg,#7e22ce,#9333ea)';
+        // Ocultar tabs de limpieza, mostrar pestaña depilación
         if (btnSalud) btnSalud.style.display = 'none';
         if (btnFacial) btnFacial.style.display = 'none';
+        if (btnDepTab) btnDepTab.style.display = '';
     }
 
-    // 3. Abrir modal reseteado al Tab 1
+    // 3. Abrir modal reseteado — siempre empezar en Datos Personales
     modalNewPatient.classList.add('active');
     switchTab('tab-personal', modalNewPatient);
 }
@@ -279,29 +278,74 @@ if (formNewPatient) {
 
             const nuevoPaciente = await response.json();
 
-            // Si el tipo elegido es "depilacion", crear registro vacío de historia depilación
+            // Si el tipo elegido es "depilacion", crear historia clínica con los datos del formulario
             if (tipoHistoria === 'depilacion' && nuevoPaciente.id) {
+                const gc = (name) => !!formNewPatient.querySelector(`[name="${name}"]`)?.checked;
+                const gt = (name) => formNewPatient.querySelector(`[name="${name}"]`)?.value || null;
+
+                const depPayload = {
+                    // Antecedentes
+                    epilepsia: gc('new-dep-epilepsia'),
+                    ovario_poliquistico: gc('new-dep-ovario_poliquistico'),
+                    asma: gc('new-dep-asma'),
+                    gastricos: gc('new-dep-gastricos'),
+                    hipertension: gc('new-dep-hipertension'),
+                    hepaticos: gc('new-dep-hepaticos'),
+                    alergias: gc('new-dep-alergias'),
+                    hirsutismo: gc('new-dep-hirsutismo'),
+                    respiratorios: gc('new-dep-respiratorios'),
+                    diabetes: gc('new-dep-diabetes'),
+                    artritis: gc('new-dep-artritis'),
+                    cancer: gc('new-dep-cancer'),
+                    analgesicos: gc('new-dep-analgesicos'),
+                    antibioticos: gc('new-dep-antibioticos'),
+                    // Dermatológicos
+                    tipo_piel: gt('new-dep-tipo_piel'),
+                    aspecto_piel: gt('new-dep-aspecto_piel'),
+                    bronceado: gc('new-dep-bronceado'),
+                    acne: gc('new-dep-acne'),
+                    fuma: gc('new-dep-fuma'),
+                    alcohol: gc('new-dep-alcohol'),
+                    blanqueamientos_piel: gc('new-dep-blanqueamientos_piel'),
+                    biopolimeros: gc('new-dep-biopolimeros'),
+                    botox: gc('new-dep-botox'),
+                    plasma: gc('new-dep-plasma'),
+                    dermatitis: gc('new-dep-dermatitis'),
+                    tatuajes: gc('new-dep-tatuajes'),
+                    vitaminas: gc('new-dep-vitaminas'),
+                    hilos_tensores: gc('new-dep-hilos_tensores'),
+                    acido_hialuronico: gc('new-dep-acido_hialuronico'),
+                    // Observaciones
+                    medicamentos_consumidos_ultimo_mes: gt('new-dep-medicamentos'),
+                    metodo_anticonceptivo: gt('new-dep-metodo_anticonceptivo'),
+                    metodo_depilacion_utilizado: gt('new-dep-metodo_depilacion'),
+                    otros: gt('new-dep-otros'),
+                };
+
                 try {
-                    await fetch(`${API_URL}/pacientes/${nuevoPaciente.id}/historia-depilacion`, {
+                    const depRes = await fetch(`${API_URL}/pacientes/${nuevoPaciente.id}/historia-depilacion`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})  // registro vacío — la especialista lo completa luego
+                        body: JSON.stringify(depPayload)
                     });
+                    if (!depRes.ok) console.warn('Historia depilación: error al guardar detalles');
                 } catch (depErr) {
-                    console.warn('Historia depilación no creada automáticamente:', depErr);
+                    console.warn('Historia depilación no guardada:', depErr);
                 }
-                dpToast('💜 Paciente registrada con Historia de Depilación', 'success');
+                dpToast('💜 Paciente registrada con Historia de Depilación completa', 'success');
             } else {
                 dpToast('🌿 Paciente registrada con Historia de Limpieza Facial', 'success');
             }
 
             modalNewPatient.classList.remove('active');
             formNewPatient.reset();
-            // Restaurar tabs por si fueron ocultados
+            // Restaurar visibilidad de todas las tabs y ocultar depform
             const btnSalud = modalNewPatient.querySelector('[data-tab="tab-salud"]');
             const btnFacial = modalNewPatient.querySelector('[data-tab="tab-facial"]');
+            const btnDepT = document.getElementById('btn-tab-depform');
             if (btnSalud) btnSalud.style.display = '';
             if (btnFacial) btnFacial.style.display = '';
+            if (btnDepT) btnDepT.style.display = 'none';
             switchTab('tab-personal', modalNewPatient);
             fetchPatients();
 
