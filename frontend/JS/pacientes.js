@@ -817,6 +817,8 @@ window.openProfile = async function (id) {
         await depilacionLoad(id);
         // ── Historia Limpieza: load after main profile data ──
         await limpiezaLoad(id);
+        // ── Paquetes Activos (Solo lectura): load after main profile data ──
+        await paquetesLoad(id);
 
     } catch (e) {
         console.error("Error cargando perfil:", e);
@@ -1369,3 +1371,47 @@ document.addEventListener('submit', async function (e) {
         }
     }
 });
+
+// ==========================================
+// PAQUETES (CUPONERA) LECTURA EN PERFIL
+// ==========================================
+async function paquetesLoad(pacienteId) {
+    const wrapper = document.getElementById('prof-paq-wrapper');
+    const list = document.getElementById('prof-paq-list');
+    if (!wrapper || !list) return;
+
+    try {
+        const res = await fetch(`${API_URL}/cobranza/paciente/${pacienteId}/paquetes`);
+        if (res.ok) {
+            const paquetes = await res.json();
+            if (paquetes.length > 0) {
+                wrapper.style.display = 'block';
+                list.innerHTML = '';
+
+                paquetes.forEach(paq => {
+                    const pct = (paq.sesiones_usadas / paq.total_sesiones) * 100;
+                    const paqHtml = `
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 16px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="flex:1;">
+                                <div style="font-weight:700; color:#0f172a; margin-bottom:4px; font-size:0.95rem;">${paq.nombre_paquete}</div>
+                                <div style="display:flex; gap:16px; font-size:0.85rem; color:#475569;">
+                                    <span>Sesiones: <strong>${paq.sesiones_usadas}/${paq.total_sesiones}</strong></span>
+                                    <span>Pagado: <strong>$${paq.monto_pagado.toFixed(2)} / $${paq.costo_total.toFixed(2)}</strong></span>
+                                </div>
+                                <div style="background:#e2e8f0; border-radius:99px; height:6px; margin-top:8px; width:200px;">
+                                    <div style="background:#16a34a; height:6px; border-radius:99px; width:${pct}%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    list.insertAdjacentHTML('beforeend', paqHtml);
+                });
+            } else {
+                wrapper.style.display = 'none';
+            }
+        }
+    } catch (e) {
+        console.error("Error loading paquetes:", e);
+        wrapper.style.display = 'none';
+    }
+}

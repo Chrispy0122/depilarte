@@ -25,6 +25,9 @@ class Cliente(Base):
     # Relación one-to-one con Historia Limpieza
     historia_limpieza = relationship("HistoriaLimpieza", back_populates="paciente", uselist=False)
 
+    # Paquetes de sesiones (cuponera) — gestionados desde Cobranza
+    paquetes = relationship("PaqueteCliente", back_populates="paciente", order_by="PaqueteCliente.id.desc()")
+
 
 class HistoriaDepilacion(Base):
     """Historia Clínica de Depilación — corresponde a la planilla física Depilarte."""
@@ -112,3 +115,21 @@ class HistoriaLimpieza(Base):
     observaciones       = Column(Text, nullable=True)
 
     paciente = relationship("Cliente", back_populates="historia_limpieza")
+
+
+class PaqueteCliente(Base):
+    """Paquete de sesiones / cuponera vendido a un paciente.
+    La lógica financiera (cobro de cuotas) vive en Cobranza.
+    """
+    __tablename__ = "paquetes_cliente"
+
+    id              = Column(Integer, primary_key=True, index=True)
+    paciente_id     = Column(Integer, ForeignKey("clientes.id"), nullable=False)
+    nombre_paquete  = Column(String(150), nullable=False)
+    total_sesiones  = Column(Integer, nullable=False)         # ej. 4
+    sesiones_usadas = Column(Integer, nullable=False, default=0)
+    costo_total     = Column(Float, nullable=False)           # ej. 32.0
+    monto_pagado    = Column(Float, nullable=False, default=0.0)
+    activo          = Column(Boolean, default=True)           # False cuando sesiones_usadas == total_sesiones
+
+    paciente = relationship("Cliente", back_populates="paquetes")

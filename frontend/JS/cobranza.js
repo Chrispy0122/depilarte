@@ -12,6 +12,8 @@ let saleType = 'session'; // 'session' or 'package'
 let bcvRate = 0;
 // CART STATE
 let cartItems = [];
+let _paqueteActivoCaja = null;
+let _isCobrandoCuotaPaquete = null;
 
 // --- DOM ELEMENTS ---
 const patientListEl = document.getElementById('cobranzaList');
@@ -718,10 +720,39 @@ async function loadClientData(clienteId) {
         useWalletCheck.disabled = false;
         walletAvailableText.textContent = `Disponible: $${currentPatientBalance.toFixed(2)}`;
     }
+
+    // --- PAQUETES LOGIC ---
+    try {
+        const pRes = await fetch(`${API_URL}/cobranza/paciente/${clienteId}/paquetes`);
+        if (pRes.ok) {
+            const paquetes = await pRes.json();
+            const panel = document.getElementById('paq-panel');
+            const panelEmpty = document.getElementById('paq-panel-empty');
+
+            if (paquetes && paquetes.length > 0) {
+                _paqueteActivoCaja = paquetes[0]; // Tomar el primer paquete activo
+                if (panel) panel.style.display = 'block';
+                if (panelEmpty) panelEmpty.style.display = 'none';
+
+                document.getElementById('paq-nombre-display').textContent = _paqueteActivoCaja.nombre_paquete;
+                document.getElementById('paq-sesiones-display').textContent = `Sesiones: ${_paqueteActivoCaja.sesiones_usadas} / ${_paqueteActivoCaja.total_sesiones}`;
+                document.getElementById('paq-pagado-display').textContent = `Pagado: $${_paqueteActivoCaja.monto_pagado.toFixed(2)} / $${_paqueteActivoCaja.costo_total.toFixed(2)}`;
+
+                const pct = (_paqueteActivoCaja.sesiones_usadas / _paqueteActivoCaja.total_sesiones) * 100;
+                document.getElementById('paq-progress-bar').style.width = pct + "%";
+            } else {
+                _paqueteActivoCaja = null;
+                if (panel) panel.style.display = 'none';
+                if (panelEmpty) panelEmpty.style.display = 'block';
+            }
+        }
+    } catch (e) { console.error("Error loading packages", e); }
 }
 
 window.closeModal = function () {
     modal.classList.remove('active');
+    _paqueteActivoCaja = null;
+    _isCobrandoCuotaPaquete = null;
 }
 
 // --- CALCULATIONS ---
@@ -856,6 +887,22 @@ if (!btnProcessPayment) {
 
             if (r.ok) {
                 const data = await r.json();
+
+                // --- ABONO DE PAQUETE (Si aplica) ---
+                if (_isCobrandoCuotaPaquete) {
+                    const idx = cartItems.findIndex(i => i.type === "Cuota");
+                    if (idx !== -1) {
+                        try {
+                            await fetch(`${API_URL}/cobranza/paquete/${_isCobrandoCuotaPaquete}/abonar`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ monto: cartItems[idx].price })
+                            });
+                        } catch (e) { console.error("Error al abonar cuota de paquete:", e); }
+                    }
+                }
+                _isCobrandoCuotaPaquete = null;
+
                 dpToast(`¡Cobro exitoso! (ID: ${data.cobro_id || 'OK'})`, 'success');
                 closeModal();
                 fetchCajaHoy();
@@ -1164,4 +1211,66 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.fetchCajaHoy) window.fetchCajaHoy();
         });
     }
+
+    // ==========================================
+    // MODULE: PAQUETES (CUPONERAS) FRONTEND
+    // ==========================================
+
+    // 1. OPEN MODAL VENDER PAQUETE
+    const btnNewPaq = document.getElementById('btn-nuevo-paquete');
+    const btnNewPaqEmpty = document.getElementById('btn-nuevo-paquete-empty');
+    if (btnNewPaq) btnNewPaq.addEventListener('click', () => document.getElementById('modalVenderPaquete').classList.add('active'));
+    if (btnNewPaqEmpty) btnNewPaqEmpty.addEventListener('click', () => document.getElementById('modalVenderPaquete').classList.add('active'));
+
+    // 2. FORM DE VENDER PAQUETE
+    const frmVender = document.getElementById('formVenderPaquete');
+    if (frmVender) {
+        frmVender.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const clientId = document.getElementById('clientSelect').value;
+            if (!clientId) return dpToast("Selecciona un paciente primero", "error");
+
+            const payload = {
+                nombre_paquete: document.getElementById('vp-nombre').value,
+                total_sesiones: parseInt(document.getElementById('vp-sesiones').value),
+                costo_total: parseFloat(document.getElementById('vp-costo').value)
+            };
+
+            try {
+                const r = await fetch(`${API_URL}/cobranza/paciente/${clientId}/paquetes`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                });
+                if (r.ok) {
+                    dpToast("Paquete vendido exitosamente", "success");
+                    document.getElementById('modalVenderPaquete').classList.remove('active');
+                    frmVender.reset();
+                    loadClientData(clientId); // reload to show panel
+                } else {
+                    dpToast("Error al vender paquete", "error");
+                }
+            } catch (err) { console.error(err); dpToast("Error de conexión", "error"); }
+        });
+    }
+
+    // 3. BOTÓN COBRAR SESIÓN DE PAQUETE (AGREGA AL CARRITO)
+    const btnCobrarPaq = document.getElementById('btn-cobrar-sesion-paq');
+    if (btnCobrarPaq) {
+        btnCobrarPaq.addEventListener('click', () => {
+            if (!_paqueteActivoCaja) return;
+            const costPerSession = _paqueteActivoCaja.costo_total / _paqueteActivoCaja.total_sesiones;
+
+            cartItems.push({
+                id: Date.now(),
+                serviceId: 0, // id temporal o nulo
+                name: "Cuota de Paquete: " + _paqueteActivoCaja.nombre_paquete,
+                type: "Cuota",
+                price: parseFloat(costPerSession.toFixed(2))
+            });
+            _isCobrandoCuotaPaquete = _paqueteActivoCaja.id; // Flag for checkout logic
+            renderCart();
+            updateCalculations();
+            dpToast("Cuota de paquete agregada al cobro", "info");
+        });
+    }
+
 });

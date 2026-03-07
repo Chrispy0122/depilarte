@@ -916,3 +916,73 @@ def exportar_caja_excel(
     except Exception as e:
         print(f"Export Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAQUETES / CUPONERA  (lógica financiera concentrada en Cobranza)
+# ═══════════════════════════════════════════════════════════════════════════════
+from .schemas import PaqueteClienteCreate, PaqueteClienteOut, AbonarSesionIn
+from typing import List as TypingList
+
+@router.get("/paciente/{paciente_id}/paquetes", response_model=TypingList[PaqueteClienteOut])
+def listar_paquetes_paciente(paciente_id: int, db: Session = Depends(get_db)):
+    """Retorna todos los paquetes activos del paciente (usado por Cobranza y por Pacientes en lectura)."""
+    cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == paciente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    return db.query(pacientes_models.PaqueteCliente).filter(
+        pacientes_models.PaqueteCliente.paciente_id == paciente_id,
+        pacientes_models.PaqueteCliente.activo == True
+    ).all()
+
+
+@router.post("/paciente/{paciente_id}/paquetes", response_model=PaqueteClienteOut)
+def vender_paquete(paciente_id: int, data: PaqueteClienteCreate, db: Session = Depends(get_db)):
+    """Vende (crea) un nuevo paquete de sesiones al paciente."""
+    cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == paciente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    nuevo = pacientes_models.PaqueteCliente(
+        paciente_id=paciente_id,
+        nombre_paquete=data.nombre_paquete,
+        total_sesiones=data.total_sesiones,
+        sesiones_usadas=0,
+        costo_total=data.costo_total,
+        monto_pagado=0.0,
+        activo=True,
+    )
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    return nuevo
+
+
+@router.post("/paquete/{paquete_id}/abonar", response_model=PaqueteClienteOut)
+def abonar_sesion_paquete(paquete_id: int, data: AbonarSesionIn, db: Session = Depends(get_db)):
+    """
+    Registra el pago de UNA sesión del paquete:
+    - Suma 1 a sesiones_usadas.
+    - Suma el monto a monto_pagado.
+    - Marca el paquete como inactivo si se agotaron las sesiones.
+    El cobro también debe registrarse en la caja llamando al endpoint POST /api/cobranza/.
+    """
+    paquete = db.query(pacientes_models.PaqueteCliente).filter(
+        pacientes_models.PaqueteCliente.id == paquete_id
+    ).first()
+    if not paquete:
+        raise HTTPException(status_code=404, detail="Paquete no encontrado")
+    if not paquete.activo:
+        raise HTTPException(status_code=409, detail="El paquete ya está completado o inactivo")
+    if paquete.sesiones_usadas >= paquete.total_sesiones:
+        raise HTTPException(status_code=409, detail="Ya se usaron todas las sesiones de este paquete")
+
+    paquete.sesiones_usadas += 1
+    paquete.monto_pagado = round(paquete.monto_pagado + data.monto, 2)
+
+    # Auto-cerrar si se completaron todas las sesiones
+    if paquete.sesiones_usadas >= paquete.total_sesiones:
+        paquete.activo = False
+
+    db.commit()
+    db.refresh(paquete)
+    return paquete

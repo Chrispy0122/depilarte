@@ -327,6 +327,50 @@
                 </div>
             </div>
 
+            <!-- ── PANEL DE PAQUETES ACTIVOS ─────────────────────────────── -->
+            <div id="paq-panel" style="display:none; margin: 0 0 16px;">
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:14px 16px;">
+                    <div
+                        style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                        <div style="flex:1;">
+                            <div
+                                style="font-size:0.8rem; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px;">
+                                📦 Paquete Activo</div>
+                            <div id="paq-nombre-display" style="font-weight:600; color:#1a1a1a; font-size:0.95rem;">
+                            </div>
+                            <div style="display:flex; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap;">
+                                <span id="paq-sesiones-display" style="font-size:0.88rem; color:#4b5563;"></span>
+                                <span id="paq-pagado-display" style="font-size:0.88rem; color:#4b5563;"></span>
+                            </div>
+                            <div
+                                style="background:#d1fae5; border-radius:99px; height:6px; margin-top:8px; width:200px; max-width:100%;">
+                                <div id="paq-progress-bar"
+                                    style="background:#16a34a; height:6px; border-radius:99px; transition:width .4s;">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; flex-direction:column;">
+                            <button id="btn-cobrar-sesion-paq"
+                                style="background:linear-gradient(135deg,#15803d,#16a34a); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap;">
+                                💵 Cobrar Sesión del Paquete
+                            </button>
+                            <button id="btn-nuevo-paquete"
+                                style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:8px; padding:6px 14px; font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                + Vender Nuevo Paquete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── SIN PAQUETE: solo botón vender ── -->
+            <div id="paq-panel-empty" style="display:none; margin: 0 0 12px; text-align:right;">
+                <button id="btn-nuevo-paquete-empty"
+                    style="background:#e2e8f0; color:#334155; border:1px solid #cbd5e1; border-radius:8px; padding:6px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">
+                    + Vender Paquete a este Paciente
+                </button>
+            </div>
+
             <!-- MAIN GRID (2 Columns) -->
             <div class="modal-grid">
                 <!-- COL 1: SERVICE SELECTION -->
@@ -543,7 +587,53 @@
     </div>
 
     <script src="JS/dialogs.js"></script>
-    <script src="JS/cobranza.js?v=2"></script>
+    <script src="JS/cobranza.js?v=3"></script>
+
+    <!-- MODAL: VENDER NUEVO PAQUETE -->
+    <div class="modal-overlay" id="modalVenderPaquete" style="z-index:10003;">
+        <div
+            style="background:#fff; border-radius:16px; padding:0; max-width:460px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2); overflow:hidden;">
+            <div
+                style="background:linear-gradient(135deg,#15803d,#16a34a); padding:18px 24px; display:flex; align-items:center; justify-content:space-between;">
+                <h2 style="color:#fff; margin:0; font-size:1.1rem;">📦 Vender Paquete / Cuponera</h2>
+                <button onclick="document.getElementById('modalVenderPaquete').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1rem; cursor:pointer;">✕</button>
+            </div>
+            <form id="formVenderPaquete" style="padding:24px;">
+                <div style="margin-bottom:14px;">
+                    <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">Nombre del
+                        Paquete</label>
+                    <input type="text" id="vp-nombre" placeholder="Ej: Paquete Depilación 4 Sesiones"
+                        style="width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-family:inherit; box-sizing:border-box;"
+                        required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                    <div>
+                        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">Total
+                            Sesiones</label>
+                        <input type="number" id="vp-sesiones" min="1" value="4"
+                            style="width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-family:inherit; box-sizing:border-box;"
+                            required>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">Costo Total
+                            ($)</label>
+                        <input type="number" id="vp-costo" step="0.01" min="0" value="32.00"
+                            style="width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-family:inherit; box-sizing:border-box;"
+                            required>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+                    <button type="button"
+                        onclick="document.getElementById('modalVenderPaquete').classList.remove('active')"
+                        style="padding:9px 18px; border:1px solid #ddd; border-radius:8px; background:#f8f9fa; cursor:pointer; font-weight:600;">Cancelar</button>
+                    <button type="submit"
+                        style="padding:9px 18px; border:none; border-radius:8px; background:linear-gradient(135deg,#15803d,#16a34a); color:#fff; font-weight:700; cursor:pointer;">💾
+                        Guardar Paquete</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 
 </html>
