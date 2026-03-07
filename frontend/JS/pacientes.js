@@ -1369,3 +1369,136 @@ document.addEventListener('submit', async function (e) {
         }
     }
 });
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAQUETES (CUPONERA) & WALLET MODULE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _paquetesActivos = [];
+
+/** Carga los paquetes activos del paciente y renderiza el bloque de inventario. */
+async function paquetesLoad(pacienteId) {
+    try {
+        const res = await fetch(`${API_URL}/pacientes/${pacienteId}/paquetes`);
+        if (!res.ok) { _paquetesActivos = []; paquetesRender([]); return; }
+        _paquetesActivos = await res.json();
+        paquetesRender(_paquetesActivos);
+    } catch {
+        _paquetesActivos = [];
+        paquetesRender([]);
+    }
+}
+
+function paquetesRender(lista) {
+    const wrapper = document.getElementById('paq-inventario');
+    const listEl = document.getElementById('paq-list');
+    if (!wrapper || !listEl) return;
+
+    if (!lista || lista.length === 0) {
+        wrapper.style.display = 'none';
+        return;
+    }
+
+    wrapper.style.display = 'block';
+    listEl.innerHTML = lista.map(p => `
+        <div style="display:flex; align-items:center; justify-content:space-between;
+                    background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px;
+                    padding:10px 14px; margin-bottom:8px;">
+            <div>
+                <div style="font-weight:700; color:#166534; font-size:0.95rem;">${p.nombre_paquete}</div>
+                <div style="font-size:0.82rem; color:#4b5563; margin-top:2px;">
+                    💲${p.precio_por_sesion.toFixed(2)} / sesión
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="background:#15803d; color:#fff; border-radius:20px; padding:3px 12px; font-weight:700; font-size:0.9rem;">
+                    ${p.sesiones_restantes} <span style="font-weight:400; font-size:0.78rem;">/ ${p.total_sesiones}</span>
+                </div>
+                <div style="font-size:0.75rem; color:#9ca3af; margin-top:2px;">sesiones restantes</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ── Conectar paquetesLoad() al openProfile ──────────────────────────────────
+// Override: save the original openProfile and chain paquetesLoad after it.
+(function () {
+    const _origOpenProfile = window.openProfile;
+    window.openProfile = async function (id) {
+        await _origOpenProfile(id);
+        await paquetesLoad(id);
+    };
+})();
+
+// ── Click delegation ─────────────────────────────────────────────────────────
+document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'btn-vender-paquete') {
+        document.getElementById('modalVenderPaquete').classList.add('active');
+    }
+    if (e.target && e.target.id === 'btn-abonar-wallet') {
+        document.getElementById('wallet-monto').value = '';
+        document.getElementById('modalAbonarWallet').classList.add('active');
+    }
+});
+
+// ── FORM: Vender Paquete ─────────────────────────────────────────────────────
+document.addEventListener('submit', async function (e) {
+    if (e.target && e.target.id === 'formVenderPaquete') {
+        e.preventDefault();
+        if (!_currentPacienteId) return;
+
+        const payload = {
+            nombre_paquete: document.getElementById('paq-nombre').value,
+            total_sesiones: parseInt(document.getElementById('paq-total').value),
+            precio_por_sesion: parseFloat(document.getElementById('paq-precio').value),
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/pacientes/${_currentPacienteId}/paquetes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Error'); }
+
+            document.getElementById('modalVenderPaquete').classList.remove('active');
+            e.target.reset();
+            await paquetesLoad(_currentPacienteId);
+            dpToast('✅ Paquete vendido y registrado', 'success');
+        } catch (err) {
+            dpToast('Error: ' + err.message, 'error');
+        }
+    }
+});
+
+// ── FORM: Abonar Wallet ──────────────────────────────────────────────────────
+document.addEventListener('submit', async function (e) {
+    if (e.target && e.target.id === 'formAbonarWallet') {
+        e.preventDefault();
+        if (!_currentPacienteId) return;
+
+        const monto = parseFloat(document.getElementById('wallet-monto').value);
+        if (!monto || monto <= 0) { dpToast('Ingresa un monto válido', 'warning'); return; }
+
+        try {
+            const res = await fetch(`${API_URL}/pacientes/${_currentPacienteId}/wallet/abonar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ monto })
+            });
+            if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Error'); }
+            const data = await res.json();
+
+            // Update wallet display live
+            const nuevoSaldo = data.saldo_wallet;
+            document.getElementById('lbl-wallet').textContent = `$${nuevoSaldo.toFixed(2)}`;
+            if (_currentPacienteData) _currentPacienteData.saldo_wallet = nuevoSaldo;
+
+            document.getElementById('modalAbonarWallet').classList.remove('active');
+            dpToast(`✅ $${monto.toFixed(2)} abonados al wallet`, 'success');
+        } catch (err) {
+            dpToast('Error: ' + err.message, 'error');
+        }
+    }
+});

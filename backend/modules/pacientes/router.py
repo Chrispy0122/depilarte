@@ -434,3 +434,73 @@ def editar_historia_limpieza(
     db.commit()
     db.refresh(h)
     return h
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAQUETES (CUPONERA)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/{paciente_id}/paquetes", response_model=List[schemas.PaqueteClienteOut])
+def listar_paquetes(paciente_id: int, db: Session = Depends(get_db)):
+    """Retorna todos los paquetes activos (sesiones_restantes > 0) del paciente."""
+    cliente = db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    paquetes = db.query(models.PaqueteCliente).filter(
+        models.PaqueteCliente.paciente_id == paciente_id,
+        models.PaqueteCliente.sesiones_restantes > 0
+    ).all()
+    return paquetes
+
+
+@router.post("/{paciente_id}/paquetes", response_model=schemas.PaqueteClienteOut)
+def vender_paquete(paciente_id: int, data: schemas.PaqueteClienteCreate, db: Session = Depends(get_db)):
+    """Crea un nuevo paquete/cuponera para el paciente."""
+    cliente = db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    nuevo = models.PaqueteCliente(
+        paciente_id=paciente_id,
+        nombre_paquete=data.nombre_paquete,
+        total_sesiones=data.total_sesiones,
+        sesiones_restantes=data.total_sesiones,
+        precio_por_sesion=data.precio_por_sesion,
+        servicio_id=data.servicio_id,
+    )
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    return nuevo
+
+
+@router.patch("/{paciente_id}/paquetes/{paquete_id}/usar")
+def usar_sesion_paquete(paciente_id: int, paquete_id: int, db: Session = Depends(get_db)):
+    """Descuenta 1 sesión de un paquete activo. Lo llama el backend de cobranza tras cobrar."""
+    paquete = db.query(models.PaqueteCliente).filter(
+        models.PaqueteCliente.id == paquete_id,
+        models.PaqueteCliente.paciente_id == paciente_id,
+    ).first()
+    if not paquete:
+        raise HTTPException(status_code=404, detail="Paquete no encontrado")
+    if paquete.sesiones_restantes <= 0:
+        raise HTTPException(status_code=409, detail="El paquete ya no tiene sesiones disponibles")
+    paquete.sesiones_restantes -= 1
+    db.commit()
+    return {"sesiones_restantes": paquete.sesiones_restantes}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# WALLET — ABONAR
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/{paciente_id}/wallet/abonar")
+def abonar_wallet(paciente_id: int, data: schemas.WalletAbonarIn, db: Session = Depends(get_db)):
+    """Suma 'monto' al saldo_wallet del paciente."""
+    if data.monto <= 0:
+        raise HTTPException(status_code=400, detail="El monto debe ser mayor a 0")
+    cliente = db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    cliente.saldo_wallet = (cliente.saldo_wallet or 0.0) + data.monto
+    db.commit()
+    return {"saldo_wallet": cliente.saldo_wallet}
