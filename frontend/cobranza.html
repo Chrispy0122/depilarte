@@ -327,35 +327,9 @@
                 </div>
             </div>
 
-            <!-- ── PANEL DE PAQUETES ACTIVOS ─────────────────────────────── -->
             <div id="paq-panel" style="display:none; margin: 0 0 16px;">
-                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:14px 16px;">
-                    <div
-                        style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-                        <div style="flex:1;">
-                            <div
-                                style="font-size:0.8rem; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px;">
-                                📦 Paquete Activo</div>
-                            <div id="paq-nombre-display" style="font-weight:600; color:#1a1a1a; font-size:0.95rem;">
-                            </div>
-                            <div style="display:flex; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap;">
-                                <span id="paq-sesiones-display" style="font-size:0.88rem; color:#4b5563;"></span>
-                                <span id="paq-pagado-display" style="font-size:0.88rem; color:#4b5563;"></span>
-                            </div>
-                            <div
-                                style="background:#d1fae5; border-radius:99px; height:6px; margin-top:8px; width:200px; max-width:100%;">
-                                <div id="paq-progress-bar"
-                                    style="background:#16a34a; height:6px; border-radius:99px; transition:width .4s;">
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:8px; flex-direction:column;">
-                            <button id="btn-cobrar-sesion-paq"
-                                style="background:linear-gradient(135deg,#15803d,#16a34a); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap;">
-                                💵 Cobrar Sesión del Paquete
-                            </button>
-                        </div>
-                    </div>
+                <!-- Contenedor dinámico para la lista de paquetes activos -->
+                <div id="paq-list-container" style="display:flex; flex-direction:column; gap:10px;">
                 </div>
             </div>
 

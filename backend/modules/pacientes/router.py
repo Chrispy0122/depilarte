@@ -95,6 +95,7 @@ def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
     # To get exact sale type, let's grab the Cobro Detalles of the same day.
     
     historial_data = []
+    procesados_cobro_ids = set()
     
     for cita in citas:
         metodos = []
@@ -125,6 +126,10 @@ def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
         
         if cobros_del_dia:
              for cobro in cobros_del_dia:
+                 if cobro.id in procesados_cobro_ids:
+                     continue # Skip already processed cobros to avoid duplicates
+                 procesados_cobro_ids.add(cobro.id)
+                 
                  for detalle in cobro.detalles:
                      servicios_detalle.append({
                          "nombre": detalle.servicio_nombre or "Servicio Estético",

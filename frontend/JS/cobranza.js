@@ -774,19 +774,52 @@ async function loadClientData(clienteId) {
         if (pRes.ok) {
             const paquetes = await pRes.json();
             const panel = document.getElementById('paq-panel');
+            const panelList = document.getElementById('paq-list-container');
             const panelEmpty = document.getElementById('paq-panel-empty');
 
             if (paquetes && paquetes.length > 0) {
-                _paqueteActivoCaja = paquetes[0]; // Tomar el primer paquete activo
+                // We no longer track a single _paqueteActivoCaja, we will pass the object/ID via button dataset
+                _paqueteActivoCaja = null;
+
                 if (panel) panel.style.display = 'block';
                 if (panelEmpty) panelEmpty.style.display = 'none';
 
-                document.getElementById('paq-nombre-display').textContent = _paqueteActivoCaja.nombre_paquete;
-                document.getElementById('paq-sesiones-display').textContent = `Sesiones: ${_paqueteActivoCaja.sesiones_usadas} / ${_paqueteActivoCaja.total_sesiones}`;
-                document.getElementById('paq-pagado-display').textContent = `Pagado: $${_paqueteActivoCaja.monto_pagado.toFixed(2)} / $${_paqueteActivoCaja.costo_total.toFixed(2)}`;
+                panelList.innerHTML = ''; // Clear container
 
-                const pct = (_paqueteActivoCaja.sesiones_usadas / _paqueteActivoCaja.total_sesiones) * 100;
-                document.getElementById('paq-progress-bar').style.width = pct + "%";
+                paquetes.forEach(paq => {
+                    const pct = (paq.sesiones_usadas / paq.total_sesiones) * 100;
+
+                    const cardHTML = `
+                        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:14px 16px;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                                <div style="flex:1;">
+                                    <div style="font-size:0.8rem; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px;">
+                                        📦 Paquete Activo</div>
+                                    <div style="font-weight:600; color:#1a1a1a; font-size:0.95rem;">
+                                        ${paq.nombre_paquete}
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap;">
+                                        <span style="font-size:0.88rem; color:#4b5563;">Sesiones: ${paq.sesiones_usadas} / ${paq.total_sesiones}</span>
+                                        <span style="font-size:0.88rem; color:#4b5563;">Pagado: $${paq.monto_pagado.toFixed(2)} / $${paq.costo_total.toFixed(2)}</span>
+                                    </div>
+                                    <div style="background:#d1fae5; border-radius:99px; height:6px; margin-top:8px; width:200px; max-width:100%;">
+                                        <div style="background:#16a34a; height:6px; border-radius:99px; transition:width .4s; width:${pct}%">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:8px; flex-direction:column;">
+                                    <button class="btn-cobrar-sesion-paq"
+                                        data-paq='${JSON.stringify(paq)}'
+                                        style="background:linear-gradient(135deg,#15803d,#16a34a); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; white-space:nowrap;">
+                                        💵 Cobrar Sesión
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    panelList.insertAdjacentHTML('beforeend', cardHTML);
+                });
+
             } else {
                 _paqueteActivoCaja = null;
                 if (panel) panel.style.display = 'none';
@@ -950,6 +983,20 @@ if (!btnProcessPayment) {
                     }
                 }
                 _isCobrandoCuotaPaquete = null;
+
+                // --- RESET CART TO PREVENT DOUBLE CHARGE ---
+                cartItems = [];
+                currentPatientBalance = 0;
+                if (walletAmountEl) walletAmountEl.textContent = "...";
+                if (useWalletCheck) {
+                    useWalletCheck.checked = false;
+                    useWalletCheck.disabled = true;
+                }
+                const impAbono = document.getElementById('inp-abono-wallet');
+                if (impAbono) impAbono.value = "0.00";
+
+                renderCart();
+                updateCalculations();
 
                 dpToast(`¡Cobro exitoso! (ID: ${data.cobro_id || 'OK'})`, 'success');
                 closeModal();
@@ -1300,25 +1347,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. BOTÓN COBRAR SESIÓN DE PAQUETE (AGREGA AL CARRITO)
-    const btnCobrarPaq = document.getElementById('btn-cobrar-sesion-paq');
-    if (btnCobrarPaq) {
-        btnCobrarPaq.addEventListener('click', () => {
-            if (!_paqueteActivoCaja) return;
-            const costPerSession = _paqueteActivoCaja.costo_total / _paqueteActivoCaja.total_sesiones;
+    // 3. BOTÓN COBRAR SESIÓN DE PAQUETE (AGREGA AL CARRITO) - EVENT DELEGATION
+    document.addEventListener('click', (e) => {
+        const btnCobrarPaq = e.target.closest('.btn-cobrar-sesion-paq');
+        if (btnCobrarPaq) {
+            try {
+                const paq = JSON.parse(btnCobrarPaq.getAttribute('data-paq'));
+                if (!paq) return;
 
-            cartItems.push({
-                id: Date.now(),
-                serviceId: 0, // id temporal o nulo
-                name: "Cuota de Paquete: " + _paqueteActivoCaja.nombre_paquete,
-                type: "Cuota",
-                price: parseFloat(costPerSession.toFixed(2))
-            });
-            _isCobrandoCuotaPaquete = _paqueteActivoCaja.id; // Flag for checkout logic
-            renderCart();
-            updateCalculations();
-            dpToast("Cuota de paquete agregada al cobro", "info");
-        });
-    }
+                const costPerSession = paq.costo_total / paq.total_sesiones;
+
+                cartItems.push({
+                    id: Date.now(),
+                    serviceId: 0, // temporal or null id
+                    name: "Cuota de Paquete: " + paq.nombre_paquete,
+                    type: "Cuota",
+                    price: parseFloat(costPerSession.toFixed(2))
+                });
+
+                _isCobrandoCuotaPaquete = paq.id; // Flag for checkout logic
+                renderCart();
+                updateCalculations();
+                dpToast("Cuota de paquete agregada al cobro", "info");
+            } catch (err) {
+                console.error("Error parsing package data", err);
+            }
+        }
+    });
 
 });
