@@ -184,24 +184,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 finalPrice = selectedService.paquete_4_sesiones;
                 typeLabel = "Paquete";
             } else if (saleType === 'promotion') {
-                finalPrice = 0;
+                finalPrice = 0; // Or prompt user? For now 0, and they edit in cart.
                 typeLabel = "Promoción";
             } else {
                 finalPrice = selectedService.sesion;
                 typeLabel = "Sesión";
             }
 
-            // ── Auto-override price if patient has an active package ──
-            if (_paqueteActivoCaja &&
-                (_paqueteActivoCaja.servicio_id === selectedService.id || !_paqueteActivoCaja.servicio_id)) {
-                const originalPrice = finalPrice;
-                finalPrice = _paqueteActivoCaja.precio_por_sesion;
-                dpToast(`📦 Aplicando precio de paquete activo: $${finalPrice.toFixed(2)}/sesión (antes $${originalPrice.toFixed(2)})`, 'info');
-            }
-
             // Create Item
             const item = {
-                id: Date.now(),
+                id: Date.now(), // unique id for removal
                 serviceId: selectedService.id,
                 name: selectedService.nombre,
                 type: typeLabel,
@@ -701,12 +693,7 @@ window.openCheckout = async function (patientId) {
     if (modal) modal.classList.add('active');
 }
 
-// ── STATE: Paquete activo detectado en caja ──────────────────────────────────
-let _paqueteActivoCaja = null; // { id, nombre_paquete, precio_por_sesion, servicio_id }
-
 async function loadClientData(clienteId) {
-    _paqueteActivoCaja = null;
-
     try {
         const res = await fetch(`${API_URL}/pacientes/${clienteId}`);
         if (res.ok) {
@@ -731,29 +718,6 @@ async function loadClientData(clienteId) {
         useWalletCheck.disabled = false;
         walletAvailableText.textContent = `Disponible: $${currentPatientBalance.toFixed(2)}`;
     }
-
-    // ── Detect active packages ────────────────────────────────────────────────
-    const paqBanner = document.getElementById('paq-caja-banner');
-    try {
-        const paqRes = await fetch(`${API_URL}/pacientes/${clienteId}/paquetes`);
-        if (paqRes.ok) {
-            const paquetes = await paqRes.json();
-            if (paquetes && paquetes.length > 0) {
-                _paqueteActivoCaja = paquetes[0]; // Use first active package
-                if (paqBanner) {
-                    paqBanner.style.display = 'flex';
-                    paqBanner.innerHTML = `
-                        <i class="fa-solid fa-box-open" style="color:#166534;"></i>
-                        <span>📦 <strong>${_paqueteActivoCaja.nombre_paquete}</strong> — Precio paquete:
-                            <strong>$${_paqueteActivoCaja.precio_por_sesion.toFixed(2)}</strong>/sesión
-                            · ${_paqueteActivoCaja.sesiones_restantes} sesiones restantes
-                        </span>`;
-                }
-            } else {
-                if (paqBanner) paqBanner.style.display = 'none';
-            }
-        }
-    } catch { /* silent */ }
 }
 
 window.closeModal = function () {
@@ -892,18 +856,6 @@ if (!btnProcessPayment) {
 
             if (r.ok) {
                 const data = await r.json();
-
-                // ── Decrement package session if one was active ──────────────
-                if (_paqueteActivoCaja) {
-                    const clienteId = parseInt(document.getElementById('clientSelect').value);
-                    try {
-                        await fetch(`${API_URL}/pacientes/${clienteId}/paquetes/${_paqueteActivoCaja.id}/usar`, {
-                            method: 'PATCH'
-                        });
-                    } catch { /* silent */ }
-                    _paqueteActivoCaja = null;
-                }
-
                 dpToast(`¡Cobro exitoso! (ID: ${data.cobro_id || 'OK'})`, 'success');
                 closeModal();
                 fetchCajaHoy();

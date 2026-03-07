@@ -158,26 +158,3 @@ class HistoriaLimpieza(HistoriaLimpiezaBase):
 
     class Config:
         from_attributes = True
-
-
-# ── Paquetes / Cuponera ──────────────────────────────────────────────────────
-class PaqueteClienteCreate(BaseModel):
-    nombre_paquete:    str
-    total_sesiones:    int
-    precio_por_sesion: float
-    servicio_id:       Optional[int] = None  # para vincular al paquete_spa si se desea
-
-class PaqueteClienteOut(BaseModel):
-    id:                int
-    paciente_id:       int
-    nombre_paquete:    str
-    total_sesiones:    int
-    sesiones_restantes: int
-    precio_por_sesion:  float
-    servicio_id:        Optional[int] = None
-
-    class Config:
-        from_attributes = True
-
-class WalletAbonarIn(BaseModel):
-    monto: float

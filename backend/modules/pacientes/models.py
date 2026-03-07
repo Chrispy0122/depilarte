@@ -25,9 +25,6 @@ class Cliente(Base):
     # Relación one-to-one con Historia Limpieza
     historia_limpieza = relationship("HistoriaLimpieza", back_populates="paciente", uselist=False)
 
-    # Paquetes (cuponera)
-    paquetes = relationship("PaqueteCliente", back_populates="paciente", order_by="PaqueteCliente.id.desc()")
-
 
 class HistoriaDepilacion(Base):
     """Historia Clínica de Depilación — corresponde a la planilla física Depilarte."""
@@ -115,18 +112,3 @@ class HistoriaLimpieza(Base):
     observaciones       = Column(Text, nullable=True)
 
     paciente = relationship("Cliente", back_populates="historia_limpieza")
-
-
-class PaqueteCliente(Base):
-    """Paquete (cuponera) de sesiones vendido a un paciente."""
-    __tablename__ = "paquetes_cliente"
-
-    id                 = Column(Integer, primary_key=True, index=True)
-    paciente_id        = Column(Integer, ForeignKey("clientes.id"), nullable=False)
-    nombre_paquete     = Column(String(150), nullable=False)
-    total_sesiones     = Column(Integer, nullable=False)
-    sesiones_restantes = Column(Integer, nullable=False)
-    precio_por_sesion  = Column(Float, nullable=False, default=0.0)   # precio promocional
-    servicio_id        = Column(Integer, nullable=True)                # paquete_spa.id opcional
-
-    paciente = relationship("Cliente", back_populates="paquetes")

@@ -247,18 +247,6 @@
                                     <div style="font-size: 0.85rem; color: #888;">Saldo Wallet</div>
                                     <div id="lbl-wallet" style="font-size: 1.3rem; font-weight: 700; color: #333;">$0.00
                                     </div>
-                                    <!-- Botones de acción wallet -->
-                                    <div
-                                        style="display:flex; gap:6px; justify-content:flex-end; margin-top:8px; flex-wrap:wrap;">
-                                        <button id="btn-vender-paquete"
-                                            style="background:linear-gradient(135deg,#15803d,#16a34a); color:#fff; border:none; border-radius:7px; padding:5px 11px; font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:transform 0.15s;"
-                                            onmouseover="this.style.transform='translateY(-1px)'"
-                                            onmouseout="this.style.transform=''">➕ Vender Paquete</button>
-                                        <button id="btn-abonar-wallet"
-                                            style="background:linear-gradient(135deg,#b45309,#d97706); color:#fff; border:none; border-radius:7px; padding:5px 11px; font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:transform 0.15s;"
-                                            onmouseover="this.style.transform='translateY(-1px)'"
-                                            onmouseout="this.style.transform=''">💵 Abonar Wallet</button>
-                                    </div>
                                 </div>
                                 <!-- Botón Editar Datos Básicos -->
                                 <div style="margin-top: 12px;">
@@ -318,14 +306,6 @@
                     </div>
 
                     <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
-
-                    <!-- ═══ PAQUETES ACTIVOS (Cuponera) ═══ -->
-                    <div id="paq-inventario" style="margin-bottom: 20px; display:none;">
-                        <div
-                            style="font-size:0.8rem; color:#64748b; font-weight:600; text-transform:uppercase; margin-bottom:10px; letter-spacing:.5px;">
-                            📦 Paquetes Activos</div>
-                        <div id="paq-list"></div>
-                    </div>
 
                     <!-- ═══ ESTADOS HISTORIA LIMPIEZA ═══ -->
 
@@ -812,7 +792,7 @@
     </div>
 
     <script src="JS/dialogs.js"></script>
-    <script src="JS/pacientes.js?v=14"></script>
+    <script src="JS/pacientes.js?v=13"></script>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- MODAL: HISTORIA DEPILACIÓN (Crear / Editar) -->
@@ -1155,66 +1135,6 @@
                     <button type="submit" class="btn-save" style="background: linear-gradient(135deg,#0369a1,#0ea5e9);">
                         💾 Guardar Cambios
                     </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- MODAL: VENDER PAQUETE (Cuponera) -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <div class="modal-overlay" id="modalVenderPaquete" style="z-index: 10003;">
-        <div class="modal-card" style="max-width: 500px;">
-            <div class="modal-header" style="background: linear-gradient(135deg,#15803d,#16a34a); padding: 18px 24px;">
-                <h2 style="color:#fff; margin:0; font-size:1.15rem;">📦 Vender Paquete / Cuponera</h2>
-                <button onclick="document.getElementById('modalVenderPaquete').classList.remove('active')"
-                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer;">✕</button>
-            </div>
-            <form id="formVenderPaquete" style="padding: 24px;">
-                <div class="form-grid">
-                    <div class="form-group full-width">
-                        <label>Nombre del Paquete</label>
-                        <input type="text" id="paq-nombre" placeholder="Ej: Paquete Depilación 4 Sesiones" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Total de Sesiones</label>
-                        <input type="number" id="paq-total" min="1" value="4" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Precio por Sesión ($)</label>
-                        <input type="number" id="paq-precio" step="0.01" min="0" value="8.00" required>
-                    </div>
-                </div>
-                <div class="modal-actions" style="margin-top: 20px;">
-                    <button type="button" class="btn-cancel"
-                        onclick="document.getElementById('modalVenderPaquete').classList.remove('active')">Cancelar</button>
-                    <button type="submit" class="btn-save"
-                        style="background:linear-gradient(135deg,#15803d,#16a34a);">💾 Guardar Paquete</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- MODAL: ABONAR A WALLET -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <div class="modal-overlay" id="modalAbonarWallet" style="z-index: 10003;">
-        <div class="modal-card" style="max-width: 400px;">
-            <div class="modal-header" style="background: linear-gradient(135deg,#b45309,#d97706); padding: 18px 24px;">
-                <h2 style="color:#fff; margin:0; font-size:1.15rem;">💵 Abonar a Wallet</h2>
-                <button onclick="document.getElementById('modalAbonarWallet').classList.remove('active')"
-                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer;">✕</button>
-            </div>
-            <form id="formAbonarWallet" style="padding: 24px;">
-                <div class="form-group">
-                    <label>Monto a Abonar ($)</label>
-                    <input type="number" id="wallet-monto" step="0.01" min="0.01" placeholder="0.00" required>
-                </div>
-                <div class="modal-actions" style="margin-top: 20px;">
-                    <button type="button" class="btn-cancel"
-                        onclick="document.getElementById('modalAbonarWallet').classList.remove('active')">Cancelar</button>
-                    <button type="submit" class="btn-save"
-                        style="background:linear-gradient(135deg,#b45309,#d97706);">💾 Abonar</button>
                 </div>
             </form>
         </div>
