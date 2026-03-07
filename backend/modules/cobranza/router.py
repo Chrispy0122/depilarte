@@ -266,8 +266,39 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             tasa_bcv=cobro_in.tasa_bcv     # Tasa BCV histórica del día
         )
         db.add(nuevo_cobro)
-        db.commit()
-        db.refresh(nuevo_cobro)
+        db.flush() # Ensure nuevo_cobro gets its ID here without committing
+        
+        # 2.1 MANTENER HISTORIAL GENERAL (Cita + Pago)
+        from backend.modules.agenda.models import Cita, EstadoCita
+        from backend.modules.cobranza.models import Pago
+        
+        # Flash appointment for History tracking
+        new_cita = Cita(
+            cliente_id=cobro_in.cliente_id,
+            fecha_hora_inicio=datetime.now(),
+            fecha_hora_fin=datetime.now() + timedelta(minutes=30),
+            estado=EstadoCita.CONFIRMADA
+        )
+        db.add(new_cita)
+        db.flush() # Ensure new_cita gets an ID
+        
+        if cash_for_service > 0:
+            pago_cash = Pago(
+                cita_id=new_cita.id,
+                monto=cash_for_service,
+                metodo=cobro_in.metodo_pago,
+                referencia=cobro_in.referencia
+            )
+            db.add(pago_cash)
+            
+        if wallet_used > 0:
+            pago_wallet = Pago(
+                cita_id=new_cita.id,
+                monto=wallet_used,
+                metodo="Monedero",
+                referencia="Uso de Saldo a Favor"
+            )
+            db.add(pago_wallet)
         
         # 2.5 Update Wallet Logic
         # DEDUCT used amount
@@ -368,6 +399,7 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
                 cliente.fecha_proxima_estimada = date.today() + timedelta(days=frec)
 
         db.commit()
+        db.refresh(nuevo_cobro)
         
         return {
             "mensaje": "Cobro registrado correctamente",
