@@ -9,6 +9,8 @@ class DetalleCobroCreate(BaseModel):
     precio_aplicado: float
     recepcionista_id: Optional[int] = None
     especialista_id: Optional[int] = None
+    tipo_cobro: str = "completo"  # 'completo' o 'fraccionado'
+    sesiones_totales: int = 1     # Usado al vender un paquete fraccionado o completo
 
 
 class CobroCreate(BaseModel):

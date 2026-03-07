@@ -284,6 +284,7 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
         
         # 3. Crear Detalles
         from backend.modules.servicios.models import PaqueteSpa
+        from backend.modules.pacientes.models import PaqueteCliente
         
         for item in cobro_in.items:
             # Get Service Name snapshot
@@ -316,6 +317,31 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             )
             db.add(detalle)
             
+            # --- CREATE PAQUETE_CLIENTE IF SOLD ---
+            if item.tipo_venta == 'paquete' or item.tipo_venta == 'Paquete':
+                # Si es un fraccionado, el costo total del paquete real es item.precio_aplicado * item.sesiones_totales
+                # Si es completo, el costo total es el precio_aplicado directamente y ya entra pagado.
+                costo_base = original_price if original_price else item.precio_aplicado * item.sesiones_totales
+                
+                # Por seguridad, si viene completo, el costo total es lo que pagó
+                if item.tipo_cobro == 'completo':
+                    costo_real = item.precio_aplicado
+                else: 
+                    # Es fraccionado, el costo_total pactado es [precio de esta cuota * total_sesiones] como proxy, o el original_price.  
+                    # Usaremos el original_price (paquete_4_sesiones en BD) si existe, o proxy.
+                    costo_real = original_price if original_price else (item.precio_aplicado * item.sesiones_totales)
+                
+                nuevo_paquete_cliente = PaqueteCliente(
+                    paciente_id=cobro_in.cliente_id,
+                    nombre_paquete=nombre_servicio,
+                    total_sesiones=item.sesiones_totales,
+                    sesiones_usadas=1,                   # Se usa la primera sesión el día de la compra 
+                    costo_total=costo_real,
+                    monto_pagado=item.precio_aplicado,   # Lo que pagó hoy (fracción o completo)
+                    activo=True if 1 < item.sesiones_totales else False
+                )
+                db.add(nuevo_paquete_cliente)
+
             # --- LOGIC PORT: INVENTORY CONSUMPTION ---
             # Consumir receta si existe (Inventory Logic)
             receta = inventario_services.obtener_receta_por_servicio(db, item.servicio_id)

@@ -199,7 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 serviceId: selectedService.id,
                 name: selectedService.nombre,
                 type: typeLabel,
-                price: finalPrice
+                price: finalPrice,
+                // --- Fractional Payment Fields ---
+                tipoCobro: 'completo',
+                paqueteTotalSesiones: selectedService.sesiones || 4, // Assuming default 4 if not specified
+                paqueteCostoTotal: selectedService.paquete_4_sesiones || finalPrice
             };
 
             cartItems.push(item);
@@ -255,10 +259,24 @@ function renderCart() {
             `;
         }
 
+        // --- FRACTIONAL PACKAGE DROPDOWN ---
+        let fracSelectorHTML = '';
+        if (item.type === 'Paquete' || item.type === 'package') {
+            fracSelectorHTML = `
+                <div style="margin-top: 6px;">
+                    <select class="cart-frac-select" data-index="${index}" style="padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8rem; background: #e0f2fe; color: #0284c7; font-weight: 600;">
+                        <option value="completo" ${item.tipoCobro === 'completo' ? 'selected' : ''}>Pagar Paquete Completo</option>
+                        <option value="fraccionado" ${item.tipoCobro === 'fraccionado' ? 'selected' : ''}>Pagar 1 Sesión</option>
+                    </select>
+                </div>
+            `;
+        }
+
         row.innerHTML = `
             <div style="flex: 1;">
                 <div style="font-weight: 600; color: #333;">${item.name}</div>
                 <div style="margin-top: 4px;">${typeSelectorHTML}</div>
+                ${fracSelectorHTML}
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="position: relative;">
@@ -297,11 +315,12 @@ function renderCart() {
             if (svc) {
                 if (newType === 'package') {
                     item.type = 'Paquete';
-                    item.price = svc.paquete_4_sesiones || 0;
+                    item.tipoCobro = 'completo'; // Reset to full package
+                    item.paqueteCostoTotal = svc.paquete_4_sesiones || 0;
+                    item.paqueteTotalSesiones = svc.sesiones || 4;
+                    item.price = item.paqueteCostoTotal;
                 } else if (newType === 'promotion') {
                     item.type = 'Promoción';
-                    // Keep current price or set to 0? User request "que no tenga precio si no que yo le ponga".
-                    // Better to keep at 0.
                     item.price = 0;
                 } else {
                     item.type = 'Sesión';
@@ -314,6 +333,26 @@ function renderCart() {
         });
     });
 
+    // 2.5 Fractional Change
+    document.querySelectorAll('.cart-frac-select').forEach(sel => {
+        sel.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            const newFrac = e.target.value; // 'completo' or 'fraccionado'
+            const item = cartItems[idx];
+
+            item.tipoCobro = newFrac;
+            if (newFrac === 'fraccionado') {
+                item.price = item.paqueteCostoTotal / item.paqueteTotalSesiones;
+            } else {
+                item.price = item.paqueteCostoTotal;
+            }
+            // Re-render
+            renderCart();
+            updateCalculations();
+        });
+    });
+
+
     // 3. Price Input Change
     document.querySelectorAll('.cart-price-input').forEach(inp => {
         inp.addEventListener('input', (e) => {
@@ -321,6 +360,14 @@ function renderCart() {
             const newPrice = parseFloat(e.target.value);
             if (!isNaN(newPrice) && newPrice >= 0) {
                 cartItems[idx].price = newPrice;
+                // If they manually edit the price of a package, update the base cost as well
+                if (cartItems[idx].type === 'Paquete' || cartItems[idx].type === 'package') {
+                    if (cartItems[idx].tipoCobro === 'completo') {
+                        cartItems[idx].paqueteCostoTotal = newPrice;
+                    } else {
+                        cartItems[idx].paqueteCostoTotal = newPrice * cartItems[idx].paqueteTotalSesiones;
+                    }
+                }
                 updateCalculations();
             }
         });
@@ -857,8 +904,9 @@ if (!btnProcessPayment) {
             return {
                 servicio_id: item.serviceId,
                 tipo_venta: tVenta,
-                precio_aplicado: item.price
-                // Auto-assign in backend
+                precio_aplicado: item.price,
+                tipo_cobro: item.tipoCobro || 'completo',
+                sesiones_totales: item.paqueteTotalSesiones || 1
             };
         });
 
