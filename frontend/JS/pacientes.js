@@ -590,6 +590,10 @@ function updateWalletChart(players, filterType) {
 
 // --- PROFILE MODAL LOGIC (RESTORED & ENHANCED) ---
 // --- PROFILE MODAL LOGIC (RESTORED & ENHANCED) ---
+// ── EDITAR DATOS BÁSICOS: module-level state ──────────────────────────────────
+let _currentPacienteId = null;
+let _currentPacienteData = null;
+
 window.openProfile = async function (id) {
     console.log("Intentando abrir perfil ID:", id);
 
@@ -607,6 +611,10 @@ window.openProfile = async function (id) {
         const response = await fetch(`${API_URL}/pacientes/${id}`);
         if (!response.ok) throw new Error("Error cargando ficha del paciente");
         const p = await response.json();
+
+        // Store current patient globally so the edit-modal can access it
+        _currentPacienteData = p;
+        _currentPacienteId = id;
 
         console.log("Datos del paciente recibidos:", p);
 
@@ -1238,6 +1246,124 @@ document.addEventListener('submit', async function (e) {
             dpToast('✅ Historia de Limpieza guardada', 'success');
             document.getElementById('modalHistoriaLimpieza').classList.remove('active');
             limpiezaRender(saved);
+        } catch (err) {
+            dpToast('Error: ' + err.message, 'error');
+        }
+    }
+});
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EDITAR DATOS BÁSICOS DEL PACIENTE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function editarDatosBasicosAbrir() {
+    const p = _currentPacienteData;
+    if (!p) return;
+
+    const personal = (p.historia_clinica && p.historia_clinica.personal) ? p.historia_clinica.personal : {};
+
+    // Pre-fill top-level fields
+    document.getElementById('edit-nombre_completo').value = p.nombre_completo || '';
+    document.getElementById('edit-cedula').value = p.cedula || '';
+    document.getElementById('edit-telefono').value = p.telefono || '';
+    document.getElementById('edit-email').value = p.email || '';
+
+    // Pre-fill personal sub-fields
+    document.getElementById('edit-direccion').value = personal.direccion || '';
+    document.getElementById('edit-fecha_nacimiento').value = personal.fecha_nacimiento || '';
+
+    const sexoEl = document.getElementById('edit-sexo');
+    if (sexoEl) sexoEl.value = personal.sexo || 'F';
+
+    const civilEl = document.getElementById('edit-estado_civil');
+    if (civilEl) civilEl.value = personal.estado_civil || 'Soltero';
+
+    document.getElementById('modalEditarPacienteBase').classList.add('active');
+}
+
+// Click delegation for the edit button (lives inside the profile modal DOM)
+document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'btn-editar-datos-basicos') editarDatosBasicosAbrir();
+});
+
+// Form submit — PUT /api/pacientes/{id}
+document.addEventListener('submit', async function (e) {
+    if (e.target && e.target.id === 'formEditarPacienteBase') {
+        e.preventDefault();
+        if (!_currentPacienteId || !_currentPacienteData) return;
+
+        // Build payload: top-level + personal inside historia_clinica
+        const personal = Object.assign(
+            {},
+            (_currentPacienteData.historia_clinica && _currentPacienteData.historia_clinica.personal)
+                ? _currentPacienteData.historia_clinica.personal
+                : {},
+            {
+                direccion: document.getElementById('edit-direccion').value || null,
+                fecha_nacimiento: document.getElementById('edit-fecha_nacimiento').value || null,
+                sexo: document.getElementById('edit-sexo').value || null,
+                estado_civil: document.getElementById('edit-estado_civil').value || null,
+            }
+        );
+
+        const nuevaHistoria = Object.assign(
+            {},
+            _currentPacienteData.historia_clinica || {},
+            { personal }
+        );
+
+        const payload = {
+            nombre_completo: document.getElementById('edit-nombre_completo').value,
+            cedula: document.getElementById('edit-cedula').value,
+            telefono: document.getElementById('edit-telefono').value || null,
+            email: document.getElementById('edit-email').value || null,
+            historia_clinica: nuevaHistoria,
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/pacientes/${_currentPacienteId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Error al guardar');
+            }
+
+            const saved = await res.json();
+
+            // Update module state
+            _currentPacienteData = Object.assign({}, _currentPacienteData, saved, { historia_clinica: nuevaHistoria });
+
+            // Update DOM labels without reloading
+            const historia = saved.numero_historia || _currentPacienteData.numero_historia;
+            const nombre = (saved.nombre_completo || '').trim() || 'Paciente';
+            document.getElementById('lbl-nombre').textContent = `${nombre} - Hist: ${historia}`;
+            document.getElementById('lbl-cedula').textContent = saved.cedula || '';
+            document.getElementById('lbl-telefono').textContent = saved.telefono || 'N/A';
+            document.getElementById('lbl-email').textContent = saved.email || 'N/A';
+
+            // Personal fields
+            document.getElementById('lbl-direccion').textContent = personal.direccion || 'No registrada';
+            let ageStr = '';
+            if (personal.fecha_nacimiento) {
+                const ag = calculateAge(personal.fecha_nacimiento);
+                ageStr = ` (${ag} años)`;
+            }
+            document.getElementById('lbl-nacimiento').textContent = (personal.fecha_nacimiento || '--/--/----') + ageStr;
+            const sexoLabel = personal.sexo === 'F' ? 'Femenino' : (personal.sexo === 'M' ? 'Masculino' : '-');
+            document.getElementById('lbl-sexo-civil').textContent = `${sexoLabel} | ${personal.estado_civil || '-'}`;
+
+            // Update the patient card in the main table too (if it exists)
+            const cardNombre = document.querySelector(`[data-id="${_currentPacienteId}"] .patient-name`);
+            if (cardNombre) cardNombre.textContent = nombre;
+
+            document.getElementById('modalEditarPacienteBase').classList.remove('active');
+            dpToast('✅ Datos del paciente actualizados', 'success');
+
         } catch (err) {
             dpToast('Error: ' + err.message, 'error');
         }

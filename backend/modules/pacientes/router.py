@@ -202,6 +202,60 @@ def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
     
     return cliente_dict
 
+
+@router.put("/{cliente_id}", response_model=schemas.Cliente)
+def actualizar_cliente(
+    cliente_id: int,
+    data: schemas.ClienteUpdate,
+    db: Session = Depends(get_db)
+):
+    """Actualiza los datos básicos del paciente (sin tocar historias clínicas relacionadas)."""
+    cliente = db.query(models.Cliente).filter(models.Cliente.id == cliente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+
+    # Validar cédula única si se está cambiando
+    if data.cedula and data.cedula != cliente.cedula:
+        if db.query(models.Cliente).filter(
+            models.Cliente.cedula == data.cedula,
+            models.Cliente.id != cliente_id
+        ).first():
+            raise HTTPException(status_code=409, detail="La cédula ya está registrada por otro paciente.")
+
+    # Aplicar solo los campos que vienen en el payload
+    update_data = data.dict(exclude_unset=True)
+    for field, val in update_data.items():
+        setattr(cliente, field, val)
+
+    db.commit()
+    db.refresh(cliente)
+
+    # Rebuild the response dict (same logic as GET /{cliente_id})
+    nombre_final = cliente.nombre_completo or "Paciente Sin Nombre"
+    try:
+        parts = nombre_final.strip().split(" ", 1)
+        nombre_atomico = parts[0]
+        apellido_atomico = parts[1] if len(parts) > 1 else ""
+    except Exception:
+        nombre_atomico = ""
+        apellido_atomico = ""
+
+    return {
+        "id": cliente.id,
+        "nombre_completo": nombre_final,
+        "nombre": nombre_atomico,
+        "apellido": apellido_atomico,
+        "cedula": cliente.cedula,
+        "numero_historia": cliente.numero_historia,
+        "telefono": cliente.telefono,
+        "email": cliente.email,
+        "saldo_wallet": cliente.saldo_wallet,
+        "fecha_proxima_estimada": cliente.fecha_proxima_estimada,
+        "historia_clinica": cliente.historia_clinica,
+        "historial_citas": [],
+    }
+
+
 @router.get("/{cliente_id}/historial", response_model=List[schemas.HistorialItem])
 def historial_cliente(cliente_id: int, db: Session = Depends(get_db)):
     # Import Cita model here to avoid circular imports if any, or assume it's available via models

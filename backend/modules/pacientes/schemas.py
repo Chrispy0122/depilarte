@@ -27,6 +27,14 @@ class ClienteBase(BaseModel):
 class ClienteCreate(ClienteBase):
     pass
 
+class ClienteUpdate(BaseModel):
+    """Solo campos básicos del paciente — no toca historias."""
+    nombre_completo:         Optional[str]  = None
+    cedula:                  Optional[str]  = None
+    telefono:                Optional[str]  = None
+    email:                   Optional[str]  = None
+    historia_clinica:        Optional[dict] = None   # para parchar datos personales internos
+
 class Cliente(ClienteBase):
     id: int
     nombre: Optional[str] = None

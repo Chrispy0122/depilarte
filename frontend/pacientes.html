@@ -248,6 +248,15 @@
                                     <div id="lbl-wallet" style="font-size: 1.3rem; font-weight: 700; color: #333;">$0.00
                                     </div>
                                 </div>
+                                <!-- Botón Editar Datos Básicos -->
+                                <div style="margin-top: 12px;">
+                                    <button id="btn-editar-datos-basicos"
+                                        style="background: linear-gradient(135deg,#0369a1,#0ea5e9); color:#fff; border:none; border-radius:8px; padding:7px 16px; font-size:0.85rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 8px rgba(3,105,161,0.25); transition:transform 0.15s;"
+                                        onmouseover="this.style.transform='translateY(-1px)'"
+                                        onmouseout="this.style.transform='translateY(0)'">
+                                        ✏️ Editar Datos
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -783,7 +792,7 @@
     </div>
 
     <script src="JS/dialogs.js"></script>
-    <script src="JS/pacientes.js?v=12"></script>
+    <script src="JS/pacientes.js?v=13"></script>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- MODAL: HISTORIA DEPILACIÓN (Crear / Editar) -->
@@ -1049,6 +1058,82 @@
                         onclick="document.getElementById('modalHistoriaLimpieza').classList.remove('active')">Cancelar</button>
                     <button type="submit" class="btn-save" style="background:linear-gradient(135deg,#15803d,#16a34a);">
                         💾 Guardar Historia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL: EDITAR DATOS BÁSICOS DEL PACIENTE -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalEditarPacienteBase" style="z-index: 10002;">
+        <div class="modal-card" style="max-width: 680px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #0369a1, #0ea5e9); padding: 18px 24px;">
+                <h2 style="color:#fff; margin:0; font-size:1.2rem;">✏️ Editar Datos del Paciente</h2>
+                <button onclick="document.getElementById('modalEditarPacienteBase').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer; line-height:1;">✕</button>
+            </div>
+
+            <form id="formEditarPacienteBase" style="padding: 24px;">
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="edit-nombre_completo" placeholder="Ej: María Pérez" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Cédula / DNI</label>
+                        <input type="text" id="edit-cedula" placeholder="Ej: V-12345678" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="edit-telefono" placeholder="Ej: 0414-1234567">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="edit-email" placeholder="cliente@email.com">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Dirección</label>
+                        <input type="text" id="edit-direccion" placeholder="Ej: Av. Principal, Edif. A">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fecha de Nacimiento</label>
+                        <input type="date" id="edit-fecha_nacimiento">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sexo</label>
+                        <select id="edit-sexo" class="custom-select">
+                            <option value="F">Femenino</option>
+                            <option value="M">Masculino</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Estado Civil</label>
+                        <select id="edit-estado_civil" class="custom-select">
+                            <option value="Soltero">Soltero/a</option>
+                            <option value="Casado">Casado/a</option>
+                            <option value="Divorciado">Divorciado/a</option>
+                            <option value="Viudo">Viudo/a</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn-cancel"
+                        onclick="document.getElementById('modalEditarPacienteBase').classList.remove('active')">Cancelar</button>
+                    <button type="submit" class="btn-save" style="background: linear-gradient(135deg,#0369a1,#0ea5e9);">
+                        💾 Guardar Cambios
                     </button>
                 </div>
             </form>
