@@ -22,6 +22,9 @@ class Cliente(Base):
     # Relación one-to-one con Historia Depilación
     historia_depilacion = relationship("HistoriaDepilacion", back_populates="paciente", uselist=False)
 
+    # Relación one-to-one con Historia Limpieza
+    historia_limpieza = relationship("HistoriaLimpieza", back_populates="paciente", uselist=False)
+
 
 class HistoriaDepilacion(Base):
     """Historia Clínica de Depilación — corresponde a la planilla física Depilarte."""
@@ -71,3 +74,41 @@ class HistoriaDepilacion(Base):
 
     paciente = relationship("Cliente", back_populates="historia_depilacion")
 
+
+class HistoriaLimpieza(Base):
+    """Historia Clínica de Limpieza Facial — corresponde a la planilla facial Depilarte."""
+    __tablename__ = "historias_limpieza"
+
+    id = Column(Integer, primary_key=True, index=True)
+    paciente_id = Column(Integer, ForeignKey("clientes.id"), unique=True, nullable=False)
+
+    # ── Bloque: Estilo de Vida ─────────────────────────────────────────────────
+    fuma                = Column(Boolean, default=False)
+    alcohol             = Column(Boolean, default=False)
+    comida_chatarra     = Column(Boolean, default=False)
+    agua_diaria         = Column(String(50), nullable=True)
+    horas_sueno         = Column(String(20), nullable=True)
+    actividad_fisica    = Column(String(100), nullable=True)
+
+    # ── Bloque: Antecedentes Médicos Faciales ──────────────────────────────────
+    diabetes            = Column(Boolean, default=False)
+    hipertension        = Column(Boolean, default=False)
+    alergias            = Column(Boolean, default=False)
+    ovarios_poliquisticos = Column(Boolean, default=False)
+    hormonas            = Column(Boolean, default=False)
+    anticonceptivos     = Column(Boolean, default=False)
+    biopolimeros        = Column(Boolean, default=False)
+    implantes           = Column(Boolean, default=False)
+    botox               = Column(Boolean, default=False)
+    acido_hialuronico   = Column(Boolean, default=False)
+
+    # ── Bloque: Diagnóstico Facial ─────────────────────────────────────────────
+    biotipo_cutaneo     = Column(String(50), nullable=True)
+    fototipo            = Column(String(20), nullable=True)
+    pat_acne            = Column(Boolean, default=False)
+    pat_melasma         = Column(Boolean, default=False)
+    pat_rosacea         = Column(Boolean, default=False)
+    pat_cicatrices      = Column(Boolean, default=False)
+    observaciones       = Column(Text, nullable=True)
+
+    paciente = relationship("Cliente", back_populates="historia_limpieza")

@@ -298,94 +298,89 @@
 
                     <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
 
-                    <!-- 2. MEDICAL & LIFESTYLE DATA -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px;">
+                    <!-- ═══ ESTADOS HISTORIA LIMPIEZA ═══ -->
 
-                        <!-- Left: Lifestyle & Habits -->
-                        <div>
-                            <h3
-                                style="font-size: 1rem; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid #f0f9ff; padding-bottom: 8px;">
-                                🏃 Estilo de Vida
-                            </h3>
-                            <div class="profile-data-list">
-                                <div class="p-data-item"><span class="label">Profesión:</span> <span class="value"
-                                        id="lbl-profesion">...</span></div>
-                                <div class="p-data-item"><span class="label">Hijos:</span> <span class="value"
-                                        id="lbl-hijos">...</span></div>
-                                <div class="p-data-item"><span class="label">Fuma:</span> <span class="value"
-                                        id="lbl-fuma">...</span></div>
-                                <div class="p-data-item"><span class="label">Alcohol:</span> <span class="value"
-                                        id="lbl-alcohol">...</span></div>
-                                <div class="p-data-item"><span class="label">Comida Chatarra:</span> <span class="value"
-                                        id="lbl-chatarra">...</span></div>
-                                <div class="p-data-item"><span class="label">Agua Diaria:</span> <span class="value"
-                                        id="lbl-agua">...</span></div>
-                                <div class="p-data-item"><span class="label">Sueño:</span> <span class="value"
-                                        id="lbl-sueno">...</span></div>
-                                <div class="p-data-item"><span class="label">Actividad Física:</span> <span
-                                        class="value" id="lbl-actividad">...</span></div>
-                            </div>
-                        </div>
-
-                        <!-- Right: Medical Antecedents -->
-                        <div>
-                            <h3
-                                style="font-size: 1rem; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid #f0f9ff; padding-bottom: 8px;">
-                                ⚕️ Antecedentes Médicos
-                            </h3>
-                            <div class="profile-data-list">
-                                <div class="p-data-item"><span class="label">Diabetes (Fam):</span> <span class="value"
-                                        id="lbl-diabetes">...</span></div>
-                                <div class="p-data-item"><span class="label">Hipertensión (Fam):</span> <span
-                                        class="value" id="lbl-hipertension">...</span></div>
-                                <div class="p-data-item"><span class="label">Alergias:</span> <span class="value"
-                                        id="lbl-alergias">...</span></div>
-                                <div class="p-data-item"><span class="label">Ovarios Poliq.:</span> <span class="value"
-                                        id="lbl-ovarios">...</span></div>
-                                <div class="p-data-item"><span class="label">Hormonales:</span> <span class="value"
-                                        id="lbl-hormonas">...</span></div>
-                                <div class="p-data-item"><span class="label">Anticonceptivos:</span> <span class="value"
-                                        id="lbl-anticonceptivos">...</span></div>
-                            </div>
-
-                            <h3
-                                style="font-size: 1rem; color: #ef4444; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px solid #fee2e2; padding-bottom: 8px;">
-                                ⚠️ Estéticos Previos
-                            </h3>
-                            <div class="profile-data-list">
-                                <div class="p-data-item"><span class="label">Biopolímeros:</span> <span class="value"
-                                        id="lbl-biopolimeros" style="font-weight:bold;">...</span></div>
-                                <div class="p-data-item"><span class="label">Implantes:</span> <span class="value"
-                                        id="lbl-implantes">...</span></div>
-                                <div class="p-data-item"><span class="label">Botox:</span> <span class="value"
-                                        id="lbl-botox">...</span></div>
-                                <div class="p-data-item"><span class="label">Hialurónico:</span> <span class="value"
-                                        id="lbl-hialuronico">...</span></div>
-                            </div>
-                        </div>
+                    <!-- Estado: cargando -->
+                    <div id="limp-cargando" style="text-align:center; padding: 40px; color:#94a3b8;">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;"></i>
+                        <p style="margin-top:10px;">Cargando historia de limpieza...</p>
                     </div>
 
-                    <!-- 3. DIAGNOSIS -->
-                    <div
-                        style="background: #fdf2f8; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #fbcfe8;">
-                        <h3 style="font-size: 1.1rem; color: #be185d; margin-bottom: 15px;">🔍 Diagnóstico de Piel</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div class="p-data-item"><span class="label">Biotipo Cutáneo:</span> <span class="value"
-                                    id="lbl-biotipo" style="font-weight:bold;">...</span></div>
-                            <div class="p-data-item"><span class="label">Fototipo:</span> <span class="value"
-                                    id="lbl-fototipo" style="font-weight:bold;">...</span></div>
+                    <!-- Estado: SIN historia -->
+                    <div id="limp-vacio" style="display:none; text-align:center; padding: 50px 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">🌿</div>
+                        <h3 style="color: #15803d; margin-bottom: 8px;">Sin Historia de Limpieza Facial</h3>
+                        <p style="color: #94a3b8; margin-bottom: 25px; font-size: 0.95rem;">
+                            Este paciente aún no tiene su historia clínica facial registrada.
+                        </p>
+                        <button id="btn-limp-agregar"
+                            style="background: linear-gradient(135deg,#15803d,#16a34a); color:#fff; border:none; border-radius:12px; padding:14px 32px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow: 0 4px 15px rgba(21,128,61,0.3); transition: transform 0.2s;"
+                            onmouseover="this.style.transform='translateY(-2px)'"
+                            onmouseout="this.style.transform='translateY(0)'">
+                            ➕ Crear Historia de Limpieza
+                        </button>
+                    </div>
+
+                    <!-- Estado: CON historia (resumen) -->
+                    <div id="limp-resumen" style="display:none;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                            <h3 style="margin:0; color:#15803d; font-size:1.1rem;">🌿 Historia Clínica de Limpieza
+                                Facial</h3>
+                            <button id="btn-limp-editar"
+                                style="background:#15803d; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:0.9rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                ✏️ Editar Historia de Limpieza
+                            </button>
                         </div>
-                        <div style="margin-top: 15px;">
-                            <span class="label" style="display:block; margin-bottom:5px;">Patologías Visibles:</span>
-                            <div id="lbl-patologias" style="display:flex; gap:10px; flex-wrap:wrap;">
-                                <!-- Badges rendered by JS -->
+
+                        <!-- Estilo de Vida -->
+                        <div
+                            style="margin-bottom:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#15803d; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                🏃 Estilo de Vida</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                <div class="p-data-item"><span class="label">Fuma:</span> <span class="value"
+                                        id="limp-fuma">-</span></div>
+                                <div class="p-data-item"><span class="label">Alcohol:</span> <span class="value"
+                                        id="limp-alcohol">-</span></div>
+                                <div class="p-data-item"><span class="label">Comida Chatarra:</span> <span class="value"
+                                        id="limp-chatarra">-</span></div>
+                                <div class="p-data-item"><span class="label">Agua Diaria:</span> <span class="value"
+                                        id="limp-agua">-</span></div>
+                                <div class="p-data-item"><span class="label">Horas Sueño:</span> <span class="value"
+                                        id="limp-sueno">-</span></div>
+                                <div class="p-data-item"><span class="label">Actividad Física:</span> <span
+                                        class="value" id="limp-actividad">-</span></div>
                             </div>
                         </div>
-                        <div style="margin-top: 15px;">
-                            <span class="label" style="display:block; margin-bottom:5px;">Observaciones:</span>
-                            <p id="lbl-observaciones"
-                                style="background:#fff; padding:10px; border-radius:8px; font-style:italic; border:1px solid #ddd;">
-                                ...</p>
+
+                        <!-- Antecedentes -->
+                        <div
+                            style="margin-bottom:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#15803d; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                ⚕️ Antecedentes Médicos</h4>
+                            <div id="limp-antecedentes-badges" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                        </div>
+
+                        <!-- Diagnóstico Facial -->
+                        <div style="background:#fdf2f8; border:1px solid #fbcfe8; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#be185d; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                🔍 Diagnóstico Facial</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                                <div class="p-data-item"><span class="label">Biotipo Cutáneo:</span> <span class="value"
+                                        id="limp-biotipo">-</span></div>
+                                <div class="p-data-item"><span class="label">Fototipo:</span> <span class="value"
+                                        id="limp-fototipo">-</span></div>
+                            </div>
+                            <div id="limp-patologias-badges"
+                                style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;"></div>
+                            <div class="p-data-item" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                                <span class="label">Observaciones:</span>
+                                <span id="limp-observaciones" style="font-style:italic; color:#555;">-</span>
+                            </div>
                         </div>
                     </div>
 
@@ -788,7 +783,7 @@
     </div>
 
     <script src="JS/dialogs.js"></script>
-    <script src="JS/pacientes.js?v=11"></script>
+    <script src="JS/pacientes.js?v=12"></script>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- MODAL: HISTORIA DEPILACIÓN (Crear / Editar) -->
@@ -942,6 +937,121 @@
                 </button>
 
             </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL: HISTORIA LIMPIEZA (Crear / Editar) -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalHistoriaLimpieza" style="z-index: 9999;">
+        <div class="modal-card" style="max-width: 780px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #15803d, #16a34a); padding: 18px 24px;">
+                <h2 style="color:#fff; margin:0; font-size:1.2rem;" id="limp-modal-titulo">🌿 Historia de Limpieza
+                    Facial</h2>
+                <button onclick="document.getElementById('modalHistoriaLimpieza').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer; line-height:1;">✕</button>
+            </div>
+
+            <form id="formHistoriaLimpieza" style="padding: 22px; max-height: 76vh; overflow-y: auto;">
+
+                <!-- ── Estilo de Vida ── -->
+                <h4
+                    style="color:#15803d; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #bbf7d0; padding-bottom:6px;">
+                    🏃 1. Estilo de Vida
+                </h4>
+                <div
+                    style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; background:#f0fdf4; padding:14px; border-radius:10px; margin-bottom:12px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="limp-fuma"> Fuma</label>
+                    <label><input type="checkbox" name="limp-alcohol"> Alcohol</label>
+                    <label><input type="checkbox" name="limp-comida_chatarra"> Comida Chatarra</label>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:18px;">
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Agua Diaria</label>
+                        <input type="text" name="limp-agua_diaria" placeholder="Ej: 2 Litros">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Horas de Sueño</label>
+                        <input type="text" name="limp-horas_sueno" placeholder="Ej: 7">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Actividad Física</label>
+                        <input type="text" name="limp-actividad_fisica" placeholder="Ej: Gym, caminata">
+                    </div>
+                </div>
+
+                <!-- ── Antecedentes Médicos ── -->
+                <h4
+                    style="color:#15803d; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #bbf7d0; padding-bottom:6px;">
+                    ⚕️ 2. Antecedentes Médicos
+                </h4>
+                <div
+                    style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; background:#f0fdf4; padding:14px; border-radius:10px; margin-bottom:18px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="limp-diabetes"> Diabetes (Fam)</label>
+                    <label><input type="checkbox" name="limp-hipertension"> Hipertensión (Fam)</label>
+                    <label><input type="checkbox" name="limp-alergias"> Alergias</label>
+                    <label><input type="checkbox" name="limp-ovarios_poliquisticos"> Ovarios Poliquísticos</label>
+                    <label><input type="checkbox" name="limp-hormonas"> Prob. Hormonales</label>
+                    <label><input type="checkbox" name="limp-anticonceptivos"> Anticonceptivos</label>
+                    <label><input type="checkbox" name="limp-biopolimeros" style="accent-color:#ef4444;"> ⚠️
+                        Biopolímeros</label>
+                    <label><input type="checkbox" name="limp-implantes"> Implantes Metálicos</label>
+                    <label><input type="checkbox" name="limp-botox"> Botox Previo</label>
+                    <label><input type="checkbox" name="limp-acido_hialuronico"> Ác. Hialurónico</label>
+                </div>
+
+                <!-- ── Diagnóstico Facial ── -->
+                <h4
+                    style="color:#15803d; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #bbf7d0; padding-bottom:6px;">
+                    🔍 3. Diagnóstico Facial
+                </h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Biotipo Cutáneo</label>
+                        <select name="limp-biotipo_cutaneo" class="custom-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Seca">Piel Seca</option>
+                            <option value="Grasa">Piel Grasa</option>
+                            <option value="Mixta">Piel Mixta</option>
+                            <option value="Sensible">Piel Sensible</option>
+                            <option value="Acneica">Piel Acneica</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Fototipo (Fitzpatrick)</label>
+                        <select name="limp-fototipo" class="custom-select">
+                            <option value="">Seleccione...</option>
+                            <option value="I">I (Muy Blanca)</option>
+                            <option value="II">II (Blanca)</option>
+                            <option value="III">III (Trigueña)</option>
+                            <option value="IV">IV (Morena Clara)</option>
+                            <option value="V">V (Morena Oscura)</option>
+                            <option value="VI">VI (Negra)</option>
+                        </select>
+                    </div>
+                </div>
+                <div
+                    style="display:grid; grid-template-columns:repeat(4,1fr); gap:9px; background:#f0fdf4; padding:14px; border-radius:10px; margin-bottom:12px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="limp-pat_acne"> Acné Activo</label>
+                    <label><input type="checkbox" name="limp-pat_melasma"> Melasma</label>
+                    <label><input type="checkbox" name="limp-pat_rosacea"> Rosácea</label>
+                    <label><input type="checkbox" name="limp-pat_cicatrices"> Cicatrices</label>
+                </div>
+                <div class="form-group" style="margin:0 0 18px;">
+                    <label style="font-size:0.85rem; font-weight:600;">Observaciones Adicionales</label>
+                    <textarea name="limp-observaciones" rows="3"
+                        style="width:100%; border:2px solid #F0F0F0; border-radius:12px; padding:10px;"></textarea>
+                </div>
+
+                <div class="modal-actions" style="margin-top:20px;">
+                    <button type="button" class="btn-cancel"
+                        onclick="document.getElementById('modalHistoriaLimpieza').classList.remove('active')">Cancelar</button>
+                    <button type="submit" class="btn-save" style="background:linear-gradient(135deg,#15803d,#16a34a);">
+                        💾 Guardar Historia
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

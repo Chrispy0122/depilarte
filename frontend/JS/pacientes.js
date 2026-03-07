@@ -807,6 +807,8 @@ window.openProfile = async function (id) {
 
         // ── Historia Depilación: load after main profile data ──
         await depilacionLoad(id);
+        // ── Historia Limpieza: load after main profile data ──
+        await limpiezaLoad(id);
 
     } catch (e) {
         console.error("Error cargando perfil:", e);
@@ -1030,6 +1032,212 @@ document.addEventListener('submit', async function (e) {
             dpToast('✅ Historia de Depilación guardada', 'success');
             document.getElementById('modalHistoriaDepilacion').classList.remove('active');
             depilacionRender(saved);
+        } catch (err) {
+            dpToast('Error: ' + err.message, 'error');
+        }
+    }
+});
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HISTORIA LIMPIEZA MODULE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _limpPacienteId = null; // ID del paciente activo en el perfil
+let _limpExiste = false;    // true → ya tiene historia (usar PUT), false → usar POST
+
+// ── Antecedentes badge map ──────────────────────────────────────────────────────────────────────
+const LIMP_ANTECEDENTES = {
+    diabetes: 'Diabetes (Fam)', hipertension: 'Hipertensión (Fam)', alergias: 'Alergias',
+    ovarios_poliquisticos: 'Ovarios Poliq.', hormonas: 'Prob. Hormonales',
+    anticonceptivos: 'Anticonceptivos', biopolimeros: '⚠️ Biopolímeros',
+    implantes: 'Implantes', botox: 'Botox', acido_hialuronico: 'Ác. Hialurónico'
+};
+const LIMP_PATOLOGIAS = {
+    pat_acne: 'Acné Activo', pat_melasma: 'Melasma',
+    pat_rosacea: 'Rosácea', pat_cicatrices: 'Cicatrices'
+};
+
+function _limpBuildBadges(data, map, containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const active = Object.keys(map).filter(k => data[k]);
+    if (active.length === 0) {
+        el.innerHTML = '<span style="color:#aaa;font-size:0.85rem;">Ninguno registrado</span>';
+        return;
+    }
+    el.innerHTML = active.map(k => {
+        const isWarn = k === 'biopolimeros';
+        return `<span style="background:${isWarn ? '#fee2e2' : '#dcfce7'};color:${isWarn ? '#dc2626' : '#15803d'};padding:3px 10px;border-radius:20px;font-size:0.8rem;font-weight:600;">${map[k]}</span>`;
+    }).join('');
+}
+
+function _limpSetVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val || '-';
+}
+
+// ── Render summary view ────────────────────────────────────────────────────────────────────────────
+function limpiezaRender(data) {
+    document.getElementById('limp-cargando').style.display = 'none';
+
+    if (!data) {
+        document.getElementById('limp-vacio').style.display = 'block';
+        document.getElementById('limp-resumen').style.display = 'none';
+        _limpExiste = false;
+        return;
+    }
+
+    _limpExiste = true;
+    document.getElementById('limp-vacio').style.display = 'none';
+    document.getElementById('limp-resumen').style.display = 'block';
+
+    // Estilo de vida
+    _limpSetVal('limp-fuma', data.fuma ? 'Sí' : 'No');
+    _limpSetVal('limp-alcohol', data.alcohol ? 'Sí' : 'No');
+    _limpSetVal('limp-chatarra', data.comida_chatarra ? 'Sí' : 'No');
+    _limpSetVal('limp-agua', data.agua_diaria);
+    _limpSetVal('limp-sueno', data.horas_sueno ? `${data.horas_sueno}h` : '-');
+    _limpSetVal('limp-actividad', data.actividad_fisica);
+
+    // Antecedentes badges
+    _limpBuildBadges(data, LIMP_ANTECEDENTES, 'limp-antecedentes-badges');
+
+    // Diagnóstico
+    _limpSetVal('limp-biotipo', data.biotipo_cutaneo);
+    _limpSetVal('limp-fototipo', data.fototipo);
+    _limpBuildBadges(data, LIMP_PATOLOGIAS, 'limp-patologias-badges');
+    _limpSetVal('limp-observaciones', data.observaciones);
+}
+
+// ── Load (called by openProfile) ────────────────────────────────────────────────────────────────────────────
+async function limpiezaLoad(pacienteId) {
+    _limpPacienteId = pacienteId;
+
+    // Reset states
+    document.getElementById('limp-cargando').style.display = 'block';
+    document.getElementById('limp-vacio').style.display = 'none';
+    document.getElementById('limp-resumen').style.display = 'none';
+
+    try {
+        const res = await fetch(`${API_URL}/pacientes/${pacienteId}/historia-limpieza`);
+        if (res.status === 404) {
+            limpiezaRender(null);
+        } else if (res.ok) {
+            limpiezaRender(await res.json());
+        } else {
+            limpiezaRender(null);
+        }
+    } catch (err) {
+        console.warn('Error cargando historia limpieza:', err);
+        limpiezaRender(null);
+    }
+}
+
+// ── Open modal (shared for Agregar + Editar) ────────────────────────────────────────────────────────
+async function limpiezaAbrirModal() {
+    const modal = document.getElementById('modalHistoriaLimpieza');
+    const form = document.getElementById('formHistoriaLimpieza');
+    if (!modal || !form) return;
+    form.reset();
+
+    document.getElementById('limp-modal-titulo').textContent =
+        _limpExiste ? '✏️ Editar Historia de Limpieza Facial' : '➕ Nueva Historia de Limpieza Facial';
+
+    if (_limpExiste && _limpPacienteId) {
+        try {
+            const res = await fetch(`${API_URL}/pacientes/${_limpPacienteId}/historia-limpieza`);
+            if (res.ok) {
+                const d = await res.json();
+
+                // Pre-fill checkboxes
+                const LIMP_ALL = {
+                    ...LIMP_ANTECEDENTES, ...LIMP_PATOLOGIAS,
+                    fuma: 'Fuma', alcohol: 'Alcohol', comida_chatarra: 'Comida Chatarra'
+                };
+                Object.keys(LIMP_ALL).forEach(key => {
+                    const el = form.querySelector(`[name="limp-${key}"]`);
+                    if (el && el.type === 'checkbox') el.checked = !!d[key];
+                });
+
+                // Pre-fill selects
+                const setSelect = (name, val) => {
+                    const el = form.querySelector(`[name="limp-${name}"]`);
+                    if (el && val) el.value = val;
+                };
+                setSelect('biotipo_cutaneo', d.biotipo_cutaneo);
+                setSelect('fototipo', d.fototipo);
+
+                // Pre-fill text inputs
+                ['agua_diaria', 'horas_sueno', 'actividad_fisica', 'observaciones'].forEach(f => {
+                    const el = form.querySelector(`[name="limp-${f}"]`);
+                    if (el && d[f]) el.value = d[f];
+                });
+            }
+        } catch (err) { console.warn('Pre-fill limp error:', err); }
+    }
+
+    modal.classList.add('active');
+}
+
+// Button listeners (event delegation)
+document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'btn-limp-agregar') limpiezaAbrirModal();
+    if (e.target && e.target.id === 'btn-limp-editar') limpiezaAbrirModal();
+});
+
+// ── Form submit (POST or PUT) ────────────────────────────────────────────────────────────────────────────
+document.addEventListener('submit', async function (e) {
+    if (e.target && e.target.id === 'formHistoriaLimpieza') {
+        e.preventDefault();
+        if (!_limpPacienteId) return;
+
+        const formLimp = e.target;
+        const getCheck = name => !!formLimp.querySelector(`[name="limp-${name}"]`)?.checked;
+        const getVal = name => formLimp.querySelector(`[name="limp-${name}"]`)?.value || null;
+
+        const payload = {
+            // Estilo de vida
+            fuma: getCheck('fuma'),
+            alcohol: getCheck('alcohol'),
+            comida_chatarra: getCheck('comida_chatarra'),
+            agua_diaria: getVal('agua_diaria'),
+            horas_sueno: getVal('horas_sueno'),
+            actividad_fisica: getVal('actividad_fisica'),
+            // Antecedentes
+            diabetes: getCheck('diabetes'),
+            hipertension: getCheck('hipertension'),
+            alergias: getCheck('alergias'),
+            ovarios_poliquisticos: getCheck('ovarios_poliquisticos'),
+            hormonas: getCheck('hormonas'),
+            anticonceptivos: getCheck('anticonceptivos'),
+            biopolimeros: getCheck('biopolimeros'),
+            implantes: getCheck('implantes'),
+            botox: getCheck('botox'),
+            acido_hialuronico: getCheck('acido_hialuronico'),
+            // Diagnóstico facial
+            biotipo_cutaneo: getVal('biotipo_cutaneo'),
+            fototipo: getVal('fototipo'),
+            pat_acne: getCheck('pat_acne'),
+            pat_melasma: getCheck('pat_melasma'),
+            pat_rosacea: getCheck('pat_rosacea'),
+            pat_cicatrices: getCheck('pat_cicatrices'),
+            observaciones: getVal('observaciones'),
+        };
+
+        const method = _limpExiste ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(`${API_URL}/pacientes/${_limpPacienteId}/historia-limpieza`, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error((await res.json()).detail || 'Error al guardar');
+            const saved = await res.json();
+            dpToast('✅ Historia de Limpieza guardada', 'success');
+            document.getElementById('modalHistoriaLimpieza').classList.remove('active');
+            limpiezaRender(saved);
         } catch (err) {
             dpToast('Error: ' + err.message, 'error');
         }

@@ -245,13 +245,13 @@ async function saveProduct() {
             closeProductModal();
             fetchInventory();
             fetchDashboardKPIs();
-            alert("Producto guardado correctamente");
+            dpToast("Producto guardado correctamente", 'success');
         } else {
-            alert("Error guardando producto");
+            dpToast("Error guardando producto", 'error');
         }
     } catch (e) {
         console.error(e);
-        alert("Error de conexión");
+        dpToast("Error de conexión", 'error');
     }
 }
 
@@ -402,13 +402,13 @@ function addIngredient() {
     const qty = parseFloat(qtyInput.value);
 
     if (!prodId || !qty) {
-        alert("Selecciona producto y cantidad valída.");
+        dpToast("Selecciona producto y cantidad válida.", 'warning');
         return;
     }
 
     // Check duplicate
     if (currentRecipeIngredients.some(i => i.producto_id === prodId)) {
-        alert("Este producto ya está en la receta.");
+        dpToast("Este producto ya está en la receta.", 'warning');
         return;
     }
 
@@ -435,7 +435,7 @@ window.removeIngredient = function (index) {
 async function saveRecipe() {
     const serviceId = document.getElementById('recipeService').value;
     if (!serviceId) {
-        alert("Selecciona un servicio.");
+        dpToast("Selecciona un servicio.", 'warning');
         return;
     }
 
@@ -457,13 +457,13 @@ async function saveRecipe() {
         });
 
         if (res.ok) {
-            alert("Receta guardada correctamente.");
+            dpToast("Receta guardada correctamente.", 'success');
             closeRecipeModal();
         } else {
-            alert("Error guardando receta.");
+            dpToast("Error guardando receta.", 'error');
         }
     } catch (e) {
         console.error(e);
-        alert("Error de conexión");
+        dpToast("Error de conexión", 'error');
     }
 }

@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnAddService) {
         btnAddService.addEventListener('click', () => {
             if (!selectedService) {
-                alert("Selecciona un servicio primero.");
+                dpToast("Selecciona un servicio primero.", 'warning');
                 return;
             }
 
@@ -789,15 +789,15 @@ if (!btnProcessPayment) {
         const clienteId = select ? parseInt(select.value) : null;
 
         if (!clienteId) {
-            alert("Seleccione un paciente.");
+            dpToast("Seleccione un paciente.", 'warning');
             return;
         }
         if (cartItems.length === 0) {
-            alert("Agrega al menos un servicio.");
+            dpToast("Agrega al menos un servicio.", 'warning');
             return;
         }
         if (!inpFechaProxima.value) {
-            alert("Fecha próxima requerida.");
+            dpToast("Fecha próxima requerida.", 'warning');
             return;
         }
 
@@ -856,16 +856,16 @@ if (!btnProcessPayment) {
 
             if (r.ok) {
                 const data = await r.json();
-                alert(`Cobro Exitoso! (ID: ${data.cobro_id || 'OK'})`);
+                dpToast(`¡Cobro exitoso! (ID: ${data.cobro_id || 'OK'})`, 'success');
                 closeModal();
-                fetchCajaHoy(); // Refresh daily cash table correctly
+                fetchCajaHoy();
             } else {
                 const err = await r.json();
-                alert("Error: " + (err.detail || "Error desconocido"));
+                dpToast("Error: " + (err.detail || "Error desconocido"), 'error');
             }
         } catch (e) {
             console.error(e);
-            alert("Error de conexión");
+            dpToast("Error de conexión", 'error');
         } finally {
             btnProcessPayment.disabled = false;
             btnProcessPayment.innerHTML = 'Confirmar y Procesar <i class="fa-solid fa-arrow-right"></i>';
@@ -962,7 +962,7 @@ async function fetchCajaHoy() {
     } catch (e) {
         console.error(e);
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error cargando caja.</td></tr>';
-        alert("Error cargando Caja de Hoy: " + e.message);
+        dpToast("Error cargando Caja de Hoy: " + e.message, 'error');
     }
 }
 
@@ -973,7 +973,7 @@ function exportToExcel() {
 
     // Validate
     if (!fecha) {
-        alert("Selecciona una fecha válida.");
+        dpToast("Selecciona una fecha válida.", 'warning');
         return;
     }
 
@@ -1006,7 +1006,7 @@ function exportToExcel() {
 
     } catch (e) {
         console.error(e);
-        alert("Error exportando: " + e.message);
+        dpToast("Error exportando: " + e.message, 'error');
     }
 }
 
@@ -1017,7 +1017,7 @@ window.fetchNomina = async function () {
     const tbody = document.getElementById('nominaBody');
 
     if (!start || !end) {
-        alert("Seleccione rango de fechas complete.");
+        dpToast("Seleccione rango de fechas completo.", 'warning');
         return;
     }
 
@@ -1051,13 +1051,13 @@ window.fetchNomina = async function () {
             });
         } else {
             const err = await res.json();
-            alert(err.detail || "Error en reporte");
+            dpToast(err.detail || "Error en reporte", 'error');
             tbody.innerHTML = '';
         }
     } catch (e) {
         console.error(e);
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Error de conexión.</td></tr>';
-        alert("Error cargando Nómina: " + e.message);
+        dpToast("Error cargando Nómina: " + e.message, 'error');
     }
 }
 

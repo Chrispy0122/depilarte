@@ -106,3 +106,47 @@ class HistoriaDepilacion(HistoriaDepilacionBase):
     class Config:
         from_attributes = True
 
+
+# ── Historia Limpieza ─────────────────────────────────────────────────────────
+
+class HistoriaLimpiezaBase(BaseModel):
+    # Estilo de vida
+    fuma:                   Optional[bool] = False
+    alcohol:                Optional[bool] = False
+    comida_chatarra:        Optional[bool] = False
+    agua_diaria:            Optional[str]  = None
+    horas_sueno:            Optional[str]  = None
+    actividad_fisica:       Optional[str]  = None
+
+    # Antecedentes médicos faciales
+    diabetes:               Optional[bool] = False
+    hipertension:           Optional[bool] = False
+    alergias:               Optional[bool] = False
+    ovarios_poliquisticos:  Optional[bool] = False
+    hormonas:               Optional[bool] = False
+    anticonceptivos:        Optional[bool] = False
+    biopolimeros:           Optional[bool] = False
+    implantes:              Optional[bool] = False
+    botox:                  Optional[bool] = False
+    acido_hialuronico:      Optional[bool] = False
+
+    # Diagnóstico facial
+    biotipo_cutaneo:        Optional[str]  = None
+    fototipo:               Optional[str]  = None
+    pat_acne:               Optional[bool] = False
+    pat_melasma:            Optional[bool] = False
+    pat_rosacea:            Optional[bool] = False
+    pat_cicatrices:         Optional[bool] = False
+    observaciones:          Optional[str]  = None
+
+
+class HistoriaLimpiezaCreate(HistoriaLimpiezaBase):
+    pass
+
+
+class HistoriaLimpieza(HistoriaLimpiezaBase):
+    id: int
+    paciente_id: int
+
+    class Config:
+        from_attributes = True

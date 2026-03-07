@@ -324,3 +324,59 @@ def editar_historia_depilacion(
     db.commit()
     db.refresh(h)
     return h
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# HISTORIA LIMPIEZA
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/{paciente_id}/historia-limpieza", response_model=schemas.HistoriaLimpieza)
+def get_historia_limpieza(paciente_id: int, db: Session = Depends(get_db)):
+    """Retorna la historia de limpieza facial del paciente. 404 si no existe."""
+    if not db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first():
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    h = db.query(models.HistoriaLimpieza).filter(
+        models.HistoriaLimpieza.paciente_id == paciente_id
+    ).first()
+    if not h:
+        raise HTTPException(status_code=404, detail="Sin historia de limpieza")
+    return h
+
+
+@router.post("/{paciente_id}/historia-limpieza", response_model=schemas.HistoriaLimpieza)
+def crear_historia_limpieza(
+    paciente_id: int,
+    data: schemas.HistoriaLimpiezaCreate,
+    db: Session = Depends(get_db)
+):
+    """Crea la historia de limpieza facial (una por paciente)."""
+    if not db.query(models.Cliente).filter(models.Cliente.id == paciente_id).first():
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    if db.query(models.HistoriaLimpieza).filter(
+        models.HistoriaLimpieza.paciente_id == paciente_id
+    ).first():
+        raise HTTPException(status_code=409, detail="Ya existe. Use PUT para editar.")
+    nueva = models.HistoriaLimpieza(**data.dict(), paciente_id=paciente_id)
+    db.add(nueva)
+    db.commit()
+    db.refresh(nueva)
+    return nueva
+
+
+@router.put("/{paciente_id}/historia-limpieza", response_model=schemas.HistoriaLimpieza)
+def editar_historia_limpieza(
+    paciente_id: int,
+    data: schemas.HistoriaLimpiezaCreate,
+    db: Session = Depends(get_db)
+):
+    """Actualiza la historia de limpieza facial existente."""
+    h = db.query(models.HistoriaLimpieza).filter(
+        models.HistoriaLimpieza.paciente_id == paciente_id
+    ).first()
+    if not h:
+        raise HTTPException(status_code=404, detail="Sin historia. Use POST primero.")
+    for field, val in data.dict(exclude_unset=True).items():
+        setattr(h, field, val)
+    db.commit()
+    db.refresh(h)
+    return h
