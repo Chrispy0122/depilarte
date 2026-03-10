@@ -282,11 +282,14 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
         spec_id = spec_emp.id if spec_emp else None
         rec_id = rec_emp.id if rec_emp else None
 
+        # Ensure WALLET standard is respected
+        processed_metodo_pago = "WALLET" if cobro_in.metodo_pago and cobro_in.metodo_pago.lower() == "wallet" else cobro_in.metodo_pago
+        
         # 2. Crear Header
         nuevo_cobro = Cobro(
             cliente_id=cobro_in.cliente_id,
             fecha=datetime.now(),
-            metodo_pago=cobro_in.metodo_pago,
+            metodo_pago=processed_metodo_pago,
             referencia=cobro_in.referencia,
             # New Fields Corrected
             monto_total_venta=grand_total, # Full Price (Modified for 1 session if package)
@@ -329,7 +332,7 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             pago_cash = Pago(
                 cita_id=new_cita.id,
                 monto=cash_for_service,
-                metodo=cobro_in.metodo_pago,
+                metodo=processed_metodo_pago,
                 referencia=cobro_in.referencia
             )
             db.add(pago_cash)
@@ -338,7 +341,7 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             pago_wallet = Pago(
                 cita_id=new_cita.id,
                 monto=wallet_used,
-                metodo="Monedero",
+                metodo="WALLET",
                 referencia="Uso de Saldo a Favor"
             )
             db.add(pago_wallet)
@@ -572,11 +575,14 @@ def procesar_pago(pago: PagoCreate, db: Session = Depends(get_db)):
         frecuencia = cliente.frecuencia_visitas if cliente.frecuencia_visitas else 21
         cliente.fecha_proxima_estimada = date.today() + timedelta(days=frecuencia)
 
+    # Ensure WALLET standard is respected
+    processed_metodo_pago = "WALLET" if pago.metodo and pago.metodo.lower() == "wallet" else pago.metodo
+
     # Registrar el Pago Real
     nuevo_pago = models.Pago(
         cita_id=cita.id,
         monto=pago.monto_pagado, 
-        metodo=pago.metodo,
+        metodo=processed_metodo_pago,
         referencia=pago.referencia
     )
     db.add(nuevo_pago)
