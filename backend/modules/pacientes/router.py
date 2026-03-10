@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from typing import List, Optional
 from backend.database import get_db
@@ -35,7 +35,7 @@ def crear_cliente(cliente: schemas.ClienteCreate, db: Session = Depends(get_db))
 
 @router.get("/", response_model=List[schemas.Cliente])
 def listar_clientes(skip: int = 0, limit: int = 1000, q: Optional[str] = None, db: Session = Depends(get_db)):
-    query = db.query(models.Cliente)
+    query = db.query(models.Cliente).options(joinedload(models.Cliente.paquetes))
     
     if q:
         if q.isdigit():

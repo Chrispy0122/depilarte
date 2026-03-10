@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from backend.database import get_db
 from . import models, services
 from backend.modules.agenda import models as agenda_models
@@ -125,10 +125,9 @@ def get_pacientes_del_dia(db: Session = Depends(get_db)):
 
 @router.get("/")
 def listar_pagos(db: Session = Depends(get_db)):
-    # List recent payments with Client data
+    # List recent payments with Client data without N+1 queries
     pagos = db.query(models.Pago).\
-        join(models.Pago.cita).\
-        join(agenda_models.Cita.cliente).\
+        options(joinedload(models.Pago.cita).joinedload(agenda_models.Cita.cliente)).\
         order_by(models.Pago.id.desc()).limit(50).all()
         
     historial = []
@@ -160,8 +159,7 @@ def exportar_excel(db: Session = Depends(get_db)):
 
     # 1. Obtener datos (mismo query que listar_pagos pero sin limite o con limite mayor)
     pagos = db.query(models.Pago).\
-        join(models.Pago.cita).\
-        join(agenda_models.Cita.cliente).\
+        options(joinedload(models.Pago.cita).joinedload(agenda_models.Cita.cliente)).\
         order_by(models.Pago.id.desc()).limit(1000).all()
     
     # 2. Crear Excel

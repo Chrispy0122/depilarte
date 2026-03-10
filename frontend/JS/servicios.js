@@ -195,8 +195,13 @@ function renderCurrentView() {
     // Helper: Money Formatter
     const formatMoney = (amount) => amount ? `$${Number(amount).toFixed(2)}` : '-';
 
+    // OPTIMIZACIÓN DE RENDIMIENTO: Limitar DOM a 50 records máximos
+    const limit = 50;
+    const isTruncated = currentServices.length > limit;
+    const renderList = isTruncated ? currentServices.slice(0, limit) : currentServices;
+
     // RENDER GRID (Premium Cards)
-    gridBody.innerHTML = currentServices.map(item => `
+    gridBody.innerHTML = renderList.map(item => `
         <div class="service-card" onclick="openOffcanvas('${item.codigo}')">
             <div class="card-header">
                 <div>
@@ -229,6 +234,14 @@ function renderCurrentView() {
             </div>
         </div>
     `).join('');
+
+    // Add small warning if truncated
+    if (isTruncated) {
+        const warning = document.createElement('div');
+        warning.style = "grid-column: 1/-1; text-align: center; color: #6b7280; font-size: 0.85rem; padding: 10px;";
+        warning.innerHTML = `<i class="fa-solid fa-circle-info"></i> Mostrando los primeros ${limit} de ${currentServices.length} servicios. Usa el buscador para encontrar específicos.`;
+        gridBody.appendChild(warning);
+    }
 }
 
 // --- OFFCANVAS LOGIC ---

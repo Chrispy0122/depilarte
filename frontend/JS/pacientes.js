@@ -521,10 +521,23 @@ function filterAndRender(term, filterType) {
 
         return matchText && matchFilter;
     });
-    // CHART LOGIC
-    updateWalletChart(filtered, filterType);
+    // OPTIMIZACIÓN DE RENDIMIENTO: Limitar DOM a 50 records máximos para no bloquear el Main Thread
+    const limit = 50;
+    const isTruncated = filtered.length > limit;
+    const renderList = isTruncated ? filtered.slice(0, limit) : filtered;
 
-    renderDirectory(filtered);
+    // CHART LOGIC
+    updateWalletChart(filtered, filterType); // Chart uses all filtered data for accuracy
+
+    renderDirectory(renderList);
+
+    // Add small warning if truncated
+    if (isTruncated) {
+        const warning = document.createElement('div');
+        warning.style = "grid-column: 1/-1; text-align: center; color: #6b7280; font-size: 0.85rem; padding: 10px;";
+        warning.innerHTML = `<i class="fa-solid fa-circle-info"></i> Mostrando los primeros ${limit} de ${filtered.length} resultados. Usa el buscador para encontrar pacientes específicos.`;
+        document.getElementById('patientDirectoryGrid').appendChild(warning);
+    }
 }
 
 // --- CHART LOGIC ---
