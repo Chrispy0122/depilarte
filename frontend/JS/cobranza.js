@@ -998,7 +998,17 @@ if (!btnProcessPayment) {
                 renderCart();
                 updateCalculations();
 
-                dpToast(`¡Cobro exitoso! (ID: ${data.cobro_id || 'OK'})`, 'success');
+                if (data.mensaje_extra) {
+                    Swal.fire({
+                        title: '¡Pago Procesado!',
+                        text: data.mensaje_extra,
+                        icon: 'success',
+                        confirmButtonColor: '#2B7A58'
+                    });
+                } else {
+                    dpToast(`¡Cobro exitoso! (ID: ${data.cobro_id || 'OK'})`, 'success');
+                }
+
                 closeModal();
                 fetchCajaHoy();
             } else {

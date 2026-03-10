@@ -228,7 +228,30 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
     # 1. Calcular total real (Precio de lista)
     try:
         grand_total = 0.0
+        auto_wallet_topup = 0.0
+        mensaje_extra = None
+
         for item in cobro_in.items:
+            # INTERCEPT FULL PACKAGE
+            if str(item.tipo_venta).lower() == 'paquete' and item.tipo_cobro == 'completo':
+                # Split logic
+                sesiones = item.sesiones_totales if item.sesiones_totales > 0 else 1
+                precio_por_sesion = item.precio_aplicado / sesiones
+                monto_abono = item.precio_aplicado - precio_por_sesion
+
+                # Record the original cost so it's not lost when we overwrite
+                # Adding a temporary property just to hold it during the loop
+                setattr(item, '_costo_original_completo', item.precio_aplicado)
+
+                # Overwrite applied price with only 1 session's worth
+                item.precio_aplicado = precio_por_sesion
+                auto_wallet_topup += monto_abono
+
+                # Generate message if there's a split
+                if monto_abono > 0:
+                    mensaje_extra = f"Pago procesado. Se cobró ${precio_por_sesion:.2f} por la sesión de hoy y se abonaron ${monto_abono:.2f} al Wallet."
+
+            # Calculate grand_total with the (potentially modified) applied price
             grand_total += item.precio_aplicado
             
         # --- LOGICA CORREGIDA: ABONO = WALLET TOP-UP ---
@@ -238,7 +261,9 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
         # total (Dinero Físico) = (Precio - WalletUsado) + RecargaExtra
         
         wallet_used = cobro_in.monto_wallet_usado or 0.0
-        wallet_topup = cobro_in.monto_abonado or 0.0
+        
+        # Include the auto-calculated split top-up
+        wallet_topup = (cobro_in.monto_abonado or 0.0) + auto_wallet_topup
         
         cash_for_service = max(0.0, grand_total - wallet_used)
         total_cash_in = cash_for_service + wallet_topup
@@ -259,8 +284,8 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             metodo_pago=cobro_in.metodo_pago,
             referencia=cobro_in.referencia,
             # New Fields Corrected
-            monto_total_venta=grand_total, # Full Price
-            monto_abonado=wallet_topup,    # Wallet Top-Up
+            monto_total_venta=grand_total, # Full Price (Modified for 1 session if package)
+            monto_abonado=wallet_topup,    # Wallet Top-Up (includes auto_wallet_topup)
             deuda=0.0,                     # No debt
             total=total_cash_in,           # Real Money In
             tasa_bcv=cobro_in.tasa_bcv     # Tasa BCV histórica del día
@@ -349,18 +374,21 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             db.add(detalle)
             
             # --- CREATE PAQUETE_CLIENTE IF SOLD ---
-            if item.tipo_venta == 'paquete' or item.tipo_venta == 'Paquete':
+            if str(item.tipo_venta).lower() == 'paquete':
+                # Determine original package cost based on whether it was a 'completo' override
+                precio_paquete_real = getattr(item, '_costo_original_completo', item.precio_aplicado)
+                
                 # Si es un fraccionado, el costo total del paquete real es item.precio_aplicado * item.sesiones_totales
-                # Si es completo, el costo total es el precio_aplicado directamente y ya entra pagado.
-                costo_base = original_price if original_price else item.precio_aplicado * item.sesiones_totales
+                # Si es completo, el costo total es el precio_paquete_real directamente y ya entra pagado.
+                costo_base = original_price if original_price else precio_paquete_real * item.sesiones_totales
                 
                 # Por seguridad, si viene completo, el costo total es lo que pagó
                 if item.tipo_cobro == 'completo':
-                    costo_real = item.precio_aplicado
+                    costo_real = precio_paquete_real
                 else: 
                     # Es fraccionado, el costo_total pactado es [precio de esta cuota * total_sesiones] como proxy, o el original_price.  
                     # Usaremos el original_price (paquete_4_sesiones en BD) si existe, o proxy.
-                    costo_real = original_price if original_price else (item.precio_aplicado * item.sesiones_totales)
+                    costo_real = original_price if original_price else (precio_paquete_real * item.sesiones_totales)
                 
                 nuevo_paquete_cliente = PaqueteCliente(
                     paciente_id=cobro_in.cliente_id,
@@ -368,7 +396,7 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
                     total_sesiones=item.sesiones_totales,
                     sesiones_usadas=1,                   # Se usa la primera sesión el día de la compra 
                     costo_total=costo_real,
-                    monto_pagado=item.precio_aplicado,   # Lo que pagó hoy (fracción o completo)
+                    monto_pagado=precio_paquete_real,    # Lo que pagó hoy legalmente por el paquete (fracción o completo)
                     activo=True if 1 < item.sesiones_totales else False
                 )
                 db.add(nuevo_paquete_cliente)
@@ -403,6 +431,7 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
         
         return {
             "mensaje": "Cobro registrado correctamente",
+            "mensaje_extra": mensaje_extra,
             "cobro_id": nuevo_cobro.id,
             "total": grand_total,
             "abonado": wallet_topup,
