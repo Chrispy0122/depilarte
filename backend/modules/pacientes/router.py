@@ -109,7 +109,7 @@ def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
         # Fallback if no payments
         if total_pagado == 0 and cita.servicios:
             for servicio in cita.servicios:
-                total_pagado += servicio.precio_sesion
+                total_pagado += servicio.sesion
                 
         # Find related DetalleCobros for this date (Approximation since Cita doesn't directly link to DetalleCobro)
         # We query Cobro by cliente_id and matching Date
@@ -285,7 +285,7 @@ def historial_cliente(cliente_id: int, db: Session = Depends(get_db)):
         # If no payments, calculate from servicios
         if total_pagado == 0 and cita.servicios:
             for servicio in cita.servicios:
-                total_pagado += servicio.precio_sesion
+                total_pagado += servicio.sesion
                 
         # Get sale type details matching by date
         start_date = cita.fecha_hora_inicio.replace(hour=0, minute=0, second=0)

@@ -83,7 +83,7 @@ def get_citas_por_cobrar(db: Session = Depends(get_db)):
         servicios_nombres = []
         if cita.servicios and len(cita.servicios) > 0:
             for servicio in cita.servicios:
-                monto_total += servicio.precio_sesion
+                monto_total += servicio.sesion
                 servicios_nombres.append(servicio.nombre)
             servicio_str = ", ".join(servicios_nombres)
         else:
@@ -421,6 +421,22 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
                 )
                 db.add(nuevo_paquete_cliente)
 
+            # --- AUTO-DEDUCT PACKAGE SESSION IF PAID WITH WALLET/ABONO ---
+            # Si se está pagando y se detecta una sesión normal cobrada por Wallet, buscamos su paquete activo
+            if str(item.tipo_venta).lower() == 'sesion' and wallet_used > 0:
+                paquete_activo = db.query(PaqueteCliente).filter(
+                    PaqueteCliente.paciente_id == cobro_in.cliente_id,
+                    PaqueteCliente.nombre_paquete == nombre_servicio,
+                    PaqueteCliente.activo == True,
+                    PaqueteCliente.sesiones_usadas < PaqueteCliente.total_sesiones
+                ).first()
+                if paquete_activo is not None:
+                    paquete_activo.sesiones_usadas += 1
+                    paquete_activo.monto_pagado += item.precio_aplicado
+                    # Auto-cerrar si se completaron todas las sesiones
+                    if paquete_activo.sesiones_usadas >= paquete_activo.total_sesiones:
+                        paquete_activo.activo = False
+
             # --- LOGIC PORT: INVENTORY CONSUMPTION ---
             # Consumir receta si existe (Inventory Logic)
             receta = inventario_services.obtener_receta_por_servicio(db, item.servicio_id)
@@ -511,7 +527,7 @@ def procesar_pago(pago: PagoCreate, db: Session = Depends(get_db)):
     total_a_pagar = 0.0
     if cita.servicios and len(cita.servicios) > 0:
         for servicio in cita.servicios:
-            total_a_pagar += servicio.precio_sesion
+            total_a_pagar += servicio.sesion
     
     # Fallback: if cita has no services, use the amount being paid
     if total_a_pagar <= 0: 
