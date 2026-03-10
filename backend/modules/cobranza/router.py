@@ -46,9 +46,9 @@ def get_citas_por_cobrar(db: Session = Depends(get_db)):
     # 2. FILTRO AMPLIADO
     # - Fecha: HOY (Venezuela)
     # - Status: Confirmada o Asistio (Solo pacientes que ya están listos para pagar)
-    # - Excluir: 'pagada', 'cancelada', 'pendiente', 'agendada'
+    # - REGLA: Mantener visibles a los que ya pagaron ('pagada') en el visor diario.
     
-    estados_activos = ['confirmada', 'asistio']
+    estados_activos = ['confirmada', 'asistio', 'pagada']
     
     citas = db.query(agenda_models.Cita).join(agenda_models.Cita.cliente).filter(
         func.date(agenda_models.Cita.fecha_hora_inicio) == hoy_venezuela,
@@ -97,7 +97,8 @@ def get_citas_por_cobrar(db: Session = Depends(get_db)):
             "servicio": servicio_str,  # NOW: Actual service names
             "monto_esperado": monto_total,  # NOW: Calculated from servicios
             "tiene_wallet": tiene_wallet,
-            "proxima_cita_texto": proxima_cita_texto
+            "proxima_cita_texto": proxima_cita_texto,
+            "estado": cita.estado.value if hasattr(cita.estado, 'value') else str(cita.estado)
         })
         
     return resultados
@@ -446,14 +447,23 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(nuevo_cobro)
         
-        return {
-            "mensaje": "Cobro registrado correctamente",
-            "mensaje_extra": mensaje_extra,
-            "cobro_id": nuevo_cobro.id,
-            "total": grand_total,
-            "abonado": wallet_topup,
-            "deuda": 0.0
-        }
+        try:
+            return {
+                "status": "success",
+                "mensaje": "Cobro procesado correctamente",
+                "mensaje_extra": str(mensaje_extra) if mensaje_extra else None,
+                "cobro_id": int(nuevo_cobro.id),
+                "total": float(grand_total),
+                "abonado": float(wallet_topup),
+                "deuda": 0.0
+            }
+        except Exception as e:
+            return {
+                "status": "success",
+                "mensaje": "Cobro procesado (con advertencia de formato)",
+                "cobro_id": -1,
+                "error_serializacion": str(e)
+            }
     except Exception as e:
         db.rollback()
         print(traceback.format_exc())
