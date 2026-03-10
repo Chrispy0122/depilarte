@@ -255,19 +255,14 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             grand_total += item.precio_aplicado
             
         # --- LOGICA CORREGIDA: ABONO = WALLET TOP-UP ---
-        # Si el método de pago es directamente Monedero / Wallet / Abono
-        is_full_wallet = str(cobro_in.metodo_pago).lower() in ['monedero', 'wallet', 'abono']
-
-        if is_full_wallet:
-            cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cobro_in.cliente_id).first()
-            if not cliente or cliente.saldo_wallet < grand_total:
-                raise HTTPException(status_code=400, detail="Saldo insuficiente en el Wallet para cubrir la sesión.")
-            
-            wallet_used = grand_total
-            wallet_topup = (cobro_in.monto_abonado or 0.0) + auto_wallet_topup
-        else:
-            wallet_used = cobro_in.monto_wallet_usado or 0.0
-            wallet_topup = (cobro_in.monto_abonado or 0.0) + auto_wallet_topup
+        # monto_total_venta = Precio de los servicios (lo que costó)
+        # monto_wallet_usado = Lo que se pagó con saldo a favor
+        # monto_abonado (Input) = Lo que se recargó EXTRA a la wallet
+        
+        wallet_used = cobro_in.monto_wallet_usado or 0.0
+        
+        # Include the auto-calculated split top-up
+        wallet_topup = (cobro_in.monto_abonado or 0.0) + auto_wallet_topup
         
         cash_for_service = max(0.0, grand_total - wallet_used)
         total_cash_in = cash_for_service + wallet_topup
@@ -302,14 +297,27 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
         from backend.modules.cobranza.models import Pago
         
         # Flash appointment for History tracking
-        new_cita = Cita(
-            cliente_id=cobro_in.cliente_id,
-            fecha_hora_inicio=datetime.now(),
-            fecha_hora_fin=datetime.now() + timedelta(minutes=30),
-            estado=EstadoCita.CONFIRMADA
-        )
-        db.add(new_cita)
-        db.flush() # Ensure new_cita gets an ID
+        start_of_day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = start_of_day + timedelta(days=1)
+        
+        existing_cita = db.query(Cita).filter(
+            Cita.cliente_id == cobro_in.cliente_id,
+            Cita.fecha_hora_inicio >= start_of_day,
+            Cita.fecha_hora_inicio < end_of_day
+        ).first()
+        
+        if existing_cita:
+            new_cita = existing_cita
+            new_cita.estado = EstadoCita.PAGADA
+        else:
+            new_cita = Cita(
+                cliente_id=cobro_in.cliente_id,
+                fecha_hora_inicio=datetime.now(),
+                fecha_hora_fin=datetime.now() + timedelta(minutes=30),
+                estado=EstadoCita.CONFIRMADA
+            )
+            db.add(new_cita)
+            db.flush() # Ensure new_cita gets an ID
         
         if cash_for_service > 0:
             pago_cash = Pago(
