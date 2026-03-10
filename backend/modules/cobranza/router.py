@@ -292,7 +292,7 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             monto_total_venta=grand_total, # Full Price (Modified for 1 session if package)
             monto_abonado=wallet_topup,    # Wallet Top-Up (includes auto_wallet_topup)
             deuda=0.0,                     # No debt
-            total=total_cash_in,           # Real Money In
+            total=grand_total + wallet_topup, # Real Invoice Total (Cart + extra topups) regardless of cash vs wallet source
             tasa_bcv=cobro_in.tasa_bcv     # Tasa BCV histórica del día
         )
         db.add(nuevo_cobro)

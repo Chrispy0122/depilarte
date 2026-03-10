@@ -871,7 +871,7 @@ function updateCalculations(preserveInput = false) {
         deductionRow.style.display = 'none';
     }
 
-    const payService = serviceSum - deduction;
+    const payService = serviceSum;
 
     // 2.5 Start with whatever is in the input (User might have lowered it)
     const amountPayingForService = payService;
