@@ -377,9 +377,12 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             monto_com_recep = comision_recepcionista if rec_id else 0.0
             monto_com_esp = comision_especialista if spec_id else 0.0
 
+            # Saneamiento de FK para evitar IntegrityError si servicio_id es 0
+            safe_servicio_id = item.servicio_id if item.servicio_id != 0 else None
+
             detalle = DetalleCobro(
                 cobro_id=nuevo_cobro.id,
-                servicio_id=item.servicio_id,
+                servicio_id=safe_servicio_id,
                 servicio_nombre=nombre_servicio,
                 tipo_venta=item.tipo_venta,
                 precio_unitario=original_price or 0.0,
