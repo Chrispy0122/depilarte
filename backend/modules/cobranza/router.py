@@ -83,7 +83,7 @@ def get_citas_por_cobrar(db: Session = Depends(get_db)):
         servicios_nombres = []
         if cita.servicios and len(cita.servicios) > 0:
             for servicio in cita.servicios:
-                monto_total += servicio.sesion
+                monto_total += (servicio.precio_sesion or 0.0)
                 servicios_nombres.append(servicio.nombre)
             servicio_str = ", ".join(servicios_nombres)
         else:
@@ -527,7 +527,7 @@ def procesar_pago(pago: PagoCreate, db: Session = Depends(get_db)):
     total_a_pagar = 0.0
     if cita.servicios and len(cita.servicios) > 0:
         for servicio in cita.servicios:
-            total_a_pagar += servicio.sesion
+            total_a_pagar += (servicio.precio_sesion or 0.0)
     
     # Fallback: if cita has no services, use the amount being paid
     if total_a_pagar <= 0: 
