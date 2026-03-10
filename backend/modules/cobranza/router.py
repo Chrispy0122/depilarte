@@ -344,30 +344,32 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             db.add(pago_wallet)
         
         # 2.5 Update Wallet Logic
-        # DEDUCT used amount
-        if wallet_used > 0:
+        # Manejo centralizado y seguro del saldo (wallet/abono)
+        if wallet_used > 0 or wallet_topup > 0:
             cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cobro_in.cliente_id).first()
             if cliente:
-                cliente.saldo_wallet -= wallet_used
-                
-        # ADD Top-up amount
-        if wallet_topup > 0:
-            cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cobro_in.cliente_id).first()
-            if cliente:
-                cliente.saldo_wallet += wallet_topup
+                if wallet_used > 0:
+                    cliente.saldo_wallet -= wallet_used
+                if wallet_topup > 0:
+                    cliente.saldo_wallet += wallet_topup
         
         # 3. Crear Detalles
         from backend.modules.servicios.models import PaqueteSpa
         from backend.modules.pacientes.models import PaqueteCliente
         
         for item in cobro_in.items:
-            # Get Service Name snapshot
+            # Get Service Name snapshot securely handling missing services
             servicio = db.query(PaqueteSpa).filter(PaqueteSpa.id == item.servicio_id).first()
-            nombre_servicio = servicio.nombre if servicio else "Servicio Eliminado"
-            original_price = servicio.sesion if item.tipo_venta == 'sesion' else servicio.paquete_4_sesiones
+            
+            if servicio is None:
+                nombre_servicio = "Abono / Servicio Personalizado"
+                original_price = item.precio_aplicado
+            else:
+                nombre_servicio = servicio.nombre
+                original_price = servicio.sesion if item.tipo_venta == 'sesion' else servicio.paquete_4_sesiones
             
             # --- COMMISSION LOGIC ---
-            # Get fixed commission rates from Service
+            # Get fixed commission rates from Service safely
             comision_recepcionista = servicio.comision_recepcionista if servicio else 0.0
             comision_especialista = servicio.comision_especialista if servicio else 0.0
             
