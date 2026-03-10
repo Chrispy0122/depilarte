@@ -49,6 +49,23 @@ def listar_clientes(skip: int = 0, limit: int = 1000, q: Optional[str] = None, d
             query = query.filter(models.Cliente.nombre_completo.ilike(f"%{q}%"))
             
     clientes = query.offset(skip).limit(limit).all()
+    
+    # Calculate and assign deuda_total dynamically before returning
+    for cliente in clientes:
+        # 1. Base debt (if exists on model in the future, fallback to 0.0)
+        base_deuda = getattr(cliente, 'deuda', 0.0) or 0.0
+        
+        # 2. Extract fractional package debt
+        deuda_paquetes = 0.0
+        if hasattr(cliente, 'paquetes') and cliente.paquetes:
+            for p in cliente.paquetes:
+                # Calculate active package debt (cost - paid)
+                if getattr(p, 'activo', True) and p.monto_pagado < p.costo_total:
+                    deuda_paquetes += (p.costo_total - p.monto_pagado)
+                    
+        # Virtual column mapping to Pydantic schema
+        cliente.deuda_total = base_deuda + deuda_paquetes
+        
     return clientes
 
 @router.post("/{cliente_id}/historial-clinico", response_model=schemas.HistorialClinico)

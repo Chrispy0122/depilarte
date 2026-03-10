@@ -397,7 +397,8 @@ async function fetchPatients() {
                     walletBalance: p.saldo_wallet || 0.0,
                     frecuencia_visitas: p.frecuencia_visitas || 21,
                     nextVisit: p.fecha_proxima_estimada,
-                    history: []
+                    history: [],
+                    totalDebt: p.deuda_total || 0.0
                 };
             } catch (e) {
                 console.error("Error mapping patient:", p, e);
@@ -451,7 +452,10 @@ function renderDirectory(data) {
             div.innerHTML = `
                 <!-- Avatar Removed -->
                 <div class="dir-info">
-                    <h4>${p.name || 'Sin Nombre'}</h4>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <h4>${p.name || 'Sin Nombre'}</h4>
+                        ${p.totalDebt > 0 ? `<span style="background:#fee2e2; color:#991b1b; padding:4px 8px; border-radius:6px; font-size:0.8rem; font-weight:bold; white-space:nowrap;">Deuda: $${(p.totalDebt).toFixed(2)}</span>` : ''}
+                    </div>
                     <div class="dir-meta">
                         <span style="font-weight: 600; color: #555;">#${p.historyId || '???'}</span>
                         <span style="display:flex; align-items:center; gap:6px;">
@@ -505,7 +509,7 @@ function filterAndRender(term, filterType) {
         const matchText = p.name.toLowerCase().includes(term) || idSafe.includes(term) || phoneSafe.includes(term);
         let matchFilter = true;
 
-        if (filterType === 'deuda') matchFilter = false; // logic placeholder
+        if (filterType === 'deuda') matchFilter = p.totalDebt > 0;
         if (filterType === 'abono') matchFilter = p.walletBalance > 0;
 
         return matchText && matchFilter;

@@ -40,6 +40,7 @@ class Cliente(ClienteBase):
     nombre: Optional[str] = None
     apellido: Optional[str] = None
     historial_citas: List[HistorialItem] = []
+    deuda_total: Optional[float] = 0.0
 
     class Config:
         from_attributes = True
