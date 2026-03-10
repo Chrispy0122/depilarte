@@ -56,8 +56,13 @@ def get_citas_por_cobrar(db: Session = Depends(get_db)):
     ).all()
     
     resultados = []
+    seen_clientes = set()
     
     for cita in citas:
+        if cita.cliente_id in seen_clientes:
+            continue
+        seen_clientes.add(cita.cliente_id)
+
         # Determine wallet status
         tiene_wallet = False
         if cita.cliente and cita.cliente.saldo_wallet > 0:
