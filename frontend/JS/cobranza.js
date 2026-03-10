@@ -612,14 +612,12 @@ async function fetchConfirmedToday() {
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = "1px solid #eee";
 
-                const isPagada = item.estado && item.estado.toLowerCase() === 'pagada';
+                const isPagada = item.estado && (item.estado.toLowerCase() === 'pagada' || item.estado.toLowerCase() === 'cobrado');
                 const badgeHtml = isPagada
-                    ? `<span style="background: #dcfce7; color: #16a34a; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">Pagada</span>`
+                    ? `<span style="background: #dcfce7; color: #16a34a; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">Cobrado</span>`
                     : `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">Confirmada</span>`;
 
-                const actionHtml = isPagada
-                    ? `<span style="color: #16a34a; font-weight: 600; padding-right: 15px;"><i class="fa-solid fa-check-circle"></i> Procesado</span>`
-                    : `<button class="btn-charge-confirmed" data-clientid="${item.cliente_id}" data-citaid="${item.cita_id}" data-clientname="${item.paciente_nombre}"
+                const actionHtml = `<button class="btn-charge-confirmed" data-clientid="${item.cliente_id}" data-citaid="${item.cita_id}" data-clientname="${item.paciente_nombre}"
                             style="background: #2B7A58; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
                             <i class="fa-solid fa-dollar-sign"></i> Cobrar
                         </button>`;
