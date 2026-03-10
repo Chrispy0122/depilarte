@@ -370,11 +370,18 @@ document.getElementById('serviceForm').addEventListener('submit', async (e) => {
         await fetchServices();
 
         // Opcional feedback UX
-        alert("¡Servicio guardado exitosamente!");
+        if (typeof dpToast === 'function') {
+            dpToast("✅ ¡Servicio guardado exitosamente!", "success");
+        } else {
+            alert("¡Servicio guardado exitosamente!");
+        }
 
     } catch (error) {
-        console.error("Error en POST /servicios/:", error);
-        alert(`Ocurrió un error: ${error.message}`);
+        if (typeof dpToast === 'function') {
+            dpToast(`Ocurrió un error: ${error.message}`, "error");
+        } else {
+            alert(`Ocurrió un error: ${error.message}`);
+        }
     }
 });
 
