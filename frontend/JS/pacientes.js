@@ -449,12 +449,19 @@ function renderDirectory(data) {
 
             const waLink = generarLinkWhatsapp(p.phone);
 
+            // Resolve the debt badge HTML safely without nested template literals
+            let debtBadgeHTML = '';
+            if (p.totalDebt > 0) {
+                const formattedDebt = Number(p.totalDebt).toFixed(2);
+                debtBadgeHTML = '<span style="background:#fee2e2; color:#991b1b; padding:4px 8px; border-radius:6px; font-size:0.8rem; font-weight:bold; white-space:nowrap;">Deuda: $' + formattedDebt + '</span>';
+            }
+
             div.innerHTML = `
                 <!-- Avatar Removed -->
                 <div class="dir-info">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <h4>${p.name || 'Sin Nombre'}</h4>
-                        ${p.totalDebt > 0 ? `<span style="background:#fee2e2; color:#991b1b; padding:4px 8px; border-radius:6px; font-size:0.8rem; font-weight:bold; white-space:nowrap;">Deuda: $${(p.totalDebt).toFixed(2)}</span>` : ''}
+                        ${debtBadgeHTML}
                     </div>
                     <div class="dir-meta">
                         <span style="font-weight: 600; color: #555;">#${p.historyId || '???'}</span>

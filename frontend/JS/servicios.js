@@ -318,3 +318,63 @@ window.openOffcanvas = function (codigo) {
     });
 };
 
+// --- FORM SUBMISSION ---
+document.getElementById('serviceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Identify if it's new
+    const isEdit = document.getElementById('formCodeBadge').textContent !== 'NEW';
+    const codigo = document.getElementById('formCodigo').value.trim();
+
+    if (!codigo) {
+        alert("El código del servicio es obligatorio.");
+        return;
+    }
+
+    const payload = {
+        nombre: document.getElementById('formNombre').value.trim(),
+        codigo: codigo,
+        categoria: document.getElementById('formCategoria').value,
+        sesion: parseFloat(document.getElementById('formPrecioSesion').value) || 0,
+        paquete_4_sesiones: parseFloat(document.getElementById('formPrecioPack').value) || null,
+        num_zonas: document.getElementById('formZonas').value.trim() || null,
+        cantidad_sesiones: document.getElementById('formSesionesRec').value.trim() || null,
+        comision_recepcionista: parseFloat(document.getElementById('formComisionRec').value) || 0,
+        comision_especialista: parseFloat(document.getElementById('formComisionEsp').value) || 0,
+        activo: 1
+    };
+
+    try {
+        if (isEdit) {
+            console.warn("Edit mode detected, but backend PUT is not fully implemented yet. Assuming it's a workaround to POST a new object with different code, or handle existing one if custom logic allows.");
+        }
+
+        const response = await fetch(`${API_URL}/servicios/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.detail || 'Error desde el servidor al intentar registrar.');
+        }
+
+        // 1. Limpiar el formulario
+        document.getElementById('serviceForm').reset();
+
+        // 2. Cerrar el modal / offcanvas
+        document.getElementById('btnCloseOffcanvas').click();
+
+        // 3. Volver a llamar a la función que descarga la lista real de servicios
+        await fetchServices();
+
+        // Opcional feedback UX
+        alert("¡Servicio guardado exitosamente!");
+
+    } catch (error) {
+        console.error("Error en POST /servicios/:", error);
+        alert(`Ocurrió un error: ${error.message}`);
+    }
+});
+

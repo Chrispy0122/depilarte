@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from backend.database import get_db
 from .models import PaqueteSpa
-from .schemas import PaqueteSpaResponse
+from .schemas import PaqueteSpaResponse, PaqueteSpaCreate
 
 router = APIRouter(prefix="/api/servicios", tags=["Servicios"])
 
@@ -50,3 +50,26 @@ def obtener_paquete(paquete_id: int, db: Session = Depends(get_db)):
     if not paquete:
         raise HTTPException(status_code=404, detail="Paquete no encontrado")
     return paquete
+
+@router.post("/", response_model=PaqueteSpaResponse)
+def crear_paquete(paquete: PaqueteSpaCreate, db: Session = Depends(get_db)):
+    """
+    Crea un nuevo paquete o servicio.
+    """
+    # Verificar si el código ya existe
+    existe = db.query(PaqueteSpa).filter(PaqueteSpa.codigo == paquete.codigo).first()
+    if existe:
+        raise HTTPException(status_code=400, detail="El código de servicio ya existe.")
+        
+    nuevo_servicio = PaqueteSpa(**paquete.dict())
+    
+    # 1. Asegurar estado activo (1) por defecto, para no romper vistas GET
+    if getattr(nuevo_servicio, 'activo', None) is None:
+        nuevo_servicio.activo = 1
+        
+    # 2. Add y commit/refresh obligatorio
+    db.add(nuevo_servicio)
+    db.commit()
+    db.refresh(nuevo_servicio)
+    
+    return nuevo_servicio
