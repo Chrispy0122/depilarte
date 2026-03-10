@@ -863,11 +863,7 @@ function updateCalculations(preserveInput = false) {
         deductionRow.style.display = 'none';
     }
 
-    const payService = serviceSum - deduction;
-
-    // Only overwrite if NOT preserving input (e.g. adding items, or first load)
-    // AND if inpMontoDeuda exists
-    // REMOVED inpMontoDeuda logic
+    const payService = serviceSum;
 
     // 2.5 Start with whatever is in the input (User might have lowered it)
     const amountPayingForService = payService;

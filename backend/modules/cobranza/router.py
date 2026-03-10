@@ -255,15 +255,19 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
             grand_total += item.precio_aplicado
             
         # --- LOGICA CORREGIDA: ABONO = WALLET TOP-UP ---
-        # monto_total_venta = Precio de los servicios (lo que costó)
-        # monto_wallet_usado = Lo que se pagó con saldo a favor
-        # monto_abonado (Input) = Lo que se recargó EXTRA a la wallet
-        # total (Dinero Físico) = (Precio - WalletUsado) + RecargaExtra
-        
-        wallet_used = cobro_in.monto_wallet_usado or 0.0
-        
-        # Include the auto-calculated split top-up
-        wallet_topup = (cobro_in.monto_abonado or 0.0) + auto_wallet_topup
+        # Si el método de pago es directamente Monedero / Wallet / Abono
+        is_full_wallet = str(cobro_in.metodo_pago).lower() in ['monedero', 'wallet', 'abono']
+
+        if is_full_wallet:
+            cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cobro_in.cliente_id).first()
+            if not cliente or cliente.saldo_wallet < grand_total:
+                raise HTTPException(status_code=400, detail="Saldo insuficiente en el Wallet para cubrir la sesión.")
+            
+            wallet_used = grand_total
+            wallet_topup = (cobro_in.monto_abonado or 0.0) + auto_wallet_topup
+        else:
+            wallet_used = cobro_in.monto_wallet_usado or 0.0
+            wallet_topup = (cobro_in.monto_abonado or 0.0) + auto_wallet_topup
         
         cash_for_service = max(0.0, grand_total - wallet_used)
         total_cash_in = cash_for_service + wallet_topup
