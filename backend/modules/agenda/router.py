@@ -203,11 +203,8 @@ def get_ultimo_tratamiento(paciente_id: int, db: Session = Depends(get_db)):
         .first()
     )
     if not ultima_cita or not ultima_cita.servicios:
-        return {"servicios_ids": [], "servicios_nombres": []}
-    return {
-        "servicios_ids": [s.id for s in ultima_cita.servicios],
-        "servicios_nombres": [s.nombre for s in ultima_cita.servicios]
-    }
+        return []
+    return [s.id for s in ultima_cita.servicios]
 
 # --- Endpoint: Reagendar Cita ---
 

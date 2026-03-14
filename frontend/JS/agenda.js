@@ -565,29 +565,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeOnSelect: false
             });
 
-            // AUTOCOMPLETE: Al cambiar el paciente, mostrar sus últimos tratamientos informativamente
+            // AUTOCOMPLETE: Al cambiar el paciente, preseleccionar sus últimos tratamientos
             $('#cliente-select').on('change', async function () {
                 const pacienteId = $(this).val();
                 
                 // Limpiar selección actual de tratamientos
                 $('#servicio_id').val([]).trigger('change');
-                
-                const $historialContainer = $('#historial-container');
-                const $historialText = $('#historial-servicios');
-                $historialContainer.addClass('d-none');
-                $historialText.empty();
 
                 if (!pacienteId) return;
                 try {
                     const res = await fetch(`${API_URL}/agenda/ultimo-tratamiento/${pacienteId}`);
                     if (!res.ok) return;
-                    const data = await res.json();
-                    if (data.servicios_nombres && data.servicios_nombres.length > 0) {
-                        $historialText.html(`<i class="fa-solid fa-clock-rotate-left text-info"></i> <span>${data.servicios_nombres.join(', ')}</span>`);
-                        $historialContainer.removeClass('d-none');
+                    const ids = await res.json();
+                    
+                    if (Array.isArray(ids) && ids.length > 0) {
+                        $('#servicio_id').val(ids).trigger('change');
+                        dpToast('✨ Tratamientos habituales auto-seleccionados', 'info');
                     }
                 } catch (e) {
-                    // Silencioso: si falla, dejar el historial oculto
+                    console.error("Error al obtener último tratamiento:", e);
                 }
             });
 
