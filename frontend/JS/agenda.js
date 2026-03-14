@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // If Confirmed -> Green
                         const estadoLower = (item.estado || '').toLowerCase();
-                        if (estadoLower === 'confirmada' || estadoLower === 'confirmed' || item.estado === 'Confirmado') {
+                        if (estadoLower === 'confirmada' || estadoLower === 'confirmed' || item.estado === 'Confirmado' || estadoLower === 'pagada') {
                             statusClass = 'evento-confirmado';
                         }
                         // Note: Cancelled are already filtered out

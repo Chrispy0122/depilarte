@@ -315,7 +315,7 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
         
         if existing_cita:
             new_cita = existing_cita
-            new_cita.estado = EstadoCita.PAGADA
+            # El estado permanece intacto según regla de negocio (no sobreescribir confirmada)
         else:
             new_cita = Cita(
                 cliente_id=cobro_in.cliente_id,
@@ -595,9 +595,8 @@ def procesar_pago(pago: PagoCreate, db: Session = Depends(get_db)):
         )
         db.add(pago_wallet)
 
-    # Actualizar estado a PAGADA para que no vuelva a aparecer en pendientes
+    # No sobrescribir estado de cita por regla de negocio (mantener como confirmada para la agenda)
     if total_cubierto >= total_a_pagar:
-        cita.estado = agenda_models.EstadoCita.PAGADA
         
         # --- CONSUMO AUTOMÁTICO DE INVENTARIO (BOM) ---
         if cita.servicios:
