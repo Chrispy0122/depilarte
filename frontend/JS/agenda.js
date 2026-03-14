@@ -565,22 +565,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeOnSelect: false
             });
 
-            // AUTOCOMPLETE: Al cambiar el paciente, prellenar sus últimos tratamientos
+            // AUTOCOMPLETE: Al cambiar el paciente, mostrar sus últimos tratamientos informativamente
             $('#cliente-select').on('change', async function () {
                 const pacienteId = $(this).val();
+                
                 // Limpiar selección actual de tratamientos
                 $('#servicio_id').val([]).trigger('change');
+                
+                const $historialContainer = $('#historial-container');
+                const $historialText = $('#historial-servicios');
+                $historialContainer.addClass('d-none');
+                $historialText.empty();
+
                 if (!pacienteId) return;
                 try {
                     const res = await fetch(`${API_URL}/agenda/ultimo-tratamiento/${pacienteId}`);
                     if (!res.ok) return;
                     const data = await res.json();
-                    if (data.servicios_ids && data.servicios_ids.length > 0) {
-                        // Select2 necesita strings, no números
-                        $('#servicio_id').val(data.servicios_ids.map(String)).trigger('change');
+                    if (data.servicios_nombres && data.servicios_nombres.length > 0) {
+                        $historialText.html(`<i class="fa-solid fa-clock-rotate-left text-info"></i> <span>${data.servicios_nombres.join(', ')}</span>`);
+                        $historialContainer.removeClass('d-none');
                     }
                 } catch (e) {
-                    // Silencioso: si falla, dejar el campo vacío para selección manual
+                    // Silencioso: si falla, dejar el historial oculto
                 }
             });
 

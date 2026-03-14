@@ -132,12 +132,19 @@
 
                 <div class="modal-body p-0">
                     <form id="formNewAppt">
-                        <!-- CLIENTE -->
                         <div class="mb-4">
                             <label class="form-label text-muted small fw-bold mb-2">CLIENTE</label>
                             <select id="cliente-select" class="form-select" style="width: 100%;">
                                 <!-- Loaded via JS -->
                             </select>
+                        </div>
+
+                        <!-- HISTORIAL DE SERVICIOS -->
+                        <div class="mb-3 d-none" id="historial-container">
+                            <label class="form-label text-muted small fw-bold mb-2">ÚLTIMOS TRATAMIENTOS</label>
+                            <div id="historial-servicios" class="px-3 py-2 bg-light border rounded-3 text-secondary small d-flex align-items-center gap-2">
+                                <!-- Populated by JS -->
+                            </div>
                         </div>
 
                         <!-- SERVICIO (MULTIPLE) -->
