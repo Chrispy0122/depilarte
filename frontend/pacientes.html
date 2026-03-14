@@ -926,7 +926,7 @@
 
     <!-- ═══ MODAL: SELECTOR TIPO HISTORIA (Limpieza vs Depilación) ═══ -->
     <div class="modal-overlay" id="modalTipoHistoria" style="z-index: 10001;">
-        <div class="modal-card" style="max-width: 540px; text-align: center;">
+        <div class="modal-card" style="max-width: 680px; text-align: center;">
             <div class="modal-header"
                 style="background: linear-gradient(135deg, #0f172a, #1e3a5f); padding: 18px 24px;">
                 <h2 style="color:#fff; margin:0; font-size:1.15rem;">¿Qué historia clínica deseas registrar?</h2>
@@ -935,6 +935,16 @@
             </div>
             <div style="padding: 30px 24px; display: flex; gap: 18px; justify-content: center;">
 
+                <!-- Opción: Express -->
+                <button id="btnTipoExpress"
+                    style="flex: 1; background: linear-gradient(135deg, #0ea5e9, #0284c7); color:#fff; border:none; border-radius:16px; padding: 28px 16px; cursor:pointer; font-size:1rem; font-weight:700; box-shadow: 0 6px 20px rgba(14,165,233,0.35); transition: transform 0.2s, box-shadow 0.2s;"
+                    onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 28px rgba(14,165,233,0.45)'"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 20px rgba(14,165,233,0.35)'">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">⚡</div>
+                    <div>Registro Express</div>
+                    <div style="font-size:0.75rem; font-weight:400; margin-top:6px; opacity:0.88;">Crea el perfil rápido.<br>Llénalo después.</div>
+                </button>
+
                 <!-- Opción 1: Limpieza Facial -->
                 <button id="btnTipoLimpieza"
                     style="flex: 1; background: linear-gradient(135deg, #15803d, #16a34a); color:#fff; border:none; border-radius:16px; padding: 28px 16px; cursor:pointer; font-size:1rem; font-weight:700; box-shadow: 0 6px 20px rgba(21,128,61,0.35); transition: transform 0.2s, box-shadow 0.2s;"
@@ -942,7 +952,7 @@
                     onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 20px rgba(21,128,61,0.35)'">
                     <div style="font-size: 2.5rem; margin-bottom: 10px;">🧖‍♀️</div>
                     <div>Limpieza Facial</div>
-                    <div style="font-size:0.78rem; font-weight:400; margin-top:6px; opacity:0.88;">Historia Clínica
+                    <div style="font-size:0.75rem; font-weight:400; margin-top:6px; opacity:0.88;">Historia Clínica
                         Facial<br>Diagnóstico de piel y hábitos</div>
                 </button>
 
@@ -953,7 +963,7 @@
                     onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 20px rgba(126,34,206,0.35)'">
                     <div style="font-size: 2.5rem; margin-bottom: 10px;">🪒</div>
                     <div>Depilación Corporal</div>
-                    <div style="font-size:0.78rem; font-weight:400; margin-top:6px; opacity:0.88;">Historia Clínica
+                    <div style="font-size:0.75rem; font-weight:400; margin-top:6px; opacity:0.88;">Historia Clínica
                         Corporal<br>Antecedentes y dermatológicos</div>
                 </button>
 

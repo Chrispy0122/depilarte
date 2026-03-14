@@ -93,15 +93,20 @@ if (btnNewPatient) {
 // (El modal HTML está después del <script>, así que getElementById retorna null en tiempo de ejecución.
 //  Event delegation resuelve eso correctamente.)
 document.addEventListener('click', function (e) {
-    const btn = e.target.closest('#btnTipoLimpieza, #btnTipoDepilacion');
+    const btn = e.target.closest('#btnTipoLimpieza, #btnTipoDepilacion, #btnTipoExpress');
     if (!btn) return;
     document.getElementById('modalTipoHistoria').classList.remove('active');
-    abrirFormNuevoPaciente(btn.id === 'btnTipoLimpieza' ? 'limpieza' : 'depilacion');
+    
+    let tipo = 'express';
+    if (btn.id === 'btnTipoLimpieza') tipo = 'limpieza';
+    if (btn.id === 'btnTipoDepilacion') tipo = 'depilacion';
+    
+    abrirFormNuevoPaciente(tipo);
 });
 
 /**
  * Abre el modalNewPatient configurado para el tipo elegido.
- * tipo: 'limpieza' | 'depilacion'
+ * tipo: 'limpieza' | 'depilacion' | 'express'
  */
 function abrirFormNuevoPaciente(tipo) {
     // 1. Registrar tipo
@@ -123,13 +128,20 @@ function abrirFormNuevoPaciente(tipo) {
         if (btnFacial) btnFacial.style.display = '';
         if (btnDepTab) btnDepTab.style.display = 'none';
 
-    } else {
+    } else if (tipo === 'depilacion') {
         if (header) header.textContent = '💜 Historia Clínica — Depilación Corporal';
         if (btnGuarda) btnGuarda.style.background = 'linear-gradient(135deg,#7e22ce,#9333ea)';
         // Ocultar tabs de limpieza, mostrar pestaña depilación
         if (btnSalud) btnSalud.style.display = 'none';
         if (btnFacial) btnFacial.style.display = 'none';
         if (btnDepTab) btnDepTab.style.display = '';
+    } else if (tipo === 'express') {
+        if (header) header.textContent = '⚡ Registro Express — Solo Datos Personales';
+        if (btnGuarda) btnGuarda.style.background = 'linear-gradient(135deg,#0ea5e9,#0284c7)';
+        // Ocultar todos los tabs médicos
+        if (btnSalud) btnSalud.style.display = 'none';
+        if (btnFacial) btnFacial.style.display = 'none';
+        if (btnDepTab) btnDepTab.style.display = 'none';
     }
 
     // 3. Abrir modal reseteado — siempre empezar en Datos Personales
@@ -209,7 +221,9 @@ if (formNewPatient) {
         const apellido = formData.get('apellido').trim();
 
         // Build Historia Clinica JSON
-        const historiaClinica = {
+        const tipoHistoria = formData.get('tipo_historia') || 'limpieza';
+
+        let historiaClinica = {
             personal: {
                 fecha_nacimiento: formData.get('fecha_nacimiento'),
                 sexo: formData.get('sexo'),
@@ -218,16 +232,19 @@ if (formNewPatient) {
                 profesion: formData.get('profesion'),
                 referido_por: formData.get('referido_por'),
                 hijos: formData.get('hijos')
-            },
-            estilo_vida: {
+            }
+        };
+
+        if (tipoHistoria !== 'express') {
+            historiaClinica.estilo_vida = {
                 fuma: formData.get('fuma') === 'on',
                 alcohol: formData.get('alcohol') === 'on',
                 comida_chatarra: formData.get('comida_chatarra') === 'on',
                 agua_diaria: formData.get('agua_diaria'),
                 horas_sueno: formData.get('horas_sueno'),
                 actividad_fisica: formData.get('actividad_fisica')
-            },
-            antecedentes: {
+            };
+            historiaClinica.antecedentes = {
                 diabetes: formData.get('ant_diabetes') === 'on',
                 hipertension: formData.get('ant_hipertension') === 'on',
                 alergias: formData.get('ant_alergias') === 'on',
@@ -238,8 +255,8 @@ if (formNewPatient) {
                 implantes: formData.get('ant_implantes') === 'on',
                 botox: formData.get('ant_botox') === 'on',
                 hialuronico: formData.get('ant_hialuronico') === 'on'
-            },
-            diagnostico: {
+            };
+            historiaClinica.diagnostico = {
                 biotipo: formData.get('biotipo'),
                 fototipo: formData.get('fototipo'),
                 observaciones: formData.get('observaciones'),
@@ -249,8 +266,8 @@ if (formNewPatient) {
                     rosacea: formData.get('pat_rosacea') === 'on',
                     cicatrices: formData.get('pat_cicatrices') === 'on'
                 }
-            }
-        };
+            };
+        }
 
         const payload = {
             nombre_completo: `${nombre} ${apellido}`.trim(),
@@ -261,8 +278,6 @@ if (formNewPatient) {
             historia_clinica: historiaClinica,
             saldo_wallet: 0.0
         };
-
-        const tipoHistoria = formData.get('tipo_historia') || 'limpieza';
 
         try {
             const response = await fetch(`${API_URL}/pacientes/`, {
@@ -332,9 +347,11 @@ if (formNewPatient) {
                 } catch (depErr) {
                     console.warn('Historia depilación no guardada:', depErr);
                 }
-                dpToast('💜 Paciente registrada con Historia de Depilación completa', 'success');
+                dpToast('💜 Paciente registrado con Historia de Depilación completa', 'success');
+            } else if (tipoHistoria === 'limpieza') {
+                dpToast('🌿 Paciente registrado con Historia de Limpieza Facial', 'success');
             } else {
-                dpToast('🌿 Paciente registrada con Historia de Limpieza Facial', 'success');
+                dpToast('⚡ Paciente creado por Registro Express', 'success');
             }
 
             modalNewPatient.classList.remove('active');
