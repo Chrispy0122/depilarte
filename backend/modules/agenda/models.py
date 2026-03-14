@@ -8,8 +8,8 @@ cita_servicios = Table(
     'cita_servicios',
     Base.metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('cita_id', Integer, ForeignKey('citas.id')),
-    Column('servicio_id', Integer, ForeignKey('servicios.id'))
+    Column('cita_id', Integer, ForeignKey('citas.id', ondelete="CASCADE")),
+    Column('servicio_id', Integer, ForeignKey('servicios.id', ondelete="CASCADE"))
 )
 
 class EstadoCita(str, enum.Enum):
