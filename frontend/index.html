@@ -20,8 +20,12 @@
 
     <!-- Security Check (Immediate Redirect) -->
     <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = (user.rol || '').toLowerCase();
         if (!localStorage.getItem('usuarioLogueado')) {
             window.location.href = '/';
+        } else if (role === 'especialista') {
+            window.location.href = '/cabina.html';
         }
     </script>
     <link rel="stylesheet" href="/css/styles.css">

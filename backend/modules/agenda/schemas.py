@@ -33,6 +33,7 @@ class CitaCreate(BaseModel):
     servicios_ids: List[int]
     fecha_hora_inicio: datetime
     duracion_total: Optional[int] = None  # In minutes
+    especialista_id: Optional[int] = None
 
 class CitaUpdateStatus(BaseModel):
     estado: str
@@ -42,6 +43,7 @@ class Cita(BaseModel):
     fecha_hora_inicio: datetime
     fecha_hora_fin: datetime
     estado: str
+    especialista_id: Optional[int] = None
     
     cliente: Optional[ClienteSimple]
     servicios: List[Servicio] = [] # Changed from single Service to List

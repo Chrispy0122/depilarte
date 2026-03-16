@@ -32,8 +32,12 @@ class Cita(Base):
     # Simple status string, defaulting to pending
     estado = Column(String(20), default="pendiente")
     
+    # Staff assignment
+    especialista_id = Column(Integer, ForeignKey("empleados.id"), nullable=True)
+
     # Relations
     cliente = relationship("backend.modules.pacientes.models.Cliente", foreign_keys=[cliente_id], overlaps="citas")
+    especialista = relationship("backend.modules.staff.models.Empleado", foreign_keys=[especialista_id])
     # M:N Relationship
     servicios = relationship("Servicio", secondary=cita_servicios, backref="citas")
     pagos = relationship("backend.modules.cobranza.models.Pago", back_populates="cita")

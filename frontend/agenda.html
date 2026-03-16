@@ -26,8 +26,12 @@
     <link rel="stylesheet" href="css/agenda.css"> <!-- Module Styles -->
 
     <script>
+        const userCheck = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = (userCheck.rol || '').toLowerCase();
         if (!localStorage.getItem('usuarioLogueado')) {
             window.location.href = '/';
+        } else if (role === 'especialista') {
+            window.location.href = '/cabina.html';
         }
     </script>
     <link rel="manifest" href="/static/manifest.json">

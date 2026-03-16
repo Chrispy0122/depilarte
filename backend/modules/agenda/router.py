@@ -245,3 +245,19 @@ def reagendar_cita(cita_id: int, data: schemas.CitaReagendar, db: Session = Depe
 #     db.commit()
 #     db.refresh(db_presupuesto)
 #     return db_presupuesto
+@router.get("/mis-citas-hoy", response_model=List[schemas.Cita])
+def read_mis_citas_hoy(db: Session = Depends(get_db)):
+    from datetime import datetime
+    # Get current date (ignoring time)
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start + timedelta(days=1)
+    
+    # NEW RULE: Return ALL appointments for today, no matter who they are assigned to
+    citas = db.query(models.Cita).options(
+        joinedload(models.Cita.cliente),
+        joinedload(models.Cita.servicios)
+    ).filter(
+        models.Cita.fecha_hora_inicio >= today_start,
+        models.Cita.fecha_hora_inicio < today_end
+    ).all()
+    return citas

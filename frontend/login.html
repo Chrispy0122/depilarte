@@ -189,41 +189,7 @@
         </form>
     </div>
 
-    <script>
-        const form = document.getElementById('loginForm');
-        const errorMsg = document.getElementById('errorMsg');
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const user = document.getElementById('username').value.trim();
-            const pass = document.getElementById('password').value.trim();
-
-            // Simple Client-Side Auth
-            if (user === 'depilarte' && pass === 'depilarte') {
-                // Success
-                localStorage.setItem('usuarioLogueado', 'true'); // SET SECURITY TOKEN
-
-                errorMsg.style.display = 'none';
-                // Optional: Animation or delay
-                const btn = document.querySelector('.btn-login');
-                btn.textContent = 'Ingresando...';
-                btn.style.opacity = '0.8';
-
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 500);
-            } else {
-                // Fail
-                errorMsg.style.display = 'flex';
-                // Shake animation reset
-                const card = document.querySelector('.login-card');
-                card.style.animation = 'none';
-                card.offsetHeight; /* trigger reflow */
-                card.style.animation = 'shake 0.4s';
-            }
-        });
-    </script>
+    <script src="/JS/login.js"></script>
 
     <style>
         @keyframes shake {
