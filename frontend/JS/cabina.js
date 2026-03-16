@@ -23,19 +23,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchAppointments() {
         try {
-            // Updated: Fetch ALL appointments for today (no specialist filter)
-            const response = await fetch(`/api/agenda/mis-citas-hoy`);
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const fechaLocal = `${year}-${month}-${day}`;
             
-            if (!response.ok) throw new Error('Error al obtener citas');
+            console.log(`CABINA: Solicitando citas para la fecha local: ${fechaLocal}`);
+            
+            const response = await fetch(`/api/agenda/mis-citas-hoy?fecha=${fechaLocal}`);
+            
+            if (!response.ok) {
+                const errorData = await response.text();
+                throw new Error(`Error ${response.status}: ${errorData || 'Ocurrió un error al obtener citas'}`);
+            }
             
             const citas = await response.json();
             renderAppointments(citas);
         } catch (err) {
-            console.error(err);
+            console.error("CABINA ERROR FETCH:", err);
             appointmentList.innerHTML = `
                 <div class="empty-state">
                     <i class="fa-solid fa-circle-exclamation"></i>
                     <p>Error al cargar las citas del día.</p>
+                    <small style="color:var(--text-muted); font-size:0.7rem;">${err.message}</small>
                 </div>
             `;
         }

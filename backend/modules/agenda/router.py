@@ -246,13 +246,30 @@ def reagendar_cita(cita_id: int, data: schemas.CitaReagendar, db: Session = Depe
 #     db.refresh(db_presupuesto)
 #     return db_presupuesto
 @router.get("/mis-citas-hoy", response_model=List[schemas.Cita])
-def read_mis_citas_hoy(db: Session = Depends(get_db)):
-    from datetime import datetime
-    # Get current date (ignoring time)
-    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+def read_mis_citas_hoy(
+    fecha: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    from datetime import datetime, timedelta
+    import logging
+    
+    logger = logging.getLogger("uvicorn.error")
+    
+    # Use provided date or fallback to server today
+    if fecha:
+        try:
+            target_date = datetime.strptime(fecha, "%Y-%m-%d")
+            logger.info(f"CABINA: Solicitando citas para fecha proporcionada: {fecha}")
+        except ValueError:
+            target_date = datetime.now()
+            logger.warning(f"CABINA: Fecha invalida recibida: {fecha}. Usando fecha servidor: {target_date.date()}")
+    else:
+        target_date = datetime.now()
+        logger.info(f"CABINA: No se recibio fecha. Usando fecha servidor: {target_date.date()}")
+
+    today_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
     
-    # NEW RULE: Return ALL appointments for today, no matter who they are assigned to
     citas = db.query(models.Cita).options(
         joinedload(models.Cita.cliente),
         joinedload(models.Cita.servicios)
@@ -260,4 +277,7 @@ def read_mis_citas_hoy(db: Session = Depends(get_db)):
         models.Cita.fecha_hora_inicio >= today_start,
         models.Cita.fecha_hora_inicio < today_end
     ).all()
+    
+    logger.info(f"CABINA: Se encontraron {len(citas)} citas para el rango {today_start} - {today_end}")
+    
     return citas
