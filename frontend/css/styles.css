@@ -93,8 +93,9 @@ button {
 .brand {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 50px;
+    justify-content: flex-start;
+    gap: 12px !important;
+    margin-bottom: 20px;
 }
 
 .logo-icon {
@@ -124,6 +125,7 @@ button {
     flex-direction: column;
     gap: 10px;
     flex: 1;
+    margin-top: 0;
 }
 
 .menu-item {
