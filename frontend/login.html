@@ -17,13 +17,12 @@
 
     <style>
         :root {
-            --primary: #FF8C94;
-            --primary-dark: #F43F5E;
-            --bg-soft: #F0FDF4;
-            /* Mint/Green soft background */
-            --white: #FFFFFF;
-            --text-dark: #1F2937;
-            --text-muted: #6B7280;
+            --color-primario: #06B6D4;
+            --color-secundario: #1A2639;
+            --color-fondo: #FDFBF7;
+            --color-tarjeta: #FFFFFF;
+            --color-texto-principal: #1E1E1E;
+            --color-texto-claro: #F8F9FA;
             --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
         }
 
@@ -35,16 +34,16 @@
         }
 
         body {
-            background-color: var(--bg-soft);
+            background-color: var(--color-fondo);
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-dark);
+            color: var(--color-texto-principal);
         }
 
         .login-card {
-            background: var(--white);
+            background: var(--color-tarjeta);
             width: 100%;
             max-width: 400px;
             padding: 40px;
@@ -73,8 +72,7 @@
         }
 
         h1 {
-            color: #be185d;
-            /* Dark Pink/Red matching Dashboard */
+            color: var(--color-primario);
             font-weight: 800;
             font-size: 2rem;
             letter-spacing: -1px;
@@ -82,7 +80,7 @@
         }
 
         p.subtitle {
-            color: var(--text-muted);
+            color: rgba(30, 30, 30, 0.6);
             font-size: 0.9rem;
             margin-bottom: 30px;
         }
@@ -119,9 +117,8 @@
         }
 
         .btn-login {
-            background-color: #10B981;
-            /* Green Button as requested */
-            color: white;
+            background-color: var(--color-primario);
+            color: var(--color-texto-claro);
             width: 100%;
             padding: 14px;
             border: none;
@@ -131,11 +128,11 @@
             cursor: pointer;
             transition: background 0.2s, transform 0.1s;
             margin-top: 10px;
-            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
         }
 
         .btn-login:hover {
-            background-color: #059669;
+            background-color: #0891b2; /* A slightly darker shade of primary */
             transform: translateY(-1px);
         }
 
@@ -167,8 +164,8 @@
             <img src="img/senu-logo.png" alt="NOVUS" style="width: 150px; height: auto; border-radius: 12px;">
         </div>
         <div style="line-height: 1.1; margin-bottom: 5px;">
-             <h1 style="font-weight: 800; font-size: 2.2rem; margin-bottom: 0; letter-spacing: -1px; color: #be185d;">NOVUS</h1>
-             <small style="font-size: 0.85rem; opacity: 0.8; font-weight: 500; color: #64748b;">señu software</small>
+             <h1 style="font-weight: 800; font-size: 2.2rem; margin-bottom: 0; letter-spacing: -1px; color: var(--color-primario);">NOVUS</h1>
+             <small style="font-size: 0.85rem; opacity: 0.8; font-weight: 500; color: rgba(30, 30, 30, 0.6);">señu software</small>
         </div>
         <p class="subtitle" style="margin-top: 5px;">Bienvenido de nuevo</p>
 

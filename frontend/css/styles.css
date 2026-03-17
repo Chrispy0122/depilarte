@@ -13,6 +13,14 @@
     --border-radius-card: 20px;
     --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.03);
 
+    /* NOVUS Palette */
+    --color-primario: #06B6D4;
+    --color-secundario: #1A2639;
+    --color-fondo: #FDFBF7;
+    --color-tarjeta: #FFFFFF;
+    --color-texto-principal: #1E1E1E;
+    --color-texto-claro: #F8F9FA;
+
     --font-main: 'Poppins', sans-serif;
     --sidebar-width: 280px;
     /* Variable for width */
@@ -26,8 +34,8 @@
 }
 
 body {
-    background-color: var(--bg-body);
-    color: var(--text-dark);
+    background-color: var(--color-fondo);
+    color: var(--color-texto-principal);
     min-height: 100vh;
     overflow-y: auto;
     /* Allow global scroll */
@@ -79,7 +87,7 @@ button {
 /* --- SIDEBAR --- */
 .sidebar {
     width: var(--sidebar-width);
-    background-color: #bbf7d0;
+    background-color: var(--color-secundario);
     padding: 30px;
     display: flex;
     flex-direction: column;
@@ -113,11 +121,12 @@ button {
 .brand h1 {
     font-size: 1.3rem;
     font-weight: 700;
+    color: var(--color-texto-claro);
 }
 
-.brand p {
+.brand p, .brand small {
     font-size: 0.8rem;
-    color: var(--text-muted);
+    color: rgba(248, 249, 250, 0.7); /* color-texto-claro with opacity */
 }
 
 .menu {
@@ -134,7 +143,7 @@ button {
     gap: 15px;
     padding: 15px 20px;
     border-radius: 15px;
-    color: var(--text-muted);
+    color: var(--color-texto-claro);
     font-weight: 500;
 }
 
@@ -145,8 +154,8 @@ button {
 
 .menu-item:hover,
 .menu-item.active {
-    color: var(--primary);
-    background-color: var(--primary-light);
+    color: var(--color-primario);
+    background-color: rgba(248, 249, 250, 0.05);
 }
 
 
@@ -239,16 +248,15 @@ button {
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    background: var(--white);
-    color: var(--text-dark);
+    background: var(--color-tarjeta);
+    color: var(--color-texto-principal);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     font-size: 1.1rem;
 }
 
 .btn-primary {
-    background-color: #1A1A2E;
-    /* Dark elegant for contrast with Primary */
-    color: var(--white);
+    background-color: var(--color-primario);
+    color: var(--color-texto-claro);
     padding: 12px 25px;
     border-radius: 30px;
     font-weight: 500;
@@ -266,10 +274,10 @@ button {
 }
 
 .card {
-    background: var(--white);
+    background: var(--color-tarjeta);
     border-radius: var(--border-radius-card);
     padding: 25px;
-    box-shadow: var(--shadow-soft);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); /* Light elevation */
 }
 
 .card-header {
@@ -652,10 +660,10 @@ button {
 
 /* --- INVENTORY MODULE STYLES --- */
 .kpi-card {
-    background: white;
+    background: var(--color-tarjeta);
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
     display: flex;
     align-items: center;
     gap: 20px;
@@ -679,11 +687,11 @@ button {
 }
 
 .product-card {
-    background: white;
+    background: var(--color-tarjeta);
     border-radius: 12px;
     padding: 0;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
     transition: transform 0.2s;
     position: relative;
     border: 1px solid transparent;
