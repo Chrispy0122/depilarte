@@ -147,11 +147,7 @@ button {
     background-color: var(--primary-light);
 }
 
-.sidebar-footer {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
+
 
 .user-profile {
     display: flex;
