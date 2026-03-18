@@ -92,40 +92,40 @@
 
             <!-- STATS / CHARTS SECTION (2 Cards Only) -->
             <section class="charts-grid">
-                <!-- Card 1: Por Agendar (Rosado) -->
-                <div class="card chart-card" id="card-por-agendar" style="background-color: #fbcfe8 !important;">
+                <!-- Card 1: Citas Confirmadas -->
+                <div class="card chart-card" id="card-confirmadas" style="background-color: #fbcfe8 !important;">
                     <div class="card-header">
-                        <div class="icon-box salmon-bg" style="background-color: #FFF5F6; color: #FF8C94;">
-                            <i class="fa-regular fa-clock"></i>
+                        <div class="icon-box green-bg" style="background-color: #EFFFF8; color: #2B7A58;">
+                            <i class="fa-solid fa-check-double"></i>
                         </div>
-                        <span class="badge-pending"
-                            style="background-color: #FFF5F6; color: #FF8C94; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem;">Pendientes</span>
+                        <span class="badge-success">Hoy</span>
                     </div>
                     <div class="card-body">
-                        <div class="stat-text">
-                            <p class="stat-label" style="color: var(--color-texto-principal); font-weight: 500;">Por Agendar</p>
-                            <h3 class="stat-value" style="color: #be185d;">4</h3>
-                        </div>
-                        <!-- Use a flexible container for centered donut/bar -->
+                        <p class="stat-label" style="color: #333;">Citas Confirmadas</p>
+                        <h3 class="stat-value" style="color: #000;">8</h3>
                         <div class="chart-container" style="height: 120px;">
-                            <canvas id="pendingChart"></canvas>
+                            <canvas id="confirmedChart"></canvas>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card 2: Citas Confirmadas (Azul Claro) -->
-                <div class="card chart-card" id="card-confirmadas" style="background-color: var(--color-azul-claro) !important;">
+                <!-- Card 2: Por Agendar -->
+                <div class="card chart-card" id="card-por-agendar" style="background-color: #bbf7d0;">
                     <div class="card-header">
-                        <div class="icon-box" style="background-color: rgba(255, 255, 255, 0.6); color: var(--color-primario);">
-                            <i class="fa-solid fa-check-double"></i>
+                        <div class="icon-box salmon-bg">
+                            <i class="fa-regular fa-clock"></i>
                         </div>
-                        <span class="badge-success" style="background-color: rgba(255, 255, 255, 0.6); color: var(--color-secundario); padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem;">Hoy</span>
+                        <span class="badge-pending"
+                            style="background-color: #FFF5F6; color: #FF8C94; padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem;">Pendientes</span>
                     </div>
                     <div class="card-body">
-                        <p class="stat-label" style="color: var(--color-texto-principal); font-weight: 500;">Citas Confirmadas</p>
-                        <h3 class="stat-value" style="color: var(--color-secundario);">8</h3>
+                        <div class="stat-text">
+                            <p class="stat-label">Por Agendar</p>
+                            <h3 class="stat-value">4</h3>
+                        </div>
+                        <!-- Use a flexible container for centered donut/bar -->
                         <div class="chart-container" style="height: 120px;">
-                            <canvas id="confirmedChart"></canvas>
+                            <canvas id="pendingChart"></canvas>
                         </div>
                     </div>
                 </div>
