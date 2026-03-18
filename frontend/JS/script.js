@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: ['Confirmadas', 'Restantes'],
                 datasets: [{
                     data: [0, 1],
-                    backgroundColor: ['#4ade80', '#F0F0F0'],
+                    backgroundColor: ['#0369a1', '#bfdbfe'], // Deep blue / Light blue
                     borderWidth: 0,
                     hoverOffset: 4
                 }]
@@ -58,13 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initCharts();
 
-    // FORCE STYLES (Fix for persistent visual bug)
+    // FORCE STYLES - keep green card bg; confirmed card uses CSS variable
     function forceCardStyles() {
-        const card1 = document.getElementById('card-confirmadas');
         const card2 = document.getElementById('card-por-agendar');
-
-        if (card1) card1.style.backgroundColor = '#fbcfe8'; // Darker Pink
-        if (card2) card2.style.backgroundColor = '#bbf7d0'; // Darker Green
+        if (card2) card2.style.backgroundColor = '#bbf7d0'; // Green
     }
     forceCardStyles();
 

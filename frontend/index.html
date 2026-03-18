@@ -39,8 +39,11 @@
             <div class="brand">
                 <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
                 <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
-                    <h1 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 0; color: #0f172a; letter-spacing: -0.5px;">NOVUS</h1>
-                    <small style="font-size: 0.75rem; opacity: 0.7; font-weight: 500; color: #475569;">señu software</small>
+                    <h1
+                        style="font-weight: 800; font-size: 1.4rem; margin-bottom: 0; color: #0f172a; letter-spacing: -0.5px;">
+                        NOVUS</h1>
+                    <small style="font-size: 0.75rem; opacity: 0.7; font-weight: 500; color: #475569;">señu
+                        software</small>
                 </div>
             </div>
 
@@ -81,8 +84,7 @@
                 </button>
 
                 <div>
-                    <span class="greeting-subtitle">Buenos días</span>
-                    <h2 style="font-weight: 800; color: #be185d; letter-spacing: -0.5px;">Depilarte</h2>
+                    <h2 style="font-weight: 800; color: #000000; letter-spacing: -0.5px;">BUENOS DIAS</h2>
                     <p class="date-subtitle" id="currentDate">Cargando fecha...</p>
                 </div>
                 <div class="header-actions">
@@ -92,17 +94,17 @@
 
             <!-- STATS / CHARTS SECTION (2 Cards Only) -->
             <section class="charts-grid">
-                <!-- Card 1: Citas Confirmadas -->
-                <div class="card chart-card" id="card-confirmadas" style="background-color: #fbcfe8 !important;">
+                <!-- Card 1: Citas Confirmadas (Azul Claro) -->
+                <div class="card chart-card" id="card-confirmadas" style="background-color: var(--color-azul-claro) !important;">
                     <div class="card-header">
-                        <div class="icon-box green-bg" style="background-color: #EFFFF8; color: #2B7A58;">
+                        <div class="icon-box" style="background-color: rgba(255,255,255,0.65); color: var(--color-primario);">
                             <i class="fa-solid fa-check-double"></i>
                         </div>
-                        <span class="badge-success">Hoy</span>
+                        <span class="badge-success" style="background-color: rgba(255,255,255,0.65); color: var(--color-secundario); padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem;">Hoy</span>
                     </div>
                     <div class="card-body">
-                        <p class="stat-label" style="color: #333;">Citas Confirmadas</p>
-                        <h3 class="stat-value" style="color: #000;">8</h3>
+                        <p class="stat-label" style="color: var(--color-secundario); font-weight: 500;">Citas Confirmadas</p>
+                        <h3 class="stat-value" style="color: var(--color-secundario);">8</h3>
                         <div class="chart-container" style="height: 120px;">
                             <canvas id="confirmedChart"></canvas>
                         </div>
