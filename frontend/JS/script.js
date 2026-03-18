@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: ['Por Agendar', 'Agendados'],
                 datasets: [{
                     data: [0, 1],
-                    backgroundColor: ['#FF8C94', '#E2E8F0'], // Red for Pending
+                    backgroundColor: ['#38bdf8', 'rgba(255, 255, 255, 0.3)'], // Light blue / white translucent
                     borderWidth: 0,
                     hoverOffset: 4
                 }]
