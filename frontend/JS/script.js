@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: ['Confirmadas', 'Restantes'],
                 datasets: [{
                     data: [0, 1],
-                    backgroundColor: ['#0369a1', '#bfdbfe'], // Deep blue / Light blue
+                    backgroundColor: ['#4ade80', 'rgba(255, 255, 255, 0.3)'], // Light green / white translucent
                     borderWidth: 0,
                     hoverOffset: 4
                 }]
