@@ -212,8 +212,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Store selected date for construction
+        // FIX: Use LOCAL date methods to avoid UTC day-drift when user clicks near midnight.
+        // FullCalendar's info.date is in UTC, so .toISOString() can give the wrong day.
         if (dateObj) {
-            modalEl.dataset.selectedDate = dateObj.toISOString().split('T')[0];
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            modalEl.dataset.selectedDate = `${y}-${m}-${d}`;
         } else if (dateStr) {
             modalEl.dataset.selectedDate = dateStr.split('T')[0];
         }
@@ -316,10 +321,14 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.querySelector('#dp-main-btns').style.display = 'none';
             const panel = overlay.querySelector('#dp-reagendar-panel');
             panel.style.display = 'block';
-            // Precargar con fecha/hora actual
+            // Precargar con fecha/hora actual LOCAL (evita drift UTC)
             const now = new Date();
-            now.setSeconds(0, 0);
-            overlay.querySelector('#dp-nueva-fecha').value = now.toISOString().slice(0, 16);
+            const yy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            overlay.querySelector('#dp-nueva-fecha').value = `${yy}-${mm}-${dd}T${hh}:${min}`;
         });
 
         // Confirmar nueva fecha
@@ -479,7 +488,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // UPDATE
                 dpToast("Edición completa no implementada aún.", 'warning');
             } else {
-                // CREATE (POST)
+                // CREATE (POST) - Usa el endpoint correcto que maneja la tabla
+                // intermedia cita_servicios. NO usar /appointments (endpoint legacy
+                // que falla con servicios_ids al inyectarlo en models.Cita directamente).
                 console.log("Making POST request to:", `${API_URL}/agenda/`);
                 const res = await fetch(`${API_URL}/agenda/`, {
                     method: 'POST',

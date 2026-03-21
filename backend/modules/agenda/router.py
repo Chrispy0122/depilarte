@@ -29,13 +29,17 @@ def get_appointments(
         
     return query.all()
 
-@router.post("/appointments", response_model=schemas.Cita)
-def create_appointment(cita: schemas.CitaCreate, db: Session = Depends(get_db)):
-    db_cita = models.Cita(**cita.dict())
-    db.add(db_cita)
-    db.commit()
-    db.refresh(db_cita)
-    return db_cita
+# ENDPOINT DESHABILITADO: Este endpoint legacy fallaba con un TypeError/422
+# porque intentaba inyectar `servicios_ids` directamente en models.Cita(**cita.dict()),
+# pero `servicios_ids` no es una columna del modelo—es solo un campo del schema.
+# El endpoint correcto para crear citas es POST /api/agenda/ (ver función `crear_cita`).
+# @router.post("/appointments", response_model=schemas.Cita)
+# def create_appointment(cita: schemas.CitaCreate, db: Session = Depends(get_db)):
+#     db_cita = models.Cita(**cita.dict())  # <- BUG: servicios_ids no es columna
+#     db.add(db_cita)
+#     db.commit()
+#     db.refresh(db_cita)
+#     return db_cita
 
 @router.patch("/appointments/{id}/status", response_model=schemas.Cita)
 def update_appointment_status(id: int, status_update: schemas.CitaUpdateStatus, db: Session = Depends(get_db)):
@@ -105,6 +109,11 @@ def get_clients(db: Session = Depends(get_db)):
 
 @router.post("/", response_model=schemas.Cita)
 def crear_cita(cita: schemas.CitaCreate, db: Session = Depends(get_db)):
+    """
+    Endpoint principal y ÚNICO para crear citas.
+    Maneja correctamente la relación M:N con servicios (tabla intermedia cita_servicios).
+    NO pasa servicios_ids al constructor de Cita—los asigna a través de la relación ORM.
+    """
     # 1. Validate Client
     cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cita.cliente_id).first()
     if not cliente:
