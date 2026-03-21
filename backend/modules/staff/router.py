@@ -25,19 +25,22 @@ def create_empleado(empleado: schemas.EmpleadoCreate, db: Session = Depends(get_
 def login(login_data: schemas.EmpleadoBase, db: Session = Depends(get_db)):
     # 1. HARDCODE BYPASS FOR SPECIALIST TESTING
     if login_data.nombre_completo == "especialista":
-        # Check if ID 1 exists, if not, we use the fallback logic below
-        # but the user asked for a bypass.
-        # Let's ensure a dummy specialist exists in the DB if we use ID 1
         return {
-            "token": "fake-specialist-token-1",
-            "user": {"id": 1, "nombre_completo": "Especialista Temporal", "rol": "especialista"}
+            "token": "fake-specialist-token-1-tenant-1",
+            "user": {"id": 1, "nombre_completo": "Especialista Temporal", "rol": "especialista"},
+            "negocio_id": 1,
+            "tipo_negocio": "laser",
+            "nombre_negocio": "Depilarte"
         }
 
     # 2. DEFAULT ADMIN BYPASS (Existing)
     if login_data.nombre_completo == "depilarte":
         return {
-            "token": "fake-admin-token",
-            "user": {"id": 0, "nombre_completo": "Administrador", "rol": "admin"}
+            "token": "fake-admin-token-tenant-1",
+            "user": {"id": 0, "nombre_completo": "Administrador", "rol": "admin"},
+            "negocio_id": 1,
+            "tipo_negocio": "laser",
+            "nombre_negocio": "Depilarte"
         }
 
     # 3. NORMAL DB SEARCH
@@ -46,14 +49,21 @@ def login(login_data: schemas.EmpleadoBase, db: Session = Depends(get_db)):
     if not empleado:
         return {"error": "Usuario no encontrado"}, 401
     
+    # 4. FETCH NEGOCIO CONTEXT
+    from backend.modules.core.models import Negocio
+    negocio = db.query(Negocio).filter(Negocio.id == empleado.negocio_id).first()
+    
     # BACKWARD COMPATIBILITY: Default role to 'admin' if null or empty
     rol_final = empleado.rol if empleado.rol else "admin"
     
     return {
-        "token": f"fake-token-{empleado.id}",
+        "token": f"fake-token-{empleado.id}-tenant-{empleado.negocio_id}",
         "user": {
             "id": empleado.id,
             "nombre_completo": empleado.nombre_completo,
             "rol": rol_final
-        }
+        },
+        "negocio_id": negocio.id if negocio else 1,
+        "tipo_negocio": negocio.tipo_negocio if negocio else "laser",
+        "nombre_negocio": negocio.nombre if negocio else "Depilarte"
     }

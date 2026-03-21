@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     forceCardStyles();
 
-    // 3.1 DYNAMIC DATE (HEADER)
     function updateHeaderDate() {
         const dateEl = document.getElementById('currentDate');
         if (!dateEl) return;
@@ -81,13 +80,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateHeaderDate();
 
+    // 3.2 TENANT INJECTION
+    function injectTenantName() {
+        const nombreNegocio = localStorage.getItem('nombre_negocio');
+        if (nombreNegocio) {
+            const headerContainer = document.querySelector('.header-left') || document.querySelector('.header');
+            if (headerContainer) {
+                // Find or create badge
+                let badge = document.getElementById('tenant-name-display');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.id = 'tenant-name-display';
+                    badge.style.marginLeft = '12px';
+                    badge.style.padding = '4px 8px';
+                    badge.style.fontSize = '0.5em';
+                    badge.style.backgroundColor = '#E1EFFE';
+                    badge.style.color = '#1E40AF';
+                    badge.style.borderRadius = '12px';
+                    badge.style.fontWeight = 'bold';
+                    badge.style.verticalAlign = 'middle';
+                    badge.style.textTransform = 'uppercase';
+                    badge.style.border = '1px solid #BFDBFE';
+                    
+                    const h1 = headerContainer.querySelector('h1');
+                    if (h1) {
+                        h1.appendChild(badge);
+                    }
+                }
+                badge.innerHTML = `<i class="fa-solid fa-building" style="margin-right:4px;"></i>${nombreNegocio}`;
+            }
+        }
+    }
+    injectTenantName();
+
     // 4. FETCH DASHBOARD (SINGLE SOURCE OF TRUTH)
     async function fetchDashboardData() {
         try {
             // Update Label Loading
             if (labelWeek) labelWeek.textContent = "Cargando...";
 
-            const response = await fetch(`${API_URL}/dashboard/resumen?offset_semanas=${currentOffset}`);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/dashboard/resumen?offset_semanas=${currentOffset}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             if (!response.ok) throw new Error('Error fetching Dashboard');
             const data = await response.json();
 

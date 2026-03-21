@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Table
 from sqlalchemy.orm import relationship
 from backend.database import Base
+from backend.modules.core.models import TenantMixin
 import enum
 
 # Association Table
@@ -20,7 +21,7 @@ class EstadoCita(str, enum.Enum):
     PAGADA = "pagada"
 
 
-class Cita(Base):
+class Cita(TenantMixin, Base):
     __tablename__ = "citas"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -43,7 +44,7 @@ class Cita(Base):
     pagos = relationship("backend.modules.cobranza.models.Pago", back_populates="cita")
 
 
-class Servicio(Base):
+class Servicio(TenantMixin, Base):
     __tablename__ = "servicios"
 
     id = Column(Integer, primary_key=True, index=True)

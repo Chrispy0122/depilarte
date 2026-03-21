@@ -15,6 +15,7 @@ class DetalleCobroCreate(BaseModel):
 
 class CobroCreate(BaseModel):
     cliente_id: int
+    cita_id: Optional[int] = None  # Agregado para validar estado
     items: List[DetalleCobroCreate]
     metodo_pago: str
     referencia: Optional[str] = None

@@ -16,9 +16,9 @@ class HistorialItem(BaseModel):
 
 class ClienteBase(BaseModel):
     nombre_completo: str
-    cedula: str
-    numero_historia: str
-    telefono: Optional[str] = None
+    telefono: str
+    cedula: Optional[str] = None
+    numero_historia: Optional[str] = None
     email: Optional[str] = None
     saldo_wallet: Optional[float] = 0.0
     fecha_proxima_estimada: Optional[datetime.date] = None
@@ -41,6 +41,7 @@ class Cliente(ClienteBase):
     apellido: Optional[str] = None
     historial_citas: List[HistorialItem] = []
     deuda_total: Optional[float] = 0.0
+    fecha_registro: Optional[datetime.datetime] = None
 
     class Config:
         from_attributes = True

@@ -217,8 +217,8 @@ if (formNewPatient) {
 
         // Collect Data
         const formData = new FormData(formNewPatient);
-        const nombre = formData.get('nombre').trim();
-        const apellido = formData.get('apellido').trim();
+        const nombre = (formData.get('nombre') || '').trim();
+        const apellido = (formData.get('apellido') || '').trim();
 
         // Build Historia Clinica JSON
         const tipoHistoria = formData.get('tipo_historia') || 'limpieza';
@@ -271,24 +271,29 @@ if (formNewPatient) {
 
         const payload = {
             nombre_completo: `${nombre} ${apellido}`.trim(),
-            cedula: formData.get('cedula').trim(),
-            numero_historia: formData.get('historia').trim(),
-            telefono: formData.get('telefono').trim(),
+            cedula: (formData.get('cedula') || '').trim(),
+            numero_historia: (formData.get('historia') || '').trim(),
+            telefono: (formData.get('telefono') || '').trim(),
             email: formData.get('email') ? formData.get('email').trim() : null,
             historia_clinica: historiaClinica,
             saldo_wallet: 0.0
         };
 
         try {
+            const token = localStorage.getItem('token') || '';
             const response = await fetch(`${API_URL}/pacientes/`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.detail || 'Error al guardar paciente');
+                // Si el servidor devuelve 500, 400, etc., no intentamos parsear JSON ciegamente
+                const errorText = await response.text();
+                throw new Error(`Error del servidor: ${response.status} - ${errorText}`);
             }
 
             const nuevoPaciente = await response.json();
@@ -415,7 +420,8 @@ async function fetchPatients() {
                     frecuencia_visitas: p.frecuencia_visitas || 21,
                     nextVisit: p.fecha_proxima_estimada,
                     history: [],
-                    totalDebt: p.deuda_total || 0.0
+                    totalDebt: p.deuda_total || 0.0,
+                    fecha_registro: p.fecha_registro || null
                 };
             } catch (e) {
                 console.error("Error mapping patient:", p, e);
@@ -535,6 +541,18 @@ function filterAndRender(term, filterType) {
 
         if (filterType === 'deuda') matchFilter = p.totalDebt > 0;
         if (filterType === 'abono') matchFilter = p.walletBalance > 0;
+        if (filterType === 'recientes') {
+            if (p.fecha_registro) {
+                const limitDate = new Date();
+                limitDate.setDate(limitDate.getDate() - 7);
+                limitDate.setHours(0, 0, 0, 0);
+
+                const regDate = new Date(p.fecha_registro);
+                matchFilter = (regDate >= limitDate);
+            } else {
+                matchFilter = false;
+            }
+        }
 
         return matchText && matchFilter;
     });
@@ -559,72 +577,114 @@ function filterAndRender(term, filterType) {
 
 // --- CHART LOGIC ---
 let walletChartInstance = null;
+let deudaChartInstance = null;
 
 function updateWalletChart(players, filterType) {
-    const container = document.getElementById('walletSummaryContainer');
-    const totalAmountEl = document.getElementById('totalWalletAmount');
-    const countEl = document.getElementById('walletCount');
-    const canvas = document.getElementById('walletChart');
+    const walletContainer = document.getElementById('walletSummaryContainer');
+    const deudaContainer = document.getElementById('deudaSummaryContainer');
 
-    if (filterType !== 'abono') {
-        container.style.display = 'none';
+    // Hide both first, then show the relevant one
+    if (filterType !== 'abono') walletContainer.style.display = 'none';
+    if (filterType !== 'deuda') deudaContainer.style.display = 'none';
+
+    // ── ABONO CHART ────────────────────────────────────────────────────────
+    if (filterType === 'abono') {
+        const totalAmountEl = document.getElementById('totalWalletAmount');
+        const countEl = document.getElementById('walletCount');
+        const canvas = document.getElementById('walletChart');
+
+        const total = players.reduce((sum, p) => sum + (p.walletBalance || 0), 0);
+        let low = 0, mid = 0, high = 0;
+        players.forEach(p => {
+            const bal = p.walletBalance || 0;
+            if (bal < 50) low++;
+            else if (bal < 200) mid++;
+            else high++;
+        });
+
+        walletContainer.style.display = 'flex';
+        totalAmountEl.textContent = `$${total.toFixed(2)}`;
+        countEl.textContent = players.length;
+
+        if (walletChartInstance) walletChartInstance.destroy();
+
+        const ctx = canvas.getContext('2d');
+        walletChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Menos de $50', '$50 - $200', 'Más de $200'],
+                datasets: [{
+                    data: [low, mid, high],
+                    backgroundColor: ['#94a3b8', '#3b82f6', '#10b981'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { boxWidth: 12, font: { size: 10 } }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
         return;
     }
 
-    // Prepare Data
-    // 1. Total
-    const total = players.reduce((sum, p) => sum + (p.walletBalance || 0), 0);
+    // ── DEUDA CHART ─────────────────────────────────────────────────────────
+    if (filterType === 'deuda') {
+        const totalDeudaEl = document.getElementById('totalDeudaAmount');
+        const deudaCountEl = document.getElementById('deudaCount');
+        const canvas = document.getElementById('deudasChart');
 
-    // 2. Counts for Pie Chart (e.g. Ranges)
-    // Low: < $50, Mid: $50-$200, High: > $200
-    let low = 0, mid = 0, high = 0;
-    players.forEach(p => {
-        const bal = p.walletBalance || 0;
-        if (bal < 50) low++;
-        else if (bal < 200) mid++;
-        else high++;
-    });
+        const total = players.reduce((sum, p) => sum + (p.totalDebt || 0), 0);
 
-    // Update UI
-    container.style.display = 'flex';
-    totalAmountEl.textContent = `$${total.toFixed(2)}`;
-    countEl.textContent = players.length;
+        // Ranges: Baja < $50, Media $50–$200, Alta > $200
+        let baja = 0, media = 0, alta = 0;
+        players.forEach(p => {
+            const debt = p.totalDebt || 0;
+            if (debt < 50) baja++;
+            else if (debt < 200) media++;
+            else alta++;
+        });
 
-    // Render Chart
-    if (walletChartInstance) {
-        walletChartInstance.destroy();
-    }
+        deudaContainer.style.display = 'flex';
+        totalDeudaEl.textContent = `$${total.toFixed(2)}`;
+        deudaCountEl.textContent = players.length;
 
-    const ctx = canvas.getContext('2d');
-    walletChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Menos de $50', '$50 - $200', 'Más de $200'],
-            datasets: [{
-                data: [low, mid, high],
-                backgroundColor: [
-                    '#94a3b8', // Grey
-                    '#3b82f6', // Blue
-                    '#10b981'  // Green
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        boxWidth: 12,
-                        font: { size: 10 }
-                    }
-                }
+        if (deudaChartInstance) deudaChartInstance.destroy();
+
+        const ctx = canvas.getContext('2d');
+        deudaChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Deuda Baja < $50', 'Deuda Media $50–$200', 'Deuda Alta > $200'],
+                datasets: [{
+                    data: [baja, media, alta],
+                    backgroundColor: [
+                        '#fbbf24', // Amber — Baja
+                        '#f97316', // Orange — Media
+                        '#dc2626'  // Red   — Alta
+                    ],
+                    borderWidth: 0
+                }]
             },
-            cutout: '70%'
-        }
-    });
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { boxWidth: 12, font: { size: 10 } }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    }
 }
 
 // openHistory removed – historial is now inside the profile modal tab (tab-historial)

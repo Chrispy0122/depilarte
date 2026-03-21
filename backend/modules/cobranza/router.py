@@ -228,7 +228,25 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
     Registra una venta (Cobro) con múltiples items.
     Soporta precios override y tipos de venta.
     """
+    # --- VALIDACIÓN DOBLE COBRO / RACE CONDITION ---
+    if cobro_in.cita_id:
+        from backend.modules.agenda.models import Cita
+        cita_pagada = db.query(Cita).filter(Cita.id == cobro_in.cita_id).first()
+        if cita_pagada and hasattr(cita_pagada, 'estado') and str(cita_pagada.estado).lower() in ['pagada', 'cobrado']:
+            raise HTTPException(status_code=400, detail="Este cobro ya fue procesado previamente.")
     
+    recent_limit = datetime.now() - timedelta(seconds=15)
+    total_approx = sum([i.precio_aplicado for i in cobro_in.items])
+    cobro_reciente = db.query(Cobro).filter(
+        Cobro.cliente_id == cobro_in.cliente_id,
+        Cobro.fecha >= recent_limit,
+        Cobro.total >= total_approx - 1, # Tolerancia de $1
+        Cobro.total <= total_approx + 1
+    ).first()
+    
+    if cobro_reciente:
+        raise HTTPException(status_code=400, detail="Se detectó un cobro idéntico en los últimos segundos. Por favor, verifique el historial.")
+
     # 1. Calcular total real (Precio de lista)
     try:
         grand_total = 0.0
@@ -315,7 +333,8 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
         
         if existing_cita:
             new_cita = existing_cita
-            # El estado permanece intacto según regla de negocio (no sobreescribir confirmada)
+            # Actualizamos el estado a PAGADA para prevenir futuros cobros
+            new_cita.estado = agenda_models.EstadoCita.PAGADA
         else:
             new_cita = Cita(
                 cliente_id=cobro_in.cliente_id,

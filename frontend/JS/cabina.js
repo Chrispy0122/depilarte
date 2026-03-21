@@ -106,8 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- STATE ---
     let _currentPacienteId = null;
-    let _limpExiste = false;
-    let _depExiste = false;
+    let _histExiste = false;
 
     // --- MODAL LOGIC ---
     const profileModal = document.getElementById('profileModal');
@@ -135,9 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
         profileModal.classList.add('active');
         tabBtns[0].click(); // Reset to General tab
 
-        // Clear forms
-        document.getElementById('formHistoriaLimpieza').reset();
-        document.getElementById('formHistoriaDepilacion').reset();
+        // Clear form
+        document.getElementById('formHistoriaClinica').reset();
 
         try {
             // 1. Datos Generales y Visitas
@@ -165,50 +163,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Sin visitas previas</td></tr>';
             }
 
-            // 2. Limpieza Facial (Load and Pre-fill)
-            const limpRes = await fetch(`/api/pacientes/${pacienteId}/historia-limpieza`);
-            const limpForm = document.getElementById('formHistoriaLimpieza');
-            if (limpRes.ok) {
-                _limpExiste = true;
-                const d = await limpRes.json();
+            // 2. Cargar Historia Clínica Unificada
+            const token = localStorage.getItem('token');
+            const histRes = await fetch(`/api/pacientes/${pacienteId}/historia-clinica`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const histForm = document.getElementById('formHistoriaClinica');
+            
+            if (histRes.ok) {
+                _histExiste = true;
+                const d = await histRes.json();
                 
-                // Checkboxes
-                const keys = ['fuma', 'alcohol', 'comida_chatarra', 'diabetes', 'hipertension', 'alergias', 'ovarios_poliquisticos', 'hormonas', 'anticonceptivos', 'biopolimeros', 'implantes', 'botox', 'acido_hialuronico', 'pat_acne', 'pat_melasma', 'pat_rosacea', 'pat_cicatrices'];
-                keys.forEach(k => {
-                    const el = limpForm.querySelector(`[name="limp-${k}"]`);
-                    if (el) el.checked = !!d[k];
-                });
-                // Selects & Text
-                const texts = ['biotipo_cutaneo', 'fototipo', 'agua_diaria', 'horas_sueno', 'actividad_fisica', 'observaciones'];
-                texts.forEach(k => {
-                    const el = limpForm.querySelector(`[name="limp-${k}"]`);
-                    if (el) el.value = d[k] || '';
+                // Pre-fill logic based on all inputs
+                const inputs = histForm.querySelectorAll('input, select, textarea');
+                inputs.forEach(el => {
+                    const name = el.name;
+                    if (!name) return;
+                    if (el.type === 'checkbox') {
+                        el.checked = !!d[name];
+                    } else {
+                        el.value = d[name] || '';
+                    }
                 });
             } else {
-                _limpExiste = false;
-            }
-
-            // 3. Depilación (Load and Pre-fill)
-            const depRes = await fetch(`/api/pacientes/${pacienteId}/historia-depilacion`);
-            const depForm = document.getElementById('formHistoriaDepilacion');
-            if (depRes.ok) {
-                _depExiste = true;
-                const d = await depRes.json();
-                
-                // Checkboxes
-                const keys = ['epilepsia', 'ovario_poliquistico', 'asma', 'gastricos', 'hipertension', 'hepaticos', 'alergias', 'hirsutismo', 'respiratorios', 'diabetes', 'artritis', 'cancer', 'bronceado', 'acne', 'fuma', 'alcohol', 'biopolimeros', 'botox', 'plasma', 'tatuajes'];
-                keys.forEach(k => {
-                    const el = depForm.querySelector(`[name="${k}"]`);
-                    if (el) el.checked = !!d[k];
-                });
-                // Selects & Text
-                const texts = ['tipo_piel', 'aspecto_piel', 'medicamentos_ultimo_mes', 'metodo_anticonceptivo', 'metodo_depilacion_utilizado', 'otros'];
-                texts.forEach(k => {
-                    const el = depForm.querySelector(`[name="${k}"]`);
-                    if (el) el.value = d[k] || '';
-                });
-            } else {
-                _depExiste = false;
+                _histExiste = false;
             }
 
         } catch (err) {
@@ -217,63 +195,74 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- FORM SUBMITS ---
-    document.getElementById('formHistoriaLimpieza').addEventListener('submit', async (e) => {
+    // --- RENDERIZADO CONDICIONAL ---
+    function renderizarFormularioCabina() {
+        const tipoNegocio = localStorage.getItem('tipo_negocio');
+        const formLaser = document.getElementById('form-laser');
+        const formBelleza = document.getElementById('form-belleza');
+
+        if (formLaser && formBelleza) {
+            formLaser.style.display = 'none';
+            formBelleza.style.display = 'none';
+
+            if (tipoNegocio === 'laser' || !tipoNegocio) { // Default a laser
+                formLaser.style.display = 'block';
+            } else if (tipoNegocio === 'belleza') {
+                formBelleza.style.display = 'block';
+            }
+        }
+    }
+    renderizarFormularioCabina();
+
+    // --- FORM SUBMIT UNIFICADO ---
+    document.getElementById('formHistoriaClinica').addEventListener('submit', async (e) => {
         e.preventDefault();
         const form = e.target;
-        const getCheck = k => !!form.querySelector(`[name="limp-${k}"]`)?.checked;
-        const getVal = k => form.querySelector(`[name="limp-${k}"]`)?.value || null;
-
-        const payload = {
-            fuma: getCheck('fuma'), alcohol: getCheck('alcohol'), comida_chatarra: getCheck('comida_chatarra'),
-            agua_diaria: getVal('agua_diaria'), horas_sueno: getVal('horas_sueno'), actividad_fisica: getVal('actividad_fisica'),
-            diabetes: getCheck('diabetes'), hipertension: getCheck('hipertension'), alergias: getCheck('alergias'),
-            ovarios_poliquisticos: getCheck('ovarios_poliquisticos'), hormonas: getCheck('hormonas'), anticonceptivos: getCheck('anticonceptivos'),
-            biopolimeros: getCheck('biopolimeros'), implantes: getCheck('implantes'), botox: getCheck('botox'), acido_hialuronico: getCheck('acido_hialuronico'),
-            biotipo_cutaneo: getVal('biotipo_cutaneo'), fototipo: getVal('fototipo'),
-            pat_acne: getCheck('pat_acne'), pat_melasma: getCheck('pat_melasma'), pat_rosacea: getCheck('pat_rosacea'), pat_cicatrices: getCheck('pat_cicatrices'),
-            observaciones: getVal('observaciones')
-        };
-
-        const method = _limpExiste ? 'PUT' : 'POST';
-        try {
-            const res = await fetch(`/api/pacientes/${_currentPacienteId}/historia-limpieza`, {
-                method, headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok) throw new Error("Error al guardar");
-            alert("✅ Historia Facial Guardada");
-            _limpExiste = true;
-        } catch (err) { alert(err.message); }
-    });
-
-    document.getElementById('formHistoriaDepilacion').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const form = e.target;
+        const tipoNegocio = localStorage.getItem('tipo_negocio');
+        
+        let payload = {};
+        
         const getCheck = k => !!form.querySelector(`[name="${k}"]`)?.checked;
         const getVal = k => form.querySelector(`[name="${k}"]`)?.value || null;
 
-        const payload = {
-            epilepsia: getCheck('epilepsia'), ovario_poliquistico: getCheck('ovario_poliquistico'), asma: getCheck('asma'),
-            gastricos: getCheck('gastricos'), hipertension: getCheck('hipertension'), hepaticos: getCheck('hepaticos'),
-            alergias: getCheck('alergias'), hirsutismo: getCheck('hirsutismo'), respiratorios: getCheck('respiratorios'),
-            diabetes: getCheck('diabetes'), artritis: getCheck('artritis'), cancer: getCheck('cancer'),
-            tipo_piel: getVal('tipo_piel'), aspecto_piel: getVal('aspecto_piel'),
-            bronceado: getCheck('bronceado'), acne: getCheck('acne'), fuma: getCheck('fuma'), alcohol: getCheck('alcohol'),
-            biopolimeros: getCheck('biopolimeros'), botox: getCheck('botox'), plasma: getCheck('plasma'), tatuajes: getCheck('tatuajes'),
-            medicamentos_ultimo_mes: getVal('medicamentos_ultimo_mes'), metodo_anticonceptivo: getVal('metodo_anticonceptivo'),
-            metodo_depilacion_utilizado: getVal('metodo_depilacion_utilizado'), otros: getVal('otros')
-        };
+        // Universales
+        payload.fuma = getCheck('fuma');
+        payload.alcohol = getCheck('alcohol');
+        payload.alergias = getCheck('alergias');
+        payload.diabetes = getCheck('diabetes');
+        payload.hipertension = getCheck('hipertension');
+        payload.observaciones = getVal('observaciones');
 
-        const method = _depExiste ? 'PUT' : 'POST';
+        // Condicionales
+        if (tipoNegocio === 'laser' || !tipoNegocio) {
+            payload.fototipo = getVal('fototipo');
+            payload.tipo_piel_laser = getVal('tipo_piel_laser');
+            payload.bronceado = getCheck('bronceado');
+            payload.fotosensibilidad = getCheck('fotosensibilidad');
+            payload.medicamentos_fotosensibles = getCheck('medicamentos_fotosensibles');
+        } else if (tipoNegocio === 'belleza') {
+            payload.tipo_cabello = getVal('tipo_cabello');
+            payload.estado_unas = getVal('estado_unas');
+            payload.tintes_previos = getCheck('tintes_previos');
+            payload.keratina = getCheck('keratina');
+            payload.alergia_quimicos = getCheck('alergia_quimicos');
+        }
+
+        const method = _histExiste ? 'PUT' : 'POST';
+        const token = localStorage.getItem('token');
+        
         try {
-            const res = await fetch(`/api/pacientes/${_currentPacienteId}/historia-depilacion`, {
-                method, headers: { 'Content-Type': 'application/json' },
+            const res = await fetch(`/api/pacientes/${_currentPacienteId}/historia-clinica`, {
+                method, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(payload)
             });
-            if (!res.ok) throw new Error("Error al guardar");
-            alert("✅ Historia Cuerpo Guardada");
-            _depExiste = true;
+            if (!res.ok) throw new Error("Error al guardar la historia clínica");
+            alert("✅ Historia Clínica Guardada");
+            _histExiste = true;
         } catch (err) { alert(err.message); }
     });
 

@@ -694,3 +694,58 @@
 .fab-new-appt:active {
     transform: scale(0.95);
 }
+
+/* --- LIST VIEW GRID OVERRIDE --- */
+.cards-grid.vista-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.cards-grid.vista-lista .service-card {
+    flex-direction: row;
+    align-items: center;
+    padding: 0.8rem 1.2rem;
+    gap: 1.5rem;
+}
+
+.cards-grid.vista-lista .card-header {
+    margin-bottom: 0;
+    flex: 2;
+    align-items: center;
+}
+
+.cards-grid.vista-lista .card-body {
+    margin-top: 0;
+    flex: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cards-grid.vista-lista .price-row {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    justify-content: flex-end;
+    gap: 2rem;
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .cards-grid.vista-lista .service-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    .cards-grid.vista-lista .card-body {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .cards-grid.vista-lista .price-row {
+        justify-content: space-between;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px dashed var(--border-color);
+    }
+}

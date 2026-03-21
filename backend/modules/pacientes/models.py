@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, Float, Date, JSON, Boolean, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, JSON, Boolean, Text, ForeignKey, func
 from sqlalchemy.orm import relationship
 from backend.database import Base
+from backend.modules.core.models import TenantMixin
 
-class Cliente(Base):
+class Cliente(TenantMixin, Base):
     __tablename__ = "clientes"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -15,6 +16,7 @@ class Cliente(Base):
     saldo_wallet = Column(Float, default=0.0)
     fecha_proxima_estimada = Column(Date, nullable=True)
     historia_clinica = Column(JSON, nullable=True)
+    fecha_registro = Column(DateTime, default=func.now(), nullable=True)
 
     # Relación with Citas
     citas = relationship("backend.modules.agenda.models.Cita", foreign_keys="[backend.modules.agenda.models.Cita.cliente_id]", overlaps="cliente")

@@ -11,32 +11,31 @@ BASE_DIR = Path(__file__).resolve().parent
 # Load .env file
 load_dotenv(BASE_DIR / ".env")
 
-# SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
-# MYSQL_DATABASE_URL = os.getenv("MYSQL_DATABASE_URL") # Format: mysql+pymysql://user:password@host:port/dbname
 MYSQL_DATABASE_URL = os.getenv("MYSQL_DATABASE_URL")
 
 # Construct URL for PyMySQL
-if MYSQL_DATABASE_URL:
-    # Ensure pymysql dialect is explicitly used
-    if MYSQL_DATABASE_URL.startswith("mysql://"):
-        db_url = MYSQL_DATABASE_URL.replace("mysql://", "mysql+pymysql://")
-    else:
-        db_url = MYSQL_DATABASE_URL
-    SQLALCHEMY_DATABASE_URL = db_url
-else:
-    SQLALCHEMY_DATABASE_URL = "sqlite:///./depilarte.db"
+if not MYSQL_DATABASE_URL:
+    raise ValueError("MYSQL_DATABASE_URL not set in environment")
 
-if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL, 
-        connect_args={"check_same_thread": False}
-    )
+if MYSQL_DATABASE_URL.startswith("mysql://"):
+    db_url = MYSQL_DATABASE_URL.replace("mysql://", "mysql+pymysql://")
 else:
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL,
-        pool_pre_ping=True, # Recommended for remote DBs to handle disconnects
-        pool_recycle=3600
-    )
+    db_url = MYSQL_DATABASE_URL
+
+# Ensure utf8mb4 charset for emoji support (required for MySQL)
+if "?" not in db_url:
+    db_url += "?charset=utf8mb4"
+elif "charset=" not in db_url:
+    db_url += "&charset=utf8mb4"
+
+SQLALCHEMY_DATABASE_URL = db_url
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    connect_args={"charset": "utf8mb4"}
+)
     
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

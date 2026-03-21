@@ -1,9 +1,10 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from backend.database import Base
+from backend.modules.core.models import TenantMixin
 from datetime import datetime
 
-class Pago(Base):
+class Pago(TenantMixin, Base):
     __tablename__ = "pagos"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -14,7 +15,7 @@ class Pago(Base):
 
     cita = relationship("backend.modules.agenda.models.Cita", back_populates="pagos")
 
-class Cobro(Base):
+class Cobro(TenantMixin, Base):
     __tablename__ = "cobros"
 
     id = Column(Integer, primary_key=True, index=True)

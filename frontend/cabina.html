@@ -380,8 +380,7 @@
             
             <div class="tabs-nav">
                 <button class="tab-btn active" data-tab="tab-general">General</button>
-                <button class="tab-btn" data-tab="tab-facial">Facial</button>
-                <button class="tab-btn" data-tab="tab-cuerpo">Cuerpo</button>
+                <button class="tab-btn" data-tab="tab-historia">H. Clínica</button>
                 <button class="tab-btn" data-tab="tab-visitas">Visitas</button>
             </div>
 
@@ -395,134 +394,79 @@
                         <div class="data-item"><span class="label">Edad</span><span class="value" id="val-edad">-</span></div>
                         <div class="data-item"><span class="label">Profesión</span><span class="value" id="val-profesion">-</span></div>
                     </div>
-                </div>
-
-                <!-- Facial (Historia Limpieza) -->
-                <div id="tab-facial" class="tab-content">
-                    <form id="formHistoriaLimpieza">
-                        <div class="section-title"><i class="fa-solid fa-sparkles"></i> 1. Estilo de Vida</div>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:15px; background:#f0fdf4; padding:10px; border-radius:10px;">
-                            <label style="font-size:0.85rem;"><input type="checkbox" name="limp-fuma"> Fuma</label>
-                            <label style="font-size:0.85rem;"><input type="checkbox" name="limp-alcohol"> Alcohol</label>
-                            <label style="font-size:0.85rem;"><input type="checkbox" name="limp-comida_chatarra"> Chatarra</label>
-                        </div>
-                        <div class="data-grid" style="margin-bottom:15px;">
-                            <div class="data-item"><span class="label">Agua/Día</span><input type="text" name="limp-agua_diaria" class="cabin-input"></div>
-                            <div class="data-item"><span class="label">Sueño (h)</span><input type="number" name="limp-horas_sueno" class="cabin-input"></div>
-                            <div class="data-item full-width"><span class="label">Actividad Física</span><input type="text" name="limp-actividad_fisica" class="cabin-input"></div>
-                        </div>
-
-                        <div class="section-title">⚕️ 2. Antecedentes</div>
+                </                <!-- Historia Clínica (Dinámica) -->
+                <div id="tab-historia" class="tab-content">
+                    <form id="formHistoriaClinica">
+                        <!-- CAMPOS UNIVERSALES -->
+                        <div class="section-title">⚕️ Antecedentes Generales</div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f0fdf4; padding:10px; border-radius:10px; margin-bottom:15px;">
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-diabetes"> Diabetes (F)</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-hipertension"> HTA (F)</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-alergias"> Alergias</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-ovarios_poliquisticos"> Ovarios P.</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-hormonas"> Hormonales</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-anticonceptivos"> Anticoncept.</label>
-                            <label style="font-size:0.8rem; color:#EF4444; font-weight:700;"><input type="checkbox" name="limp-biopolimeros"> Biopolímeros</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-implantes"> Implantes</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-botox"> Botox</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-acido_hialuronico"> Ác. Hialur.</label>
-                        </div>
-
-                        <div class="section-title">🔍 3. Diagnóstico</div>
-                        <div class="data-grid">
-                            <div class="data-item">
-                                <span class="label">Biotipo</span>
-                                <select name="limp-biotipo_cutaneo" class="cabin-select">
-                                    <option value="">-</option>
-                                    <option value="Seca">Seca</option>
-                                    <option value="Grasa">Grasa</option>
-                                    <option value="Mixta">Mixta</option>
-                                    <option value="Sensible">Sensible</option>
-                                    <option value="Acneica">Acneica</option>
-                                </select>
-                            </div>
-                            <div class="data-item">
-                                <span class="label">Fototipo</span>
-                                <select name="limp-fototipo" class="cabin-select">
-                                    <option value="">-</option>
-                                    <option value="I">I</option><option value="II">II</option><option value="III">III</option>
-                                    <option value="IV">IV</option><option value="V">V</option><option value="VI">VI</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0;">
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-pat_acne"> Acné Activo</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-pat_melasma"> Melasma</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-pat_rosacea"> Rosácea</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="limp-pat_cicatrices"> Cicatrices</label>
-                        </div>
-                        <textarea name="limp-observaciones" placeholder="Observaciones..." class="cabin-textarea"></textarea>
-                        
-                        <div style="margin-top:20px;">
-                            <button type="submit" class="btn-save-cabin">💾 Guardar Historia Facial</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Cuerpo (Historia Depilación) -->
-                <div id="tab-cuerpo" class="tab-content">
-                    <form id="formHistoriaDepilacion">
-                        <div class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> 2. Antecedentes Pers.</div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#fdf4ff; padding:10px; border-radius:10px; margin-bottom:15px;">
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="epilepsia"> Epilepsia</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="ovario_poliquistico"> Ovario P.</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="asma"> Asma</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="gastricos"> Gástricos</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="hipertension"> HTA</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="hepaticos"> Hepáticos</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="alergias"> Alergias</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="hirsutismo"> Hirsutismo</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="respiratorios"> Respirat.</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="diabetes"> Diabetes</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="artritis"> Artritis</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="cancer"> Cáncer</label>
-                        </div>
-
-                        <div class="section-title">🔎 3. Dermatológicos</div>
-                        <div class="data-grid">
-                            <div class="data-item">
-                                <span class="label">Tipo Piel</span>
-                                <select name="tipo_piel" class="cabin-select">
-                                    <option value="">-</option>
-                                    <option value="Seca">Seca</option><option value="Grasa">Grasa</option>
-                                    <option value="Mixta">Mixta</option><option value="Sensible">Sensible</option>
-                                </select>
-                            </div>
-                            <div class="data-item">
-                                <span class="label">Aspecto</span>
-                                <select name="aspecto_piel" class="cabin-select">
-                                    <option value="">-</option>
-                                    <option value="Hidratada">Hidratada</option>
-                                    <option value="Deshidratada">Deshidratada</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f5f0ff; padding:10px; border-radius:10px; margin:10px 0;">
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="bronceado"> Bronceado</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="acne"> Acné</label>
                             <label style="font-size:0.8rem;"><input type="checkbox" name="fuma"> Fuma</label>
                             <label style="font-size:0.8rem;"><input type="checkbox" name="alcohol"> Alcohol</label>
-                            <label style="font-size:0.8rem; color:#EF4444; font-weight:700;"><input type="checkbox" name="biopolimeros"> Biopolímeros</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="botox"> Botox</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="plasma"> Plasma</label>
-                            <label style="font-size:0.8rem;"><input type="checkbox" name="tatuajes"> Tatuajes</label>
+                            <label style="font-size:0.8rem;"><input type="checkbox" name="alergias"> Alergias</label>
+                            <label style="font-size:0.8rem;"><input type="checkbox" name="diabetes"> Diabetes</label>
+                            <label style="font-size:0.8rem;"><input type="checkbox" name="hipertension"> HTA</label>
+                        </div>
+                        <textarea name="observaciones" placeholder="Observaciones generales..." class="cabin-textarea" style="margin-bottom:10px;"></textarea>
+
+                        <!-- CONTENEDOR LASER -->
+                        <div id="form-laser" style="display: none; border-top:1px solid #eee; padding-top:15px;">
+                            <div class="section-title">✨ Específico Láser</div>
+                            <div class="data-grid">
+                                <div class="data-item">
+                                    <span class="label">Fototipo</span>
+                                    <select name="fototipo" class="cabin-select">
+                                        <option value="">-</option>
+                                        <option value="I">I</option><option value="II">II</option><option value="III">III</option>
+                                        <option value="IV">IV</option><option value="V">V</option><option value="VI">VI</option>
+                                    </select>
+                                </div>
+                                <div class="data-item">
+                                    <span class="label">Tipo Piel</span>
+                                    <select name="tipo_piel_laser" class="cabin-select">
+                                        <option value="">-</option>
+                                        <option value="Seca">Seca</option><option value="Grasa">Grasa</option>
+                                        <option value="Mixta">Mixta</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0; background:#f5f0ff; padding:10px; border-radius:10px;">
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="bronceado"> Bronceado Reciente</label>
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="fotosensibilidad"> Fotosensibilidad a Luz</label>
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="medicamentos_fotosensibles"> Medicamentos Fotosensibles</label>
+                            </div>
                         </div>
 
-                        <div class="section-title">📝 4. Observaciones</div>
-                        <div class="data-grid">
-                            <div class="data-item"><span class="label">Medicamentos (Mes)</span><input type="text" name="medicamentos_ultimo_mes" class="cabin-input"></div>
-                            <div class="data-item"><span class="label">Anticonceptivo</span><input type="text" name="metodo_anticonceptivo" class="cabin-input"></div>
-                            <div class="data-item"><span class="label">Método Prev.</span><input type="text" name="metodo_depilacion_utilizado" class="cabin-input"></div>
-                            <div class="data-item"><span class="label">Otros</span><input type="text" name="otros" class="cabin-input"></div>
+                        <!-- CONTENEDOR BELLEZA -->
+                        <div id="form-belleza" style="display: none; border-top:1px solid #eee; padding-top:15px;">
+                            <div class="section-title">💅 Específico Belleza (Salón)</div>
+                            <div class="data-grid">
+                                <div class="data-item">
+                                    <span class="label">Tipo Cabello</span>
+                                    <select name="tipo_cabello" class="cabin-select">
+                                        <option value="">-</option>
+                                        <option value="Liso">Liso</option><option value="Ondulado">Ondulado</option><option value="Rizado">Rizado</option><option value="Afro">Afro</option>
+                                    </select>
+                                </div>
+                                <div class="data-item">
+                                    <span class="label">Estado Uñas</span>
+                                    <select name="estado_unas" class="cabin-select">
+                                        <option value="">-</option>
+                                        <option value="Sanas">Sanas</option><option value="Quebradizas">Quebradizas</option><option value="Con Hongos">Signos de Hongos</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0; background:#fff1f2; padding:10px; border-radius:10px;">
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="tintes_previos"> Tintes Previos (Decoloración)</label>
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="keratina"> Alisado/Keratina</label>
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="alergia_quimicos"> Alergia a Químicos</label>
+                            </div>
                         </div>
 
                         <div style="margin-top:20px;">
-                            <button type="submit" class="btn-save-cabin">💾 Guardar Historia Cuerpo</button>
+                            <button type="submit" class="btn-save-cabin">💾 Guardar Historia Clínica</button>
                         </div>
                     </form>
+                </div>           </form>
                 </div>
 
                 <!-- Visitas -->

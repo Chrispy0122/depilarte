@@ -168,6 +168,29 @@
 
             </div>
 
+            <!-- DEUDA SUMMARY CHART (Hidden by default) -->
+            <div id="deudaSummaryContainer"
+                style="display: none; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.15); margin-bottom: 25px; align-items: center; gap: 30px; border: 1px solid #fecaca;">
+
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="background: #fee2e2; color: #991b1b; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">⚠️ Cartera Vencida</span>
+                    </div>
+                    <h3
+                        style="margin: 0 0 10px 0; color: #b91c1c; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Total de Deudas Pendientes</h3>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: #dc2626;" id="totalDeudaAmount">$0.00</div>
+                    <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 0.85rem;">Saldo adeudado por
+                        <span id="deudaCount">0</span> pacientes con deuda activa.
+                    </p>
+                </div>
+
+                <div style="width: 300px; height: 150px; position: relative;">
+                    <canvas id="deudasChart"></canvas>
+                </div>
+
+            </div>
+
             <!-- HERO SEARCH SECTION -->
             <section class="hero-search-section">
                 <div class="search-container">
@@ -180,7 +203,7 @@
                     <button class="filter-chip active" data-filter="all">Todos</button>
                     <button class="filter-chip debt" data-filter="deuda">Con Deuda</button>
                     <button class="filter-chip credit" data-filter="abono">Con Abono</button>
-                    <button class="filter-chip recent" data-filter="recientes">Recientes</button>
+                    <button class="filter-chip recent" data-filter="recientes">Nuevos (7 Días)</button>
                 </div>
             </section>
 
@@ -537,11 +560,11 @@
                             </div>
                             <div class="form-group">
                                 <label>Apellido</label>
-                                <input type="text" name="apellido" required placeholder="Ej: Pérez">
+                                <input type="text" name="apellido" placeholder="Ej: Pérez">
                             </div>
                             <div class="form-group">
                                 <label>Cédula/DNI</label>
-                                <input type="text" name="cedula" required placeholder="Ej: V-12345678">
+                                <input type="text" name="cedula" placeholder="Ej: V-12345678">
                             </div>
                             <div class="form-group">
                                 <label>Fecha Nacimiento</label>
@@ -569,7 +592,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Nro. Historia (Único)</label>
-                                <input type="text" name="historia" required
+                                <input type="text" name="historia"
                                     style="font-weight: bold; letter-spacing: 1px;" placeholder="Ej: HIST-001">
                             </div>
                             <div class="form-group full-width">

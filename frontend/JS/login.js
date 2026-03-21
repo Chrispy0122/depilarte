@@ -32,6 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('usuarioLogueado', 'true');
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Almacenamiento del Contexto de Negocio (Multi-Tenant)
+                    if (data.negocio_id) localStorage.setItem('negocio_id', data.negocio_id);
+                    if (data.tipo_negocio) localStorage.setItem('tipo_negocio', data.tipo_negocio);
+                    if (data.nombre_negocio) localStorage.setItem('nombre_negocio', data.nombre_negocio);
 
                     // Role-based redirection
                     if (data.user.rol === 'especialista') {

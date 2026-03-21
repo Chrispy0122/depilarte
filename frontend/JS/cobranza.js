@@ -948,6 +948,7 @@ if (!btnProcessPayment) {
         const payload = {
             // New Scheme Payload
             cliente_id: clienteId,
+            cita_id: currentCitaId,
             items: itemsPayload,
             metodo_pago: paymentMethodSelect.value, // Used for header
             referencia: referenciaVal || null,
@@ -961,6 +962,7 @@ if (!btnProcessPayment) {
 
         console.log("📤 Sending payment payload:", payload);
 
+        let isSuccess = false;
         try {
             const r = await fetch(`${API_URL}/cobranza/`, {
                 method: 'POST',
@@ -969,6 +971,7 @@ if (!btnProcessPayment) {
             });
 
             if (r.ok) {
+                isSuccess = true;
                 const data = await r.json();
 
                 // --- ABONO DE PAQUETE (Si aplica) ---
@@ -1021,8 +1024,10 @@ if (!btnProcessPayment) {
             console.error(e);
             dpToast("Error de conexión", 'error');
         } finally {
-            btnProcessPayment.disabled = false;
-            btnProcessPayment.innerHTML = 'Confirmar y Procesar <i class="fa-solid fa-arrow-right"></i>';
+            if (!isSuccess) {
+                btnProcessPayment.disabled = false;
+                btnProcessPayment.innerHTML = 'Confirmar y Procesar <i class="fa-solid fa-arrow-right"></i>';
+            }
         }
     });
 }

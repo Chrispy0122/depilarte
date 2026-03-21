@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Date, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from backend.database import Base
+from backend.modules.core.models import TenantMixin
 import enum
 from datetime import datetime
 
@@ -8,7 +9,7 @@ class TipoProducto(str, enum.Enum):
     USO_INTERNO = "uso_interno"  # Cabina (ml, g)
     RETAIL = "retail"             # Venta (unidades)
 
-class Producto(Base):
+class Producto(TenantMixin, Base):
     __tablename__ = "productos_inventario"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -77,7 +78,7 @@ class TipoMovimiento(str, enum.Enum):
     AJUSTE = "ajuste"        # Corrección manual
     CONSUMO = "consumo"      # Descuento automático por servicio
 
-class MovimientoInventario(Base):
+class MovimientoInventario(TenantMixin, Base):
     """Registro de todos los movimientos de inventario"""
     __tablename__ = "movimientos_inventario"
     

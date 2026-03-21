@@ -134,19 +134,25 @@ function initSearch() {
 }
 
 function initViewToggles() {
-    const listBtn = document.getElementById('viewListBtn');
-    const gridBtn = document.getElementById('viewGridBtn');
+    const toggleBtn = document.getElementById('btnToggleView');
+    const container = document.getElementById('servicesGrid');
 
-    listBtn.addEventListener('click', () => setView('list'));
-    gridBtn.addEventListener('click', () => setView('grid'));
-}
-
-function setView(mode) {
-    viewMode = 'grid'; // Force strictly GRID for this Mobile First Premium design
-
-    // Toggle Containers
-    const gridContainer = document.getElementById('gridViewContainer');
-    if (gridContainer) gridContainer.classList.remove('hidden');
+    if (toggleBtn && container) {
+        toggleBtn.addEventListener('click', () => {
+            // Alternar la clase en el contenedor
+            container.classList.toggle('vista-lista');
+            
+            // Cambiar ícono visualmente según el estado actual
+            const icon = toggleBtn.querySelector('i');
+            if (container.classList.contains('vista-lista')) {
+                icon.className = 'fa-solid fa-border-all';
+                toggleBtn.title = 'Vista Tarjetas';
+            } else {
+                icon.className = 'fa-solid fa-list';
+                toggleBtn.title = 'Vista Lista';
+            }
+        });
+    }
 }
 
 // --- CORE LOGIC ---

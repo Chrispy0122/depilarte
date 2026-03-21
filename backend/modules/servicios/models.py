@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float
 from backend.database import Base
+from backend.modules.core.models import TenantMixin
 
-class PaqueteSpa(Base):
+class PaqueteSpa(TenantMixin, Base):
     """
     Modelo para almacenar información de paquetes y servicios del spa.
     Basado en la tabla de precios de tratamientos de depilación.

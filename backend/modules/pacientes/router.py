@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
+import re
+import uuid
 from backend.database import get_db
 from . import models, schemas
 
@@ -10,8 +13,31 @@ router = APIRouter(
     tags=["Pacientes"]
 )
 
+class DummyUsuario:
+    def __init__(self, negocio_id: int):
+        self.negocio_id = negocio_id
+
+def get_current_usuario(authorization: str = Header(None)):
+    if authorization:
+        match = re.search(r"tenant-(\d+)", authorization)
+        if match:
+            return DummyUsuario(negocio_id=int(match.group(1)))
+    # Fallback default tenant for safety if token is missing
+    return DummyUsuario(negocio_id=1)
+
 @router.post("/", response_model=schemas.Cliente)
-def crear_cliente(cliente: schemas.ClienteCreate, db: Session = Depends(get_db)):
+def crear_cliente(
+    cliente: schemas.ClienteCreate, 
+    db: Session = Depends(get_db),
+    usuario_actual: DummyUsuario = Depends(get_current_usuario)
+):
+    # Generar automáticamente si vienen vacíos (Registro Express)
+    if not cliente.cedula or not str(cliente.cedula).strip():
+        cliente.cedula = f"EXP-CED-{uuid.uuid4().hex[:8].upper()}"
+        
+    if not cliente.numero_historia or not str(cliente.numero_historia).strip():
+        cliente.numero_historia = f"EXP-HIST-{uuid.uuid4().hex[:8].upper()}"
+
     # Validar Historial Único
     if db.query(models.Cliente).filter(models.Cliente.numero_historia == cliente.numero_historia).first():
         raise HTTPException(status_code=400, detail=f"El número de historia {cliente.numero_historia} ya está en uso. Por favor verifique.")
@@ -28,9 +54,18 @@ def crear_cliente(cliente: schemas.ClienteCreate, db: Session = Depends(get_db))
         email=cliente.email,
         saldo_wallet=cliente.saldo_wallet
     )
-    db.add(nuevo_cliente)
-    db.commit()
-    db.refresh(nuevo_cliente)
+    
+    # Asignar dinámicamente el ID del negocio
+    nuevo_cliente.negocio_id = usuario_actual.negocio_id
+    
+    try:
+        db.add(nuevo_cliente)
+        db.commit()
+        db.refresh(nuevo_cliente)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Error al guardar el paciente")
+        
     return nuevo_cliente
 
 @router.get("/", response_model=List[schemas.Cliente])

@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float
 from backend.database import Base
+from backend.modules.core.models import TenantMixin
 
-class Empleado(Base):
+class Empleado(TenantMixin, Base):
     __tablename__ = "empleados"
 
     id = Column(Integer, primary_key=True, index=True)
