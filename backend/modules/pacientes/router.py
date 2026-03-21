@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
+from pydantic import BaseModel
 import re
 import uuid
 from backend.database import get_db
@@ -114,6 +115,48 @@ def crear_historial(cliente_id: int, historial: schemas.HistorialClinicoCreate, 
     db.commit()
     db.refresh(nuevo_historial)
     return nuevo_historial
+
+# ── PATCH: Actualizar Número de Historia ──────────────────────────────────────
+class HistoriaUpdatePayload(BaseModel):
+    numero_historia: str
+
+@router.patch("/{cliente_id}/historia")
+def actualizar_historia(
+    cliente_id: int,
+    payload: "HistoriaUpdatePayload",
+    db: Session = Depends(get_db),
+    usuario_actual: DummyUsuario = Depends(get_current_usuario)
+):
+    nuevo_num = payload.numero_historia.strip()
+    if not nuevo_num:
+        raise HTTPException(status_code=400, detail="El número de historia no puede estar vacío.")
+
+    # Verificar duplicado dentro del mismo negocio (Multi-Tenant)
+    duplicado = db.query(models.Cliente).filter(
+        models.Cliente.numero_historia == nuevo_num,
+        models.Cliente.negocio_id == usuario_actual.negocio_id,
+        models.Cliente.id != cliente_id   # Excluir al mismo paciente
+    ).first()
+
+    if duplicado:
+        raise HTTPException(
+            status_code=400,
+            detail="Este número de historia ya está en uso en su negocio."
+        )
+
+    # Actualizar
+    cliente = db.query(models.Cliente).filter(
+        models.Cliente.id == cliente_id,
+        models.Cliente.negocio_id == usuario_actual.negocio_id
+    ).first()
+
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado.")
+
+    cliente.numero_historia = nuevo_num
+    db.commit()
+    db.refresh(cliente)
+    return {"ok": True, "numero_historia": cliente.numero_historia}
 
 @router.get("/{cliente_id}/historial-clinico", response_model=List[schemas.HistorialClinico])
 def obtener_historial_cliente(cliente_id: int, db: Session = Depends(get_db)):

@@ -258,7 +258,28 @@
                             <div style="text-align: right;">
                                 <div
                                     style="background: #e0f2fe; color: #0369a1; padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; display: inline-block;">
-                                    N° HIST: <span id="lbl-historia" style="font-size: 1.4rem;">000</span>
+                                    N° HIST:
+                                    <!-- Modo Visualización -->
+                                    <span id="lbl-historia" style="font-size: 1.4rem;">000</span>
+                                    <button id="btn-editar-historia" title="Editar N° Historia"
+                                        style="background:none; border:none; cursor:pointer; color:#0369a1; font-size:0.95rem; margin-left:4px; padding:0 2px; vertical-align:middle;"
+                                        onclick="activarEdicionHistoria()">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <!-- Modo Edición (oculto por defecto) -->
+                                    <span id="wrap-editar-historia" style="display:none; align-items:center; gap:4px;">
+                                        <input id="input-historia" type="text"
+                                            style="font-size:1.1rem; font-weight:bold; border:2px solid #0369a1; border-radius:6px; padding:3px 8px; width:120px; letter-spacing:1px;"
+                                            placeholder="Ej: HIST-001">
+                                        <button title="Guardar" onclick="guardarNuevoHistoria()"
+                                            style="background:#0369a1; color:#fff; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.85rem;">
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
+                                        <button title="Cancelar" onclick="cancelarEdicionHistoria()"
+                                            style="background:#94a3b8; color:#fff; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.85rem;">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </span>
                                 </div>
                                 <div class="pch-wallet"
                                     style="margin-top: 10px; border: none; background: none; padding: 0; text-align: right;">

@@ -1516,3 +1516,83 @@ async function paquetesLoad(pacienteId) {
         wrapper.style.display = 'none';
     }
 }
+
+// ─── Historia Inline Edit ──────────────────────────────────────────────────
+
+window.activarEdicionHistoria = function () {
+    const lblHistoria = document.getElementById('lbl-historia');
+    const input = document.getElementById('input-historia');
+    const wrapEdit = document.getElementById('wrap-editar-historia');
+    const btnEditar = document.getElementById('btn-editar-historia');
+
+    if (!lblHistoria || !input || !wrapEdit) return;
+
+    // Pre-fill input with current value
+    input.value = lblHistoria.textContent.trim();
+
+    // Toggle visibility
+    lblHistoria.style.display = 'none';
+    btnEditar.style.display = 'none';
+    wrapEdit.style.display = 'inline-flex';
+    input.focus();
+    input.select();
+};
+
+window.cancelarEdicionHistoria = function () {
+    const lblHistoria = document.getElementById('lbl-historia');
+    const wrapEdit = document.getElementById('wrap-editar-historia');
+    const btnEditar = document.getElementById('btn-editar-historia');
+
+    if (lblHistoria) lblHistoria.style.display = '';
+    if (btnEditar) btnEditar.style.display = '';
+    if (wrapEdit) wrapEdit.style.display = 'none';
+};
+
+window.guardarNuevoHistoria = async function () {
+    const input = document.getElementById('input-historia');
+    const lblHistoria = document.getElementById('lbl-historia');
+    if (!input || !_currentPacienteId) return;
+
+    const nuevoValor = input.value.trim();
+    if (!nuevoValor) {
+        dpToast('El número de historia no puede estar vacío.', 'error');
+        return;
+    }
+
+    const token = localStorage.getItem('token') || '';
+
+    try {
+        const res = await fetch(`${API_URL}/pacientes/${_currentPacienteId}/historia`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            body: JSON.stringify({ numero_historia: nuevoValor })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            const msg = errData.detail || 'Error al actualizar el número de historia.';
+            dpToast(`⚠️ ${msg}`, 'error');
+            return;
+        }
+
+        const data = await res.json();
+
+        // Update UI in-place
+        if (lblHistoria) lblHistoria.textContent = data.numero_historia;
+
+        // Also sync the in-memory patientsDB record
+        const pacIdx = patientsDB.findIndex(p => p.id === _currentPacienteId);
+        if (pacIdx !== -1) patientsDB[pacIdx].historyId = data.numero_historia;
+
+        cancelarEdicionHistoria();
+        dpToast('✅ Número de historia actualizado correctamente.', 'success');
+
+    } catch (err) {
+        console.error('Error actualizando historia:', err);
+        dpToast('Error de red al intentar actualizar.', 'error');
+    }
+};
+
