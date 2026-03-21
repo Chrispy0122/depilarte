@@ -485,16 +485,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (eventId) {
-                // UPDATE
+                // UPDATE (pendiente de implementar completamente)
                 dpToast("Edición completa no implementada aún.", 'warning');
             } else {
                 // CREATE (POST) - Usa el endpoint correcto que maneja la tabla
                 // intermedia cita_servicios. NO usar /appointments (endpoint legacy
                 // que falla con servicios_ids al inyectarlo en models.Cita directamente).
                 console.log("Making POST request to:", `${API_URL}/agenda/`);
+                const token = localStorage.getItem('token') || '';
                 const res = await fetch(`${API_URL}/agenda/`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token   // requerido para extraer negocio_id (TenantMixin)
+                    },
                     body: JSON.stringify(payload)
                 });
                 console.log("Response status:", res.status);
@@ -506,12 +510,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Reset form
                     $('#cliente-select').val('').trigger('change');
                     $('#servicio_id').val([]).trigger('change');
+                    dpToast('✅ Cita agendada exitosamente.', 'success');
                 } else {
-                    const err = await res.json();
-                    console.error("Error response:", err);
-                    dpToast("Error al guardar: " + JSON.stringify(err), 'error');
+                    // Parseo seguro: primero texto, luego intentar JSON
+                    const rawText = await res.text();
+                    let errMsg = rawText;
+                    try {
+                        const errJson = JSON.parse(rawText);
+                        errMsg = errJson.detail || JSON.stringify(errJson);
+                    } catch (_) { /* No era JSON, usar rawText */ }
+                    console.error("Error response:", errMsg);
+                    dpToast(`⚠️ Error al guardar: ${errMsg}`, 'error');
                 }
             }
+
         } catch (e) {
             console.error("Exception caught:", e);
             dpToast("Error de conexión: " + e.message, 'error');

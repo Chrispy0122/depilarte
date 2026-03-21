@@ -1,11 +1,27 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from datetime import datetime, timedelta
+import re
 from backend.database import get_db
 from backend.modules.agenda import models, schemas
 from backend.modules.pacientes import models as pacientes_models
+
+# ─── Auth / Tenant ─────────────────────────────────────────────────────────
+class DummyUsuario:
+    def __init__(self, negocio_id: int):
+        self.negocio_id = negocio_id
+
+def get_current_usuario(authorization: str = Header(None)):
+    """Extrae negocio_id del token JWT/fake-token almacenado en localStorage."""
+    if authorization:
+        match = re.search(r"tenant-(\d+)", authorization)
+        if match:
+            return DummyUsuario(negocio_id=int(match.group(1)))
+    # Fallback al tenant 1 si no hay token (misma política que pacientes)
+    return DummyUsuario(negocio_id=1)
 
 router = APIRouter(tags=["Agenda"])
 
@@ -108,7 +124,11 @@ def get_clients(db: Session = Depends(get_db)):
     return db.query(models.Cliente).all()
 
 @router.post("/", response_model=schemas.Cita)
-def crear_cita(cita: schemas.CitaCreate, db: Session = Depends(get_db)):
+def crear_cita(
+    cita: schemas.CitaCreate,
+    db: Session = Depends(get_db),
+    usuario_actual: DummyUsuario = Depends(get_current_usuario)
+):
     """
     Endpoint principal y ÚNICO para crear citas.
     Maneja correctamente la relación M:N con servicios (tabla intermedia cita_servicios).
@@ -129,27 +149,36 @@ def crear_cita(cita: schemas.CitaCreate, db: Session = Depends(get_db)):
         total_duracion = cita.duracion_total
     else:
         total_duracion = sum([s.duracion_minutos for s in servicios])
-        # Ensure at least 20 mins if 0
-        if total_duracion == 0: total_duracion = 20
+        if total_duracion == 0:
+            total_duracion = 20
 
     fecha_fin = cita.fecha_hora_inicio + timedelta(minutes=total_duracion)
 
-    # 4. Create Cita
+    # 4. Create Cita (sin servicios_ids - no es columna del modelo)
     nueva_cita = models.Cita(
         cliente_id=cita.cliente_id,
-        # No single servicio_id
         fecha_hora_inicio=cita.fecha_hora_inicio,
         fecha_hora_fin=fecha_fin,
         estado="pendiente"
     )
-    
-    # Associate Services
+
+    # 5. Inyectar negocio_id del tenant autenticado (requerido por TenantMixin)
+    nueva_cita.negocio_id = usuario_actual.negocio_id
+
+    # 6. Associate Services via M:N relationship
     nueva_cita.servicios = servicios
 
-    db.add(nueva_cita)
-    db.commit()
-    db.refresh(nueva_cita)
-    return nueva_cita
+    try:
+        db.add(nueva_cita)
+        db.commit()
+        db.refresh(nueva_cita)
+        return nueva_cita
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error de integridad al guardar la cita: {str(e.orig)}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error inesperado al guardar la cita: {str(e)}")
 
 @router.get("/", response_model=List[schemas.Cita])
 def listar_citas(db: Session = Depends(get_db)):
