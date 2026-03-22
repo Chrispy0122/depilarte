@@ -91,9 +91,24 @@ def obtener_productos(
     productos = query.all()
     return [enriquecer_producto(p) for p in productos]
 
-def crear_producto(db: Session, producto: schemas.ProductoCreate) -> models.Producto:
-    """Crea un nuevo producto"""
-    db_producto = models.Producto(**producto.dict())
+def crear_producto(db: Session, producto: schemas.ProductoCreate, negocio_id: int = 1) -> models.Producto:
+    """Crea un nuevo producto. Requiere negocio_id para TenantMixin."""
+    db_producto = models.Producto(
+        nombre=producto.nombre,
+        descripcion=getattr(producto, 'descripcion', None),
+        tipo=producto.tipo,
+        categoria=producto.categoria,
+        unidad_medida=producto.unidad_medida,
+        stock_actual=getattr(producto, 'stock_actual', 0.0),
+        stock_minimo=getattr(producto, 'stock_minimo', 0.0),
+        stock_maximo=getattr(producto, 'stock_maximo', 1000.0),
+        costo_unitario=getattr(producto, 'costo_unitario', 0.0),
+        precio_venta=getattr(producto, 'precio_venta', None),
+        fecha_caducidad=getattr(producto, 'fecha_caducidad', None),
+        imagen_url=getattr(producto, 'imagen_url', None),
+        activo=getattr(producto, 'activo', True),
+    )
+    db_producto.negocio_id = negocio_id  # TenantMixin requerido
     db.add(db_producto)
     db.commit()
     db.refresh(db_producto)
@@ -150,10 +165,17 @@ def crear_receta(db: Session, receta_data: schemas.RecetaCreate) -> models.Recet
     db.refresh(nueva_receta)
     return nueva_receta
 
-def consumir_receta(db: Session, receta_id: int, referencia: str = "") -> List[models.MovimientoInventario]:
+def consumir_receta(
+    db: Session,
+    receta_id: int,
+    referencia: str = "",
+    negocio_id: int = 1           # <-- propagado desde el cobro para TenantMixin
+) -> List[models.MovimientoInventario]:
     """
-    Descuenta del inventario todos los ingredientes de una receta.
-    Retorna lista de movimientos creados.
+    Descuenta del inventario todos los ingredientes de una receta (BOM).
+    Cada descuento genera un MovimientoInventario de tipo 'consumo'.
+    IMPORTANTE: NO hace db.commit() propio — el commit lo ejecuta el llamador
+    para garantizar atomicidad con el cobro completo.
     """
     receta = db.query(models.RecetaServicio).filter(models.RecetaServicio.id == receta_id).first()
     if not receta:
@@ -165,8 +187,9 @@ def consumir_receta(db: Session, receta_id: int, referencia: str = "") -> List[m
             db=db,
             producto_id=ingrediente.producto_id,
             tipo="consumo",
-            cantidad=-abs(ingrediente.cantidad),  # Negativo para salida
-            referencia=referencia
+            cantidad=-abs(ingrediente.cantidad),  # Negativo = salida de inventario
+            referencia=referencia,
+            negocio_id=negocio_id
         )
         if movimiento:
             movimientos.append(movimiento)
@@ -180,9 +203,10 @@ def registrar_movimiento(
     tipo: str,
     cantidad: float,
     referencia: Optional[str] = None,
-    notas: Optional[str] = None
+    notas: Optional[str] = None,
+    negocio_id: int = 1           # <-- requerido por TenantMixin en MovimientoInventario
 ) -> Optional[models.MovimientoInventario]:
-    """Registra un movimiento de inventario y actualiza el stock"""
+    """Registra un movimiento de inventario y actualiza el stock del producto."""
     producto = db.query(models.Producto).filter(models.Producto.id == producto_id).first()
     if not producto:
         return None
@@ -196,10 +220,10 @@ def registrar_movimiento(
         stock_nuevo = 0
         cantidad = -stock_anterior
     
-    # Actualizar stock
+    # Actualizar stock del producto
     producto.stock_actual = stock_nuevo
     
-    # Crear movimiento
+    # Crear el movimiento con negocio_id estampado (TenantMixin)
     movimiento = models.MovimientoInventario(
         producto_id=producto_id,
         tipo=tipo,
@@ -210,6 +234,7 @@ def registrar_movimiento(
         referencia=referencia,
         notas=notas
     )
+    movimiento.negocio_id = negocio_id  # TenantMixin: sin esto el commit falla silenciosamente
     db.add(movimiento)
     db.commit()
     db.refresh(movimiento)

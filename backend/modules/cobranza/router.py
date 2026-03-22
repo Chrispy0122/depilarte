@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session, joinedload
 from backend.database import get_db
 from . import models, services
@@ -7,7 +7,21 @@ from backend.modules.pacientes import models as pacientes_models
 from pydantic import BaseModel
 from datetime import datetime, date, time, timedelta
 from sqlalchemy import func, or_
-from typing import Optional
+from typing import Optional, List
+import re
+
+# ─── Auth / Tenant (mismo patrón que pacientes/router.py) ──────────────────────────
+class DummyUsuario:
+    def __init__(self, negocio_id: int):
+        self.negocio_id = negocio_id
+
+def get_current_usuario(authorization: str = Header(None)):
+    """Extrae negocio_id del token JWT/fake-token almacenado en localStorage."""
+    if authorization:
+        match = re.search(r"tenant-(\d+)", authorization)
+        if match:
+            return DummyUsuario(negocio_id=int(match.group(1)))
+    return DummyUsuario(negocio_id=1)
 from backend.modules.inventario import services as inventario_services
 from backend.modules.inventario import models as inventario_models
 import traceback # For debugging 500 errors
@@ -223,7 +237,11 @@ from .schemas import CobroCreate
 from .models import Cobro, DetalleCobro, Pago
 
 @router.post("/")
-def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
+def crear_cobro(
+    cobro_in: CobroCreate,
+    db: Session = Depends(get_db),
+    usuario_actual: DummyUsuario = Depends(get_current_usuario)
+):
     """
     Registra una venta (Cobro) con múltiples items.
     Soporta precios override y tipos de venta.
@@ -461,14 +479,20 @@ def crear_cobro(cobro_in: CobroCreate, db: Session = Depends(get_db)):
                         paquete_activo.activo = False
 
             # --- LOGIC PORT: INVENTORY CONSUMPTION ---
-            # Consumir receta si existe (Inventory Logic)
-            receta = inventario_services.obtener_receta_por_servicio(db, item.servicio_id)
-            if receta:
-                 inventario_services.consumir_receta(
-                    db, 
-                    receta.id, 
-                    referencia=f"Cobro #{nuevo_cobro.id} - {nombre_servicio}"
-                )
+            # Consumir receta si existe (BOM). Falla silenciosa: no aborta el cobro.
+            if item.servicio_id:
+                try:
+                    receta = inventario_services.obtener_receta_por_servicio(db, item.servicio_id)
+                    if receta:
+                        inventario_services.consumir_receta(
+                            db,
+                            receta.id,
+                            referencia=f"Cobro #{nuevo_cobro.id} - {nombre_servicio}",
+                            negocio_id=usuario_actual.negocio_id
+                        )
+                except Exception as inv_err:
+                    print(f"WARNING: Error al consumir inventario para servicio {item.servicio_id}: {inv_err}")
+                    # No hacemos rollback aquí — el cobro se guarda, el inventario se puede corregir manualmente
 
         # 4. Actualizar Próxima Cita (Legacy Logic)
         cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cobro_in.cliente_id).first()
@@ -620,14 +644,17 @@ def procesar_pago(pago: PagoCreate, db: Session = Depends(get_db)):
         # --- CONSUMO AUTOMÁTICO DE INVENTARIO (BOM) ---
         if cita.servicios:
             for servicio in cita.servicios:
-                # Buscar receta activa para el servicio
-                receta = inventario_services.obtener_receta_por_servicio(db, servicio.id)
-                if receta:
-                    inventario_services.consumir_receta(
-                        db, 
-                        receta.id, 
-                        referencia=f"Cita #{cita.id} - {servicio.nombre}"
-                    )
+                try:
+                    receta = inventario_services.obtener_receta_por_servicio(db, servicio.id)
+                    if receta:
+                        inventario_services.consumir_receta(
+                            db,
+                            receta.id,
+                            referencia=f"Cita #{cita.id} - {servicio.nombre}",
+                            negocio_id=1  # /pagar no tiene auth token; fallback tenant 1
+                        )
+                except Exception as inv_err:
+                    print(f"WARNING: Error al consumir inventario para servicio {servicio.id}: {inv_err}")
 
     db.commit()
     return {
