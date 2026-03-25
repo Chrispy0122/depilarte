@@ -322,6 +322,7 @@ def crear_cobro(
         # 2. Crear Header
         nuevo_cobro = Cobro(
             cliente_id=cobro_in.cliente_id,
+            negocio_id=usuario_actual.negocio_id,  # ← TENANT FIX
             fecha=datetime.now(),
             metodo_pago=processed_metodo_pago,
             referencia=cobro_in.referencia,
@@ -366,6 +367,7 @@ def crear_cobro(
         if cash_for_service > 0:
             pago_cash = Pago(
                 cita_id=new_cita.id,
+                negocio_id=usuario_actual.negocio_id,  # ← TENANT FIX
                 monto=cash_for_service,
                 metodo=processed_metodo_pago,
                 referencia=cobro_in.referencia
@@ -375,6 +377,7 @@ def crear_cobro(
         if wallet_used > 0:
             pago_wallet = Pago(
                 cita_id=new_cita.id,
+                negocio_id=usuario_actual.negocio_id,  # ← TENANT FIX
                 monto=wallet_used,
                 metodo="WALLET",
                 referencia="Uso de Saldo a Favor"
