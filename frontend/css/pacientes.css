@@ -1042,4 +1042,9 @@
     .history-section .refined-table td:nth-child(3)>div {
         display: inline-block;
     }
-}
+} 
+ / *   S w e e t A l e r t   t a r g e t   f i x   f o r   M o d a l s   * /  
+ . s w a l - o n - m o d a l   {  
+         z - i n d e x :   1 0 0 0 0   ! i m p o r t a n t ;  
+ }  
+ 

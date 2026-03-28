@@ -104,7 +104,7 @@
                     </div>
                     <div class="card-body">
                         <p class="stat-label" style="color: var(--color-secundario); font-weight: 500;">Citas Confirmadas</p>
-                        <h3 class="stat-value" style="color: var(--color-secundario);">8</h3>
+                        <h3 class="stat-value" style="color: var(--color-secundario);"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.2rem;"></i></h3>
                         <div class="chart-container" style="height: 120px;">
                             <canvas id="confirmedChart"></canvas>
                         </div>
@@ -123,7 +123,7 @@
                     <div class="card-body">
                         <div class="stat-text">
                             <p class="stat-label" style="color: #14532d; font-weight: 500;">Por Agendar</p>
-                            <h3 class="stat-value" style="color: #14532d;">4</h3>
+                            <h3 class="stat-value" style="color: #14532d;"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.2rem;"></i></h3>
                         </div>
                         <!-- Use a flexible container for centered donut/bar -->
                         <div class="chart-container" style="height: 120px;">
@@ -146,6 +146,24 @@
                                 Actual</span>
                             <button id="btnNextWeek" class="arrow-btn"><i
                                     class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="filter-controls" style="display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px; position: relative;">
+                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                            <input type="text" id="searchInput" placeholder="Buscar por nombre o ID..." 
+                                   style="width: 100%; padding: 10px 10px 10px 35px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
+                        </div>
+                        <div style="width: 180px;">
+                            <select id="statusFilter" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background-color: white; color: #475569;">
+                                <option value="Todos">Todos los estados</option>
+                                <option value="Por Agendar">Por Agendar</option>
+                                <option value="Agendado">Agendado</option>
+                                <option value="Confirmado">Confirmado</option>
+                                <option value="Canceló - Recuperar">Recuperar</option>
+                            </select>
                         </div>
                     </div>
                     <div class="patient-list" id="patientList"

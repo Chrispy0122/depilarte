@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentOffset = 0;
     let confirmedChart = null;
     let pendingChart = null;
+    let allClientsThisWeek = [];
+    let currentWeekStartStr = "";
 
     // 2. DOM ELEMENTS
     const listContainer = document.getElementById('patientList');
@@ -128,54 +130,71 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Error fetching Dashboard');
             const data = await response.json();
 
+            // Guardar datos para filtrado local
+            allClientsThisWeek = data.citas_semana || [];
+            currentWeekStartStr = data.semana_inicio;
+
             // A. UPDATE KPIS & CHARTS
             updateKPIs(data.kpis);
 
-            // B. UPDATE LIST (RETENTION TABLE)
-            renderRetentionTable(data.citas_semana, data.semana_inicio);
+            // B. UPDATE LIST (FILTRADO Y RENDERIZADO)
+            filterAndRenderTable();
 
             // C. UPDATE WEEK LABEL
             updateWeekLabel(data.semana_inicio, data.semana_fin);
 
         } catch (error) {
             console.error("Dashboard Error:", error);
+            // Reemplazar spinners con '-' para que no queden congelados
+            const confirmedEl = document.querySelector('#card-confirmadas .stat-value');
+            const pendingEl   = document.querySelector('#card-por-agendar .stat-value');
+            if (confirmedEl) confirmedEl.textContent = '-';
+            if (pendingEl)   pendingEl.textContent   = '-';
             if (listContainer) listContainer.innerHTML = '<div style="padding:20px; text-align:center; color:red">Error cargando datos. <br/><small>' + error.message + '</small></div>';
         }
     }
 
     function updateKPIs(kpis) {
-        // DOM Elements
-        const confirmedEl = document.querySelector('.card.chart-card:nth-child(1) .stat-value');
-        const pendingEl = document.querySelector('.card.chart-card:nth-child(2) .stat-value');
+        const confirmedEl = document.querySelector('#card-confirmadas .stat-value');
+        const pendingEl   = document.querySelector('#card-por-agendar .stat-value');
 
         if (confirmedEl) confirmedEl.textContent = kpis.confirmadas;
-        if (pendingEl) pendingEl.textContent = kpis.por_agendar; // Show "Actions Needed"
+        if (pendingEl)   pendingEl.textContent   = kpis.por_agendar;
 
-        // Charts
-        const total = kpis.total_citas;
+        const total     = kpis.total_citas;
         const confirmed = kpis.confirmadas;
-        const porAgendar = kpis.por_agendar; // Use specific "To Call" metric
+        const porAgendar = kpis.por_agendar;
 
         if (confirmedChart) {
             confirmedChart.data.datasets[0].data = [confirmed, Math.max(0, total - confirmed)];
             confirmedChart.update();
         }
-
-        // Chart 2: "Por Agendar" vs Rest (Agendadas + Confirmadas)
         if (pendingChart) {
-            // We want the red slice to be those who have NO appointment.
-            // Gray slice = everyone else (processed)
             pendingChart.data.datasets[0].data = [porAgendar, Math.max(0, total - porAgendar)];
             pendingChart.update();
         }
-        // Show ratio of "To Call" vs "Others"
-        // The 'pending' variable is not defined in this scope. Assuming it should be 'porAgendar' or a similar KPI.
-        // For now, commenting out or correcting based on context.
-        // If 'pending' refers to kpis.por_agendar, then the line below is redundant with the one above.
-        // If it refers to a different KPI, it needs to be defined.
-        // As per the instruction, just adding the brace. The line below will cause an error.
-        // pendingChart.data.datasets[0].data = [pending, Math.max(0, total - pending)];
-        // pendingChart.update();
+    }
+
+    function filterAndRenderTable() {
+        const searchInputEl = document.getElementById('searchInput');
+        const statusFilterEl = document.getElementById('statusFilter');
+
+        const searchTerm = searchInputEl ? searchInputEl.value.toLowerCase().trim() : "";
+        const statusTerm = statusFilterEl ? statusFilterEl.value : "Todos";
+
+        const filtered = allClientsThisWeek.filter(client => {
+            // Filtro de Búsqueda (Nombre o ID)
+            const matchesSearch = 
+                (client.cliente_nombre || "").toLowerCase().includes(searchTerm) || 
+                (client.cliente_id || "").toString().includes(searchTerm);
+
+            // Filtro de Estado
+            const matchesStatus = statusTerm === "Todos" || client.estado_accion === statusTerm;
+
+            return matchesSearch && matchesStatus;
+        });
+
+        renderRetentionTable(filtered, currentWeekStartStr);
     }
 
     function renderRetentionTable(clients, weekStartStr) {
@@ -275,7 +294,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         Atendido
                     </span>
                 `;
+            } else if (client.estado_accion === 'Canceló - Recuperar') {
+                // BADGE NARANJA - Paciente de rescate (canceló sin reagendar)
+                actionHtml = `
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                        <span style="display:inline-flex; align-items:center; gap:5px; padding: 5px 12px;
+                                     background: linear-gradient(135deg, #fed7aa, #fdba74);
+                                     color: #7c2d12; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+                                     box-shadow: 0 2px 6px rgba(251,146,60,0.3);">
+                            <i class="fa-solid fa-fire" style="font-size:0.75rem;"></i> Recuperar
+                        </span>
+                        <button class="btn-agendar"
+                                style="background: linear-gradient(135deg,#f97316,#ea580c); color:white; border:none;
+                                       padding:5px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem;
+                                       font-weight:600; box-shadow:0 2px 4px rgba(234,88,12,0.25);"
+                                data-id="${client.cliente_id}"
+                                data-name="${client.cliente_nombre}">
+                            <i class="fa-regular fa-calendar-plus" style="margin-right:3px;"></i> Agendar
+                        </button>
+                    </div>
+                `;
             }
+
 
             function obtenerBaseWhatsapp(telefono) {
                 if (!telefono) return '';
@@ -388,8 +428,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 6. EVENT LISTENERS PARA FILTRADO
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(filterAndRenderTable, 300);
+        });
+    }
+
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterAndRenderTable);
+    }
+
     // Initial Load
     fetchDashboardData();
+
+    // REFRESCO REACTIVO: cuando el usuario vuelve a esta pestaña (ej. después de cancelar
+    // una cita en la Agenda), se re-piden los datos para que la tabla de retención
+    // muestre el estado actualizado sin necesitar un reload manual.
+    let refreshTimer = null;
+    function scheduleRefresh() {
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(fetchDashboardData, 2000); // 2 s de debounce
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') scheduleRefresh();
+    });
+    window.addEventListener('pageshow', (e) => {
+        // pageshow se dispara también al navegar con el botón "Atrás" del browser
+        if (e.persisted) scheduleRefresh();
+    });
 
     // Mobile Sidebar
     const menuToggle = document.getElementById('menuToggle');

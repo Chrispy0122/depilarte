@@ -62,8 +62,37 @@ def update_appointment_status(id: int, status_update: schemas.CitaUpdateStatus, 
     db_cita = db.query(models.Cita).filter(models.Cita.id == id).first()
     if not db_cita:
         raise HTTPException(status_code=404, detail="Cita not found")
-    
+
     db_cita.estado = status_update.estado
+
+    # RETENCIÓN AUTOMÁTICA: Si la cita se cancela y el paciente no tiene otra cita
+    # futura válida, mover su fecha_proxima_estimada a HOY para que el Dashboard
+    # lo detecte de inmediato en la lista "Por Agendar" sin esperar la ventana de 14 días.
+    ESTADOS_CANCELADOS = {'CANCELLED', 'cancelada', 'cancelado', 'cancelled'}
+    if status_update.estado in ESTADOS_CANCELADOS:
+        from backend.modules.pacientes import models as paciente_models
+        from datetime import date
+
+        cliente = db.query(paciente_models.Cliente).filter(
+            paciente_models.Cliente.id == db_cita.cliente_id
+        ).first()
+
+        if cliente:
+            # Buscar si tiene alguna otra cita futura no cancelada
+            tiene_cita_futura = db.query(models.Cita).filter(
+                models.Cita.cliente_id == db_cita.cliente_id,
+                models.Cita.id != db_cita.id,           # excluir la que se cancela
+                models.Cita.fecha_hora_inicio > datetime.now(),
+                ~models.Cita.estado.in_(list(ESTADOS_CANCELADOS))
+            ).first()
+
+            if not tiene_cita_futura:
+                # Sin citas futuras → empujar a la PROXIMA SEMANA para seguimiento.
+                # (Regla de negocio: no agendar en la semana actual que ya fue cancelada)
+                from datetime import timedelta as td
+                cliente.fecha_proxima_estimada = date.today() + td(days=7)
+                db.add(cliente)
+
     db.commit()
     db.refresh(db_cita)
     return db_cita

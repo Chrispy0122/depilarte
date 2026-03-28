@@ -59,16 +59,91 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- EVENT DELEGATION FOR DYNAMIC BUTTONS ---
     // Fix for "Ver Perfil" button not working on dynamically created cards
     document.addEventListener('click', async function (e) {
-        const btn = e.target.closest('.btn-ver-perfil');
-        if (btn) {
+        const btnVer = e.target.closest('.btn-ver-perfil');
+        if (btnVer) {
             e.preventDefault();
-            const clienteId = btn.getAttribute('data-id');
+            const clienteId = btnVer.getAttribute('data-id');
             console.log("Abriendo perfil del cliente (Delegado):", clienteId);
             await loadClientProfile(clienteId);
+        }
+
+        const deleteBtn = e.target.closest('.btn-eliminar-paciente');
+        if (deleteBtn) {
+            e.preventDefault();
+            const pacienteId = deleteBtn.getAttribute('data-id');
+            const name = deleteBtn.getAttribute('data-name') || 'el paciente';
+            if (!pacienteId) {
+                console.error("ID no proveído en el botón.");
+                return;
+            }
+            handleEliminarPaciente(pacienteId, name);
         }
     });
 
 });
+
+// --- ELIMINAR PACIENTE (SOFT DELETE) ---
+function handleEliminarPaciente(id, name) {
+    Swal.fire({
+        title: '¿Eliminar este paciente?',
+        text: 'El paciente será ocultado del sistema, pero su historial de citas y pagos se mantendrá intacto.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        target: document.getElementById('profileModal'),
+        customClass: { container: 'swal-on-modal' }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            ejecutarSoftDelete(id);
+        }
+    });
+}
+
+async function ejecutarSoftDelete(id) {
+    try {
+        const token = localStorage.getItem('token') || '';
+        const response = await fetch(`${API_URL}/pacientes/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Error al eliminar el paciente');
+        }
+
+        // Mostrar Swal de Éxito sobre el modal actual
+        Swal.fire({
+            title: '¡Eliminado!',
+            text: 'Paciente eliminado.',
+            icon: 'success',
+            target: document.getElementById('profileModal'),
+            customClass: { container: 'swal-on-modal' }
+        });
+
+        // Cerrar el modal principal de perfil después del Swal
+        const modal = document.getElementById('profileModal');
+        if (modal) modal.classList.remove('active');
+
+        // Refrescar la tabla principal
+        fetchPatients();
+
+    } catch (error) {
+        console.error("Error en Soft Delete:", error);
+        Swal.fire({
+            title: 'Error',
+            text: error.message,
+            icon: 'error',
+            target: document.getElementById('profileModal'),
+            customClass: { container: 'swal-on-modal' }
+        });
+    }
+}
 
 // Alias requested by user
 window.loadClientProfile = async function (id) {
@@ -744,6 +819,13 @@ window.openProfile = async function (id) {
         setText('lbl-historia', p.numero_historia);
         setText('lbl-telefono', p.telefono || 'N/A');
         setText('lbl-email', p.email || 'N/A');
+
+        // Dynamically inject ID for the delete button
+        const btnEliminarP = document.getElementById('btn-eliminar-perfil');
+        if (btnEliminarP) {
+            btnEliminarP.setAttribute('data-id', id);
+            btnEliminarP.setAttribute('data-name', tituloFinal);
+        }
 
         // 2. Extra Personal Data from JSON
         const personal = p.historia_clinica && p.historia_clinica.personal ? p.historia_clinica.personal : {};

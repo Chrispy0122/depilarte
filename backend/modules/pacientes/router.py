@@ -70,9 +70,18 @@ def crear_cliente(
     return nuevo_cliente
 
 @router.get("/", response_model=List[schemas.Cliente])
-def listar_clientes(skip: int = 0, limit: int = 1000, q: Optional[str] = None, db: Session = Depends(get_db)):
-    query = db.query(models.Cliente).options(joinedload(models.Cliente.paquetes))
-    
+def listar_clientes(
+    skip: int = 0,
+    limit: int = 1000,
+    q: Optional[str] = None,
+    db: Session = Depends(get_db),
+    usuario_actual: DummyUsuario = Depends(get_current_usuario)
+):
+    query = db.query(models.Cliente).options(joinedload(models.Cliente.paquetes)).filter(
+        models.Cliente.negocio_id == usuario_actual.negocio_id,
+        models.Cliente.eliminado == False  # Excluir pacientes con soft-delete
+    )
+
     if q:
         if q.isdigit():
             query = query.filter(
@@ -83,14 +92,14 @@ def listar_clientes(skip: int = 0, limit: int = 1000, q: Optional[str] = None, d
             )
         else:
             query = query.filter(models.Cliente.nombre_completo.ilike(f"%{q}%"))
-            
+
     clientes = query.offset(skip).limit(limit).all()
-    
+
     # Calculate and assign deuda_total dynamically before returning
     for cliente in clientes:
         # 1. Base debt (if exists on model in the future, fallback to 0.0)
         base_deuda = getattr(cliente, 'deuda', 0.0) or 0.0
-        
+
         # 2. Extract fractional package debt
         deuda_paquetes = 0.0
         if hasattr(cliente, 'paquetes') and cliente.paquetes:
@@ -98,10 +107,10 @@ def listar_clientes(skip: int = 0, limit: int = 1000, q: Optional[str] = None, d
                 # Calculate active package debt (cost - paid)
                 if getattr(p, 'activo', True) and p.monto_pagado < p.costo_total:
                     deuda_paquetes += (p.costo_total - p.monto_pagado)
-                    
+
         # Virtual column mapping to Pydantic schema
         cliente.deuda_total = base_deuda + deuda_paquetes
-        
+
     return clientes
 
 @router.post("/{cliente_id}/historial-clinico", response_model=schemas.HistorialClinico)
@@ -354,6 +363,34 @@ def actualizar_cliente(
         "historia_clinica": cliente.historia_clinica,
         "historial_citas": [],
     }
+
+
+# ─── SOFT DELETE ──────────────────────────────────────────────────────────────
+@router.delete("/{cliente_id}", status_code=200)
+def eliminar_cliente(
+    cliente_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: DummyUsuario = Depends(get_current_usuario)
+):
+    """Soft Delete: marca el paciente como eliminado (eliminado=True).
+    Los datos se conservan en la DB por integridad referencial (citas, cobros, historia).
+    El paciente desaparece de todas las listas y consultas del sistema.
+    """
+    cliente = db.query(models.Cliente).filter(
+        models.Cliente.id == cliente_id,
+        models.Cliente.negocio_id == usuario_actual.negocio_id,  # Seguridad multi-tenant
+        models.Cliente.eliminado == False
+    ).first()
+
+    if not cliente:
+        raise HTTPException(
+            status_code=404,
+            detail="Paciente no encontrado o ya fue eliminado."
+        )
+
+    cliente.eliminado = True
+    db.commit()
+    return {"ok": True, "mensaje": f"Paciente '{cliente.nombre_completo}' eliminado correctamente."}
 
 
 @router.get("/{cliente_id}/historial", response_model=List[schemas.HistorialItem])
