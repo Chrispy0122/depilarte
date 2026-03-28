@@ -67,10 +67,9 @@ def crear_paquete(paquete: PaqueteSpaCreate, db: Session = Depends(get_db)):
     if getattr(nuevo_servicio, 'activo', None) is None:
         nuevo_servicio.activo = 1
         
-    # Asignar tenant (negocio_id = 1 por defecto al no haber auth middleware complejo aqui aun)
+# Asignar tenant (negocio_id = 1 por defecto al no haber auth middleware complejo aqui aun)
     # Por ahora hardcodeo 1, pero lo ideal es pasar el depend: get_current_usuario
     nuevo_servicio.negocio_id = 1
-        
     # 2. Add y commit/refresh obligatorio
     db.add(nuevo_servicio)
     db.commit()

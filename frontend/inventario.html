@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -27,7 +27,7 @@
         }
     </script>
 
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css">
     <!-- Inline styles for inventory specific components -->
     <!-- Inline styles moved to styles.css -->
     <link rel="manifest" href="/static/manifest.json">
@@ -36,30 +36,40 @@
 <body>
     <div class="dashboard-container">
         <!-- SIDEBAR -->
-<aside class="sidebar">
+        <aside class="sidebar">
             <div class="brand">
                 <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
                 <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
-                    <h1 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 0; color: #0f172a; letter-spacing: -0.5px;">NOVUS</h1>
-                    <small style="font-size: 0.75rem; opacity: 0.7; font-weight: 500; color: #475569;">señu software</small>
+                    <h1
+                        style="font-weight: 800; font-size: 1.4rem; margin-bottom: 0; color: #0f172a; letter-spacing: -0.5px;">
+                        NOVUS</h1>
+                    <small style="font-size: 0.75rem; opacity: 0.7; font-weight: 500; color: #475569;">señu
+                        software</small>
                 </div>
             </div>
 
             <nav class="menu">
-                <a href="index.html" class="menu-item"><i class="fa-solid fa-border-all"></i> Inicio</a>
-                <a href="agenda.html" class="menu-item"><i class="fa-regular fa-calendar"></i> Agenda</a>
-                <a href="servicios.html" class="menu-item"><i class="fa-solid fa-list-check"></i> Servicios</a>
-                <a href="pacientes.html" class="menu-item"><i class="fa-solid fa-users"></i> Pacientes</a>
-                <a href="cobranza.html" class="menu-item"><i class="fa-solid fa-money-bill-1-wave"></i> Cobranza</a>
-                <a href="inventario.html" class="menu-item active"><i class="fa-solid fa-boxes-stacked"></i> Inventario</a>
-                <a href="personal.html" class="menu-item"><i class="fa-solid fa-user-doctor"></i> Personal</a>
+                <a href="index.html" class="menu-item">
+                    <i class="fa-solid fa-border-all"></i> Inicio
+                </a>
+                <a href="agenda.html" class="menu-item">
+                    <i class="fa-regular fa-calendar"></i> Agenda
+                </a>
+                <a href="servicios.html" class="menu-item">
+                    <i class="fa-solid fa-list-check"></i> Servicios
+                </a>
+                <a href="pacientes.html" class="menu-item">
+                    <i class="fa-solid fa-users"></i> Pacientes
+                </a>
+                <a href="cobranza.html" class="menu-item">
+                    <i class="fa-solid fa-money-bill-1-wave"></i> Cobranza
+                </a>
+                <a href="inventario.html" class="menu-item active">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
             </nav>
 
-            <div class="sidebar-footer">
-                <button class="btn-logout" onclick="confirmarLogout()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
-                </button>
-            </div>
+
         </aside>
 
         <!-- OVERLAY FOR MOBILE -->
@@ -75,7 +85,7 @@
                         <i class="fa-solid fa-bars"></i>
                     </button>
                     <div>
-                        <h2 style="font-weight: 800; color: #be185d;">Inventario y Stock</h2>
+                        <h2 style="font-weight: 800; color: #070204;">Inventario y Stock</h2>
                         <p class="date-subtitle">Gestión inteligente de insumos y productos</p>
                     </div>
                 </div>
@@ -273,39 +283,6 @@
     <!-- SCRIPTS -->
     <script src="JS/dialogs.js"></script>
     <script src="JS/inventario.js"></script>
-
-    <!-- MODAL CONFIRMAR CERRAR SESIÓN -->
-    <div class="logout-confirm-overlay" id="logoutConfirmOverlay">
-        <div class="logout-confirm-box">
-            <div class="logout-confirm-icon">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </div>
-            <h3>¿Cerrar sesión?</h3>
-            <p>¿Estás seguro de que deseas cerrar tu sesión? Serás redirigido al inicio de sesión.</p>
-            <div class="logout-confirm-actions">
-                <button class="btn-cancelar-logout" onclick="cancelarLogout()">Cancelar</button>
-                <button class="btn-confirmar-logout" onclick="ejecutarLogout()">Sí, cerrar sesión</button>
-            </div>
-        </div>
-    </div>
-    <script>
-        function confirmarLogout() {
-            document.getElementById('logoutConfirmOverlay').classList.add('active');
-        }
-        function cancelarLogout() {
-            document.getElementById('logoutConfirmOverlay').classList.remove('active');
-        }
-        function ejecutarLogout() {
-            localStorage.clear();
-            window.location.href = '/';
-        }
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') cancelarLogout();
-        });
-        document.getElementById('logoutConfirmOverlay').addEventListener('click', function(e) {
-            if (e.target === this) cancelarLogout();
-        });
-    </script>
 </body>
 
 </html>

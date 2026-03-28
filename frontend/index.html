@@ -28,14 +28,14 @@
             window.location.href = '/cabina.html';
         }
     </script>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css">
     <link rel="manifest" href="/static/manifest.json">
 </head>
 
 <body>
     <div class="dashboard-container">
         <!-- SIDEBAR -->
-<aside class="sidebar">
+        <aside class="sidebar">
             <div class="brand">
                 <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
                 <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
@@ -66,16 +66,7 @@
                 <a href="inventario.html" class="menu-item">
                     <i class="fa-solid fa-boxes-stacked"></i> Inventario
                 </a>
-                <a href="personal.html" class="menu-item">
-                    <i class="fa-solid fa-user-doctor"></i> Personal
-                </a>
             </nav>
-
-            <div class="sidebar-footer">
-                <button class="btn-logout" onclick="confirmarLogout()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
-                </button>
-            </div>
 
 
         </aside>
@@ -113,7 +104,7 @@
                     </div>
                     <div class="card-body">
                         <p class="stat-label" style="color: var(--color-secundario); font-weight: 500;">Citas Confirmadas</p>
-                        <h3 class="stat-value" style="color: var(--color-secundario);">8</h3>
+                        <h3 class="stat-value" style="color: var(--color-secundario);"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.2rem;"></i></h3>
                         <div class="chart-container" style="height: 120px;">
                             <canvas id="confirmedChart"></canvas>
                         </div>
@@ -132,7 +123,7 @@
                     <div class="card-body">
                         <div class="stat-text">
                             <p class="stat-label" style="color: #14532d; font-weight: 500;">Por Agendar</p>
-                            <h3 class="stat-value" style="color: #14532d;">4</h3>
+                            <h3 class="stat-value" style="color: #14532d;"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.2rem;"></i></h3>
                         </div>
                         <!-- Use a flexible container for centered donut/bar -->
                         <div class="chart-container" style="height: 120px;">
@@ -157,6 +148,24 @@
                                     class="fa-solid fa-chevron-right"></i></button>
                         </div>
                     </div>
+
+                    <!-- Filter Controls -->
+                    <div class="filter-controls" style="display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px; position: relative;">
+                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                            <input type="text" id="searchInput" placeholder="Buscar por nombre o ID..." 
+                                   style="width: 100%; padding: 10px 10px 10px 35px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
+                        </div>
+                        <div style="width: 180px;">
+                            <select id="statusFilter" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background-color: white; color: #475569;">
+                                <option value="Todos">Todos los estados</option>
+                                <option value="Por Agendar">Por Agendar</option>
+                                <option value="Agendado">Agendado</option>
+                                <option value="Confirmado">Confirmado</option>
+                                <option value="Canceló - Recuperar">Recuperar</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="patient-list" id="patientList"
                         style="max-height: 400px; overflow-y: auto; scrollbar-width: thin;">
                         <!-- Populated by JS -->
@@ -167,42 +176,6 @@
     </div>
 
     <script src="/JS/script.js"></script>
-
-    <!-- MODAL CONFIRMAR CERRAR SESIÓN -->
-    <div class="logout-confirm-overlay" id="logoutConfirmOverlay">
-        <div class="logout-confirm-box">
-            <div class="logout-confirm-icon">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </div>
-            <h3>¿Cerrar sesión?</h3>
-            <p>¿Estás seguro de que deseas cerrar tu sesión? Serás redirigido al inicio de sesión.</p>
-            <div class="logout-confirm-actions">
-                <button class="btn-cancelar-logout" onclick="cancelarLogout()">Cancelar</button>
-                <button class="btn-confirmar-logout" onclick="ejecutarLogout()">Sí, cerrar sesión</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function confirmarLogout() {
-            document.getElementById('logoutConfirmOverlay').classList.add('active');
-        }
-        function cancelarLogout() {
-            document.getElementById('logoutConfirmOverlay').classList.remove('active');
-        }
-        function ejecutarLogout() {
-            localStorage.clear();
-            window.location.href = '/';
-        }
-        // Cerrar con ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') cancelarLogout();
-        });
-        // Cerrar clickeando fuera del cuadro
-        document.getElementById('logoutConfirmOverlay').addEventListener('click', function(e) {
-            if (e.target === this) cancelarLogout();
-        });
-    </script>
 </body>
 
 </html>

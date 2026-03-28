@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -40,8 +40,7 @@
 <body>
     <div class="dashboard-container">
         <!-- SIDEBAR (From Global Layout) -->
-        <!-- SIDEBAR -->
-<aside class="sidebar">
+        <aside class="sidebar">
             <div class="brand">
                 <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
                 <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
@@ -51,20 +50,27 @@
             </div>
 
             <nav class="menu">
-                <a href="index.html" class="menu-item"><i class="fa-solid fa-border-all"></i> Inicio</a>
-                <a href="agenda.html" class="menu-item active"><i class="fa-regular fa-calendar"></i> Agenda</a>
-                <a href="servicios.html" class="menu-item"><i class="fa-solid fa-list-check"></i> Servicios</a>
-                <a href="pacientes.html" class="menu-item"><i class="fa-solid fa-users"></i> Pacientes</a>
-                <a href="cobranza.html" class="menu-item"><i class="fa-solid fa-money-bill-1-wave"></i> Cobranza</a>
-                <a href="inventario.html" class="menu-item"><i class="fa-solid fa-boxes-stacked"></i> Inventario</a>
-                <a href="personal.html" class="menu-item"><i class="fa-solid fa-user-doctor"></i> Personal</a>
+                <a href="index.html" class="menu-item">
+                    <i class="fa-solid fa-border-all"></i> Inicio
+                </a>
+                <a href="agenda.html" class="menu-item active">
+                    <i class="fa-regular fa-calendar"></i> Agenda
+                </a>
+                <a href="servicios.html" class="menu-item">
+                    <i class="fa-solid fa-list-check"></i> Servicios
+                </a>
+                <a href="pacientes.html" class="menu-item">
+                    <i class="fa-solid fa-users"></i> Pacientes
+                </a>
+                <a href="cobranza.html" class="menu-item">
+                    <i class="fa-solid fa-money-bill-1-wave"></i> Cobranza
+                </a>
+                <a href="inventario.html" class="menu-item">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
             </nav>
 
-            <div class="sidebar-footer">
-                <button class="btn-logout" onclick="confirmarLogout()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
-                </button>
-            </div>
+
         </aside>
 
         <!-- OVERLAY FOR MOBILE -->
@@ -215,43 +221,46 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL CONFIRMACIÓN CANCELAR CITA -->
+    <div class="modal fade" id="modalConfirmCancel" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <!-- Top accent bar -->
+                <div style="height: 5px; background: linear-gradient(90deg, #ff6b6b, #ff8e53);"></div>
+                <div class="modal-body p-4 text-center">
+                    <!-- Icon -->
+                    <div class="mb-3"
+                        style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(255, 107, 107, 0.12);">
+                        <i class="fa-solid fa-calendar-xmark" style="font-size: 1.8rem; color: #ff6b6b;"></i>
+                    </div>
+                    <!-- Title -->
+                    <h5 class="fw-bold mb-2" style="color: #1e293b; font-size: 1.1rem;">¿Cancelar esta cita?</h5>
+                    <p class="text-muted mb-4" style="font-size: 0.9rem;">Esta acción la eliminará de la agenda
+                        permanentemente.</p>
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn flex-fill fw-semibold py-2 rounded-3" id="btnConfirmCancelNo"
+                            style="background: #f1f5f9; color: #64748b; border: none;">
+                            No, volver
+                        </button>
+                        <button type="button" class="btn flex-fill fw-semibold py-2 rounded-3" id="btnConfirmCancelSi"
+                            style="background: linear-gradient(135deg, #ff6b6b, #ff8e53); color: white; border: none;">
+                            <i class="fa-solid fa-ban me-1"></i> Sí, cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="JS/dialogs.js"></script>
     <script src="JS/agenda.js?v=11"></script>
 
-    <!-- MODAL CONFIRMAR CERRAR SESIÓN -->
-    <div class="logout-confirm-overlay" id="logoutConfirmOverlay">
-        <div class="logout-confirm-box">
-            <div class="logout-confirm-icon">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </div>
-            <h3>¿Cerrar sesión?</h3>
-            <p>¿Estás seguro de que deseas cerrar tu sesión? Serás redirigido al inicio de sesión.</p>
-            <div class="logout-confirm-actions">
-                <button class="btn-cancelar-logout" onclick="cancelarLogout()">Cancelar</button>
-                <button class="btn-confirmar-logout" onclick="ejecutarLogout()">Sí, cerrar sesión</button>
-            </div>
-        </div>
-    </div>
-    <script>
-        function confirmarLogout() {
-            document.getElementById('logoutConfirmOverlay').classList.add('active');
-        }
-        function cancelarLogout() {
-            document.getElementById('logoutConfirmOverlay').classList.remove('active');
-        }
-        function ejecutarLogout() {
-            localStorage.clear();
-            window.location.href = '/';
-        }
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') cancelarLogout();
-        });
-        document.getElementById('logoutConfirmOverlay').addEventListener('click', function(e) {
-            if (e.target === this) cancelarLogout();
-        });
-    </script>
 </body>
 
 </html>

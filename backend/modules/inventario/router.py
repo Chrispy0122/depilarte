@@ -60,49 +60,37 @@ async def subir_imagen_producto(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    """
-    Sube una imagen para un producto de inventario.
-    Guarda el archivo en frontend/static/uploads/productos/
-    y actualiza el campo imagen_url del producto.
-    """
     import os
     import uuid
     import shutil
 
-    # Verificar que el producto existe
     producto = db.query(models.Producto).filter(models.Producto.id == producto_id).first()
     if not producto:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
 
-    # Validar tipo de archivo
     allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
     if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=400,
-            detail=f"Tipo de archivo no permitido: {file.content_type}. Use JPEG, PNG, WEBP o GIF."
+            detail=f"Tipo de archivo no permitido: {file.content_type}."
         )
 
-    # Construir ruta de guardado
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     upload_dir = os.path.join(base_dir, "frontend", "static", "uploads", "productos")
     os.makedirs(upload_dir, exist_ok=True)
 
-    # Generar nombre único para evitar colisiones
     ext = os.path.splitext(file.filename)[1] if file.filename else ".jpg"
     unique_filename = f"producto_{producto_id}_{uuid.uuid4().hex[:8]}{ext}"
     file_path = os.path.join(upload_dir, unique_filename)
 
-    # Eliminar imagen anterior si existe y es un archivo local
     if producto.imagen_url and producto.imagen_url.startswith("/static/uploads/"):
         old_path = os.path.join(base_dir, "frontend", producto.imagen_url.lstrip("/"))
         if os.path.exists(old_path):
             os.remove(old_path)
 
-    # Guardar el nuevo archivo
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Actualizar la URL en la base de datos
     imagen_url = f"/static/uploads/productos/{unique_filename}"
     producto.imagen_url = imagen_url
     db.commit()
@@ -117,7 +105,6 @@ async def subir_imagen_producto(
 # --- RECETAS (BOM) ---
 @router.get("/recetas", response_model=Optional[schemas.RecetaResponse])
 def get_receta_servicio(servicio_id: int, db: Session = Depends(get_db)):
-    """Obtiene la receta activa de un servicio"""
     receta = services.obtener_receta_por_servicio(db, servicio_id)
     if not receta:
         return None
@@ -125,7 +112,6 @@ def get_receta_servicio(servicio_id: int, db: Session = Depends(get_db)):
 
 @router.post("/recetas", response_model=schemas.RecetaResponse)
 def create_receta(receta: schemas.RecetaCreate, db: Session = Depends(get_db)):
-    """Crea o actualiza la receta de un servicio"""
     return services.crear_receta(db, receta)
 
 # --- MOVIMIENTOS ---
@@ -134,7 +120,6 @@ def registrar_entrada(
     entrada: schemas.MovimientoCreate, 
     db: Session = Depends(get_db)
 ):
-    """Registra una entrada de inventario (compra)"""
     if entrada.tipo != "entrada":
         raise HTTPException(status_code=400, detail="Tipo de movimiento debe ser 'entrada'")
     
@@ -156,7 +141,6 @@ def registrar_ajuste(
     ajuste: schemas.MovimientoCreate, 
     db: Session = Depends(get_db)
 ):
-    """Registra un ajuste de inventario (manual)"""
     movimiento = services.registrar_movimiento(
         db, 
         ajuste.producto_id, 
@@ -166,6 +150,6 @@ def registrar_ajuste(
         ajuste.notas
     )
     if not movimiento:
-        raise HTTPException(status_code=404, detail="Producto no encontrado")
+        raise HTTPException(status_code=404, detail="Producto n encontrado")
     db.commit()
     return movimiento

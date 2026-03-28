@@ -134,7 +134,7 @@ else:
 
 # ── 2. Rutas HTML explícitas ──────────────────────────────────────────────────
 # Cada página tiene su propia ruta GET.
-# Se registran AMBAS formas: /agenda y /agenda.html
+# Se registran AMBAS formas: /agenda e /agenda.html
 # porque el menú del frontend usa hrefs relativos con extensión.
 
 def _html(filename: str) -> FileResponse:
@@ -211,5 +211,3 @@ async def serve_personal():
 @app.get("/personal.html")
 async def serve_personal_html():
     return _html("personal.html")
-
-

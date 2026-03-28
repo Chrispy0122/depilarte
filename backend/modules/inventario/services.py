@@ -236,9 +236,12 @@ def registrar_movimiento(
     )
     movimiento.negocio_id = negocio_id  # TenantMixin: sin esto el commit falla silenciosamente
     db.add(movimiento)
-    # IMPORTANTE: usar flush() en lugar de commit() para preservar atomicidad.
+# IMPORTANTE: usar flush() en lugar de commit() para preservar atomicidad.
     # El llamador (crear_cobro / endpoint de movimiento) es quien hace el commit final.
     db.flush()
+
+db.commit()
+    db.refresh(movimiento)
     
     return movimiento
 

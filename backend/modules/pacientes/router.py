@@ -76,9 +76,18 @@ def crear_cliente(
     return nuevo_cliente
 
 @router.get("/", response_model=List[schemas.Cliente])
-def listar_clientes(skip: int = 0, limit: int = 1000, q: Optional[str] = None, db: Session = Depends(get_db)):
-    query = db.query(models.Cliente).options(joinedload(models.Cliente.paquetes))
-    
+def listar_clientes(
+    skip: int = 0,
+    limit: int = 1000,
+    q: Optional[str] = None,
+    db: Session = Depends(get_db),
+    usuario_actual: DummyUsuario = Depends(get_current_usuario)
+):
+    query = db.query(models.Cliente).options(joinedload(models.Cliente.paquetes)).filter(
+        models.Cliente.negocio_id == usuario_actual.negocio_id,
+        models.Cliente.eliminado == False  # Excluir pacientes con soft-delete
+    )
+
     if q:
         if q.isdigit():
             query = query.filter(
@@ -89,14 +98,14 @@ def listar_clientes(skip: int = 0, limit: int = 1000, q: Optional[str] = None, d
             )
         else:
             query = query.filter(models.Cliente.nombre_completo.ilike(f"%{q}%"))
-            
+
     clientes = query.offset(skip).limit(limit).all()
-    
+
     # Calculate and assign deuda_total dynamically before returning
     for cliente in clientes:
         # 1. Base debt (if exists on model in the future, fallback to 0.0)
         base_deuda = getattr(cliente, 'deuda', 0.0) or 0.0
-        
+
         # 2. Extract fractional package debt
         deuda_paquetes = 0.0
         if hasattr(cliente, 'paquetes') and cliente.paquetes:
@@ -104,10 +113,10 @@ def listar_clientes(skip: int = 0, limit: int = 1000, q: Optional[str] = None, d
                 # Calculate active package debt (cost - paid)
                 if getattr(p, 'activo', True) and p.monto_pagado < p.costo_total:
                     deuda_paquetes += (p.costo_total - p.monto_pagado)
-                    
+
         # Virtual column mapping to Pydantic schema
         cliente.deuda_total = base_deuda + deuda_paquetes
-        
+
     return clientes
 
 @router.post("/{cliente_id}/historial-clinico", response_model=schemas.HistorialClinico)
@@ -191,10 +200,6 @@ def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
         Cita.estado.in_([EstadoCita.CONFIRMADA, EstadoCita.ASISTIO, "completada", "pagada"])
     ).order_by(Cita.fecha_hora_inicio.desc()).all()
     
-    # Pre-fetch all cobros for this client to match services by date/client if direct relation isn't clear
-    # In Depilarte, Pagos link to Citas, and Cobros link to Cliente.  
-    # To get exact sale type, let's grab the Cobro Detalles of the same day.
-    
     historial_data = []
     procesados_cobro_ids = set()
     
@@ -258,16 +263,6 @@ def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
             "asistio": cita.estado == EstadoCita.ASISTIO or cita.estado == "completada"
         })
         
-    # We need to attach this to the Pydantic model response
-    # Since SQLAlchemy models don't have this field, we might need to convert to dict or use an adapter
-    # But Pydantic's from_attributes=True usually looks for attributes on the object.
-    # We can just set the attribute on the instance if it's not a frozen model, or return a dict.
-    # However, 'cliente' is an ORM object. Best way is to construct the Pydantic model explicitly or
-    # Monkey-patch the instance for this request (risky but works for simple cases)
-    # Better: Return a dict that matches Schema
-    
-    # Monkey-patch or construct dict to ensure name availability
-    # Check if nombre_completo is missing/empty and try to recover from historia_clinica
     nombre_final = cliente.nombre_completo
     nombre_atomico = ""
     apellido_atomico = ""
@@ -307,7 +302,6 @@ def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
     }
     
     return cliente_dict
-
 
 @router.put("/{cliente_id}", response_model=schemas.Cliente)
 def actualizar_cliente(
@@ -361,17 +355,43 @@ def actualizar_cliente(
         "historial_citas": [],
     }
 
+# ─── SOFT DELETE ──────────────────────────────────────────────────────────────
+@router.delete("/{cliente_id}", status_code=200)
+def eliminar_cliente(
+    cliente_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: DummyUsuario = Depends(get_current_usuario)
+):
+    """Soft Delete: marca el paciente como eliminado (eliminado=True).
+    Los datos se conservan en la DB por integridad referencial (citas, cobros, historia).
+    El paciente desaparece de todas las listas y consultas del sistema.
+    """
+    cliente = db.query(models.Cliente).filter(
+        models.Cliente.id == cliente_id,
+        models.Cliente.negocio_id == usuario_actual.negocio_id,  # Seguridad multi-tenant
+        models.Cliente.eliminado == False
+    ).first()
+
+    if not cliente:
+        raise HTTPException(
+            status_code=404,
+            detail="Paciente no encontrado o ya fue eliminado."
+        )
+
+    cliente.eliminado = True
+    db.commit()
+    return {"ok": True, "mensaje": f"Paciente '{cliente.nombre_completo}' eliminado correctamente."}
+
 
 @router.get("/{cliente_id}/historial", response_model=List[schemas.HistorialItem])
 def historial_cliente(cliente_id: int, db: Session = Depends(get_db)):
-    # Import Cita model here to avoid circular imports if any, or assume it's available via models
     from backend.modules.agenda.models import Cita, EstadoCita
     from backend.modules.cobranza.models import Pago, Cobro, DetalleCobro
     
     # Filter Citas
     citas = db.query(Cita).filter(
         Cita.cliente_id == cliente_id,
-        Cita.estado.in_([EstadoCita.CONFIRMADA, EstadoCita.ASISTIO, "completada", "pagada"]) # Add loose strings just in case
+        Cita.estado.in_([EstadoCita.CONFIRMADA, EstadoCita.ASISTIO, "completada", "pagada"])
     ).order_by(Cita.fecha_hora_inicio.desc()).all()
     
     historial = []

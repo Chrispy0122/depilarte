@@ -9,5 +9,3 @@ requests
 cryptography
 python-jose[cryptography]
 passlib[bcrypt]
-openpyxl
-python-multipart

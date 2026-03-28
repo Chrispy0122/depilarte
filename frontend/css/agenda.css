@@ -1,5 +1,8 @@
 /* FONTS */
-/* Body styles removed to inherit from styles.css */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #F8F9FA;
+}
 
 /* --- CALENDAR CONTAINER --- */
 #calendar-container {

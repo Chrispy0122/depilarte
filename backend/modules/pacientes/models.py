@@ -17,6 +17,9 @@ class Cliente(TenantMixin, Base):
     fecha_proxima_estimada = Column(Date, nullable=True)
     historia_clinica = Column(JSON, nullable=True)
     fecha_registro = Column(DateTime, default=func.now(), nullable=True)
+    eliminado = Column(Boolean, default=False, nullable=False, server_default='0')
+    # server_default='0' garantiza que las filas existentes en la DB tomen False
+    # sin necesidad de migración manual de datos.
 
     # Relación with Citas
     citas = relationship("backend.modules.agenda.models.Cita", foreign_keys="[backend.modules.agenda.models.Cita.cliente_id]", overlaps="cliente")

@@ -45,18 +45,6 @@ def get_appointments(
         
     return query.all()
 
-# ENDPOINT DESHABILITADO: Este endpoint legacy fallaba con un TypeError/422
-# porque intentaba inyectar `servicios_ids` directamente en models.Cita(**cita.dict()),
-# pero `servicios_ids` no es una columna del modelo—es solo un campo del schema.
-# El endpoint correcto para crear citas es POST /api/agenda/ (ver función `crear_cita`).
-# @router.post("/appointments", response_model=schemas.Cita)
-# def create_appointment(cita: schemas.CitaCreate, db: Session = Depends(get_db)):
-#     db_cita = models.Cita(**cita.dict())  # <- BUG: servicios_ids no es columna
-#     db.add(db_cita)
-#     db.commit()
-#     db.refresh(db_cita)
-#     return db_cita
-
 @router.patch("/appointments/{id}/status", response_model=schemas.Cita)
 def update_appointment_status(id: int, status_update: schemas.CitaUpdateStatus, db: Session = Depends(get_db)):
     db_cita = db.query(models.Cita).filter(models.Cita.id == id).first()
@@ -64,6 +52,34 @@ def update_appointment_status(id: int, status_update: schemas.CitaUpdateStatus, 
         raise HTTPException(status_code=404, detail="Cita not found")
     
     db_cita.estado = status_update.estado
+
+    # RETENCIÓN AUTOMÁTICA: Si la cita se cancela y el paciente no tiene otra cita
+    # futura válida, mover su fecha_proxima_estimada a HOY para que el Dashboard
+    # lo detecte de inmediato en la lista "Por Agendar" sin esperar la ventana de 14 días.
+    ESTADOS_CANCELADOS = {'CANCELLED', 'cancelada', 'cancelado', 'cancelled'}
+    if status_update.estado in ESTADOS_CANCELADOS:
+        from backend.modules.pacientes import models as paciente_models
+        from datetime import date
+
+        cliente = db.query(paciente_models.Cliente).filter(
+            paciente_models.Cliente.id == db_cita.cliente_id
+        ).first()
+
+        if cliente:
+            # Buscar si tiene alguna otra cita futura no cancelada
+            tiene_cita_futura = db.query(models.Cita).filter(
+                models.Cita.cliente_id == db_cita.cliente_id,
+                models.Cita.id != db_cita.id,           # excluir la que se cancela
+                models.Cita.fecha_hora_inicio > datetime.now(),
+                ~models.Cita.estado.in_(list(ESTADOS_CANCELADOS))
+            ).first()
+
+            if not tiene_cita_futura:
+                # Sin citas futuras → empujar a la PROXIMA SEMANA para seguimiento.
+                from datetime import timedelta as td
+                cliente.fecha_proxima_estimada = date.today() + td(days=7)
+                db.add(cliente)
+
     db.commit()
     db.refresh(db_cita)
     return db_cita
@@ -80,15 +96,12 @@ def agendar_seguimiento(
         raise HTTPException(status_code=404, detail="Cita original no encontrada.")
     
     # 2. Actualizar estado de la cita actual
-    # Usando el string "asistio" o su valor enum si está definido
     cita_actual.estado = models.EstadoCita.ASISTIO.value if hasattr(models.EstadoCita, "ASISTIO") else "asistio"
     
     # 3. Validar cliente de la nueva cita (debería ser el mismo)
-    if cita_actual.cliente_id != rebook_data.cliente_id:
-        # Solo como validación cruzada. Usamos el proporcionado o el original
-        pass
+    # (Optional cross-validation)
 
-    # 4. Calcular el fin de la nueva cita (Reusing same logic as creation)
+    # 4. Calcular el fin de la nueva cita
     servicios = db.query(models.Servicio).filter(models.Servicio.id.in_(rebook_data.servicios_ids)).all()
     if not servicios or len(servicios) != len(rebook_data.servicios_ids):
         raise HTTPException(status_code=404, detail="Uno o más servicios no encontrados")
@@ -129,11 +142,6 @@ def crear_cita(
     db: Session = Depends(get_db),
     usuario_actual: DummyUsuario = Depends(get_current_usuario)
 ):
-    """
-    Endpoint principal y ÚNICO para crear citas.
-    Maneja correctamente la relación M:N con servicios (tabla intermedia cita_servicios).
-    NO pasa servicios_ids al constructor de Cita—los asigna a través de la relación ORM.
-    """
     # 1. Validate Client
     cliente = db.query(pacientes_models.Cliente).filter(pacientes_models.Cliente.id == cita.cliente_id).first()
     if not cliente:
@@ -154,7 +162,7 @@ def crear_cita(
 
     fecha_fin = cita.fecha_hora_inicio + timedelta(minutes=total_duracion)
 
-    # 4. Create Cita (sin servicios_ids - no es columna del modelo)
+    # 4. Create Cita
     nueva_cita = models.Cita(
         cliente_id=cita.cliente_id,
         fecha_hora_inicio=cita.fecha_hora_inicio,
@@ -162,10 +170,10 @@ def crear_cita(
         estado="pendiente"
     )
 
-    # 5. Inyectar negocio_id del tenant autenticado (requerido por TenantMixin)
+    # 5. Inyectar negocio_id
     nueva_cita.negocio_id = usuario_actual.negocio_id
 
-    # 6. Associate Services via M:N relationship
+    # 6. Associate Services
     nueva_cita.servicios = servicios
 
     try:
@@ -182,10 +190,9 @@ def crear_cita(
 
 @router.get("/", response_model=List[schemas.Cita])
 def listar_citas(db: Session = Depends(get_db)):
-    # Eager load relations for performance and cleaner JSON
     citas = db.query(models.Cita).options(
         joinedload(models.Cita.cliente),
-        joinedload(models.Cita.servicios) # Updated to plural
+        joinedload(models.Cita.servicios)
     ).all()
     return citas
 
@@ -203,36 +210,8 @@ def create_service(servicio: schemas.ServicioCreate, db: Session = Depends(get_d
 def list_services(db: Session = Depends(get_db)):
     return db.query(models.Servicio).all()
 
-@router.get("/debug/populate")
-def populate_services_debug(db: Session = Depends(get_db)):
-    servicios_data = [
-        {"nombre": "Axilas", "duracion_minutos": 20, "precio_sesion": 15.0},
-        {"nombre": "Piernas Completas", "duracion_minutos": 40, "precio_sesion": 40.0},
-        {"nombre": "Media Pierna", "duracion_minutos": 20, "precio_sesion": 25.0},
-        {"nombre": "Bozo", "duracion_minutos": 10, "precio_sesion": 10.0},
-        {"nombre": "Bikini", "duracion_minutos": 20, "precio_sesion": 20.0},
-        {"nombre": "Full Body", "duracion_minutos": 60, "precio_sesion": 100.0},
-        {"nombre": "Rostro", "duracion_minutos": 20, "precio_sesion": 25.0},
-        {"nombre": "Espalda", "duracion_minutos": 30, "precio_sesion": 35.0}
-    ]
-    added = []
-    for s in servicios_data:
-        exists = db.query(models.Servicio).filter(models.Servicio.nombre == s["nombre"]).first()
-        if not exists:
-            new_svc = models.Servicio(**s)
-            db.add(new_svc)
-            added.append(s["nombre"])
-    db.commit()
-    return {"status": "populated", "added": added}
-
-# --- Endpoint: Último Tratamiento por Paciente ---
-
 @router.get("/ultimo-tratamiento/{paciente_id}")
 def get_ultimo_tratamiento(paciente_id: int, db: Session = Depends(get_db)):
-    """
-    Retorna los IDs de los servicios de la cita más reciente del paciente.
-    Si no tiene citas previas, retorna lista vacía.
-    """
     ultima_cita = (
         db.query(models.Cita)
         .options(joinedload(models.Cita.servicios))
@@ -244,14 +223,8 @@ def get_ultimo_tratamiento(paciente_id: int, db: Session = Depends(get_db)):
         return []
     return [s.id for s in ultima_cita.servicios]
 
-# --- Endpoint: Reagendar Cita ---
-
 @router.put("/reagendar/{cita_id}")
 def reagendar_cita(cita_id: int, data: schemas.CitaReagendar, db: Session = Depends(get_db)):
-    """
-    Mueve una cita a una nueva fecha/hora preservando duración, paciente y tratamientos.
-    Resetea el estado a 'pendiente'.
-    """
     cita = (
         db.query(models.Cita)
         .options(joinedload(models.Cita.servicios))
@@ -270,19 +243,6 @@ def reagendar_cita(cita_id: int, data: schemas.CitaReagendar, db: Session = Depe
     db.refresh(cita)
     return {"ok": True, "id": cita.id}
 
-# --- Módulo Presupuestos (Disabled for now) ---
-# @router.post("/presupuestos", response_model=schemas.Presupuesto)
-# def create_budget(presupuesto: schemas.PresupuestoCreate, db: Session = Depends(get_db)):
-#     # Verify client exists
-#     client = db.query(models.Cliente).filter(models.Cliente.id == presupuesto.cliente_id).first()
-#     if not client:
-#         raise HTTPException(status_code=404, detail="Client not found")
-#         
-#     db_presupuesto = models.Presupuesto(**presupuesto.dict())
-#     db.add(db_presupuesto)
-#     db.commit()
-#     db.refresh(db_presupuesto)
-#     return db_presupuesto
 @router.get("/mis-citas-hoy", response_model=List[schemas.Cita])
 def read_mis_citas_hoy(
     fecha: Optional[str] = None,
@@ -293,17 +253,13 @@ def read_mis_citas_hoy(
     
     logger = logging.getLogger("uvicorn.error")
     
-    # Use provided date or fallback to server today
     if fecha:
         try:
             target_date = datetime.strptime(fecha, "%Y-%m-%d")
-            logger.info(f"CABINA: Solicitando citas para fecha proporcionada: {fecha}")
         except ValueError:
             target_date = datetime.now()
-            logger.warning(f"CABINA: Fecha invalida recibida: {fecha}. Usando fecha servidor: {target_date.date()}")
     else:
         target_date = datetime.now()
-        logger.info(f"CABINA: No se recibio fecha. Usando fecha servidor: {target_date.date()}")
 
     today_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
@@ -315,7 +271,5 @@ def read_mis_citas_hoy(
         models.Cita.fecha_hora_inicio >= today_start,
         models.Cita.fecha_hora_inicio < today_end
     ).all()
-    
-    logger.info(f"CABINA: Se encontraron {len(citas)} citas para el rango {today_start} - {today_end}")
     
     return citas

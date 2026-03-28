@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -20,6 +20,9 @@
     <link rel="stylesheet" href="css/pacientes.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* Classic Profile Header Styles */
@@ -85,7 +88,7 @@
 <body>
     <div class="dashboard-container">
         <!-- SIDEBAR -->
-<aside class="sidebar">
+        <aside class="sidebar">
             <div class="brand">
                 <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
                 <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
@@ -95,20 +98,27 @@
             </div>
 
             <nav class="menu">
-                <a href="index.html" class="menu-item"><i class="fa-solid fa-border-all"></i> Inicio</a>
-                <a href="agenda.html" class="menu-item"><i class="fa-regular fa-calendar"></i> Agenda</a>
-                <a href="servicios.html" class="menu-item"><i class="fa-solid fa-list-check"></i> Servicios</a>
-                <a href="pacientes.html" class="menu-item active"><i class="fa-solid fa-users"></i> Pacientes</a>
-                <a href="cobranza.html" class="menu-item"><i class="fa-solid fa-money-bill-1-wave"></i> Cobranza</a>
-                <a href="inventario.html" class="menu-item"><i class="fa-solid fa-boxes-stacked"></i> Inventario</a>
-                <a href="personal.html" class="menu-item"><i class="fa-solid fa-user-doctor"></i> Personal</a>
+                <a href="index.html" class="menu-item">
+                    <i class="fa-solid fa-border-all"></i> Inicio
+                </a>
+                <a href="agenda.html" class="menu-item">
+                    <i class="fa-regular fa-calendar"></i> Agenda
+                </a>
+                <a href="servicios.html" class="menu-item">
+                    <i class="fa-solid fa-list-check"></i> Servicios
+                </a>
+                <a href="pacientes.html" class="menu-item active">
+                    <i class="fa-solid fa-users"></i> Pacientes
+                </a>
+                <a href="cobranza.html" class="menu-item">
+                    <i class="fa-solid fa-money-bill-1-wave"></i> Cobranza
+                </a>
+                <a href="inventario.html" class="menu-item">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
             </nav>
 
-            <div class="sidebar-footer">
-                <button class="btn-logout" onclick="confirmarLogout()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
-                </button>
-            </div>
+
         </aside>
 
         <!-- OVERLAY FOR MOBILE -->
@@ -280,8 +290,14 @@
                                     <div id="lbl-wallet" style="font-size: 1.3rem; font-weight: 700; color: #333;">$0.00
                                     </div>
                                 </div>
-                                <!-- Botón Editar Datos Básicos -->
-                                <div style="margin-top: 12px;">
+                                <!-- Botones de Acción (Editar y Eliminar) -->
+                                <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: flex-end;">
+                                    <button id="btn-eliminar-perfil" class="btn-eliminar-paciente"
+                                        style="background: #fee2e2; color:#dc2626; border:1px solid #fecaca; border-radius:8px; padding:7px 16px; font-size:0.85rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.15s;"
+                                        onmouseover="this.style.background='#fecaca'"
+                                        onmouseout="this.style.background='#fee2e2'">
+                                        <i class="fa-solid fa-trash"></i> Eliminar
+                                    </button>
                                     <button id="btn-editar-datos-basicos"
                                         style="background: linear-gradient(135deg,#0369a1,#0ea5e9); color:#fff; border:none; border-radius:8px; padding:7px 16px; font-size:0.85rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 8px rgba(3,105,161,0.25); transition:transform 0.15s;"
                                         onmouseover="this.style.transform='translateY(-1px)'"
@@ -289,6 +305,7 @@
                                         ✏️ Editar Datos
                                     </button>
                                 </div>
+
                             </div>
                         </div>
 
@@ -1196,38 +1213,7 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIRMAR CERRAR SESIÓN -->
-    <div class="logout-confirm-overlay" id="logoutConfirmOverlay">
-        <div class="logout-confirm-box">
-            <div class="logout-confirm-icon">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </div>
-            <h3>¿Cerrar sesión?</h3>
-            <p>¿Estás seguro de que deseas cerrar tu sesión? Serás redirigido al inicio de sesión.</p>
-            <div class="logout-confirm-actions">
-                <button class="btn-cancelar-logout" onclick="cancelarLogout()">Cancelar</button>
-                <button class="btn-confirmar-logout" onclick="ejecutarLogout()">Sí, cerrar sesión</button>
-            </div>
-        </div>
-    </div>
-    <script>
-        function confirmarLogout() {
-            document.getElementById('logoutConfirmOverlay').classList.add('active');
-        }
-        function cancelarLogout() {
-            document.getElementById('logoutConfirmOverlay').classList.remove('active');
-        }
-        function ejecutarLogout() {
-            localStorage.clear();
-            window.location.href = '/';
-        }
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') cancelarLogout();
-        });
-        document.getElementById('logoutConfirmOverlay').addEventListener('click', function(e) {
-            if (e.target === this) cancelarLogout();
-        });
-    </script>
 </body>
+
 
 </html>
