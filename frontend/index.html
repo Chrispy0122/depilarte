@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depilarte - Dashboard</title>
+
+    <!-- Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Security Check (Immediate Redirect) -->
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = (user.rol || '').toLowerCase();
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = '/';
+        } else if (role === 'especialista') {
+            window.location.href = '/cabina.html';
+        }
+    </script>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+<aside class="sidebar">
+            <div class="brand">
+                <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
+                    <h1
+                        style="font-weight: 800; font-size: 1.4rem; margin-bottom: 0; color: #0f172a; letter-spacing: -0.5px;">
+                        NOVUS</h1>
+                    <small style="font-size: 0.75rem; opacity: 0.7; font-weight: 500; color: #475569;">señu
+                        software</small>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="index.html" class="menu-item active">
+                    <i class="fa-solid fa-border-all"></i> Inicio
+                </a>
+                <a href="agenda.html" class="menu-item">
+                    <i class="fa-regular fa-calendar"></i> Agenda
+                </a>
+                <a href="servicios.html" class="menu-item">
+                    <i class="fa-solid fa-list-check"></i> Servicios
+                </a>
+                <a href="pacientes.html" class="menu-item">
+                    <i class="fa-solid fa-users"></i> Pacientes
+                </a>
+                <a href="cobranza.html" class="menu-item">
+                    <i class="fa-solid fa-money-bill-1-wave"></i> Cobranza
+                </a>
+                <a href="inventario.html" class="menu-item">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
+                <a href="personal.html" class="menu-item">
+                    <i class="fa-solid fa-user-doctor"></i> Personal
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="confirmarLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                </button>
+            </div>
+
+
+        </aside>
+
+        <!-- OVERLAY FOR MOBILE -->
+        <div class="overlay" id="sidebarOverlay"></div>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- HEADER -->
+            <header class="top-header">
+                <!-- Hamburger Button (Mobile Only) -->
+                <button class="menu-toggle-btn" id="menuToggle">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div>
+                    <h2 style="font-weight: 800; color: #000000; letter-spacing: -0.5px;">BUENOS DIAS</h2>
+                    <p class="date-subtitle" id="currentDate">Cargando fecha...</p>
+                </div>
+                <div class="header-actions">
+                    <!-- Cleaned up as requested -->
+                </div>
+            </header>
+
+            <!-- STATS / CHARTS SECTION (2 Cards Only) -->
+            <section class="charts-grid">
+                <!-- Card 1: Citas Confirmadas (Azul Claro) -->
+                <div class="card chart-card" id="card-confirmadas" style="background-color: var(--color-azul-claro) !important;">
+                    <div class="card-header">
+                        <div class="icon-box" style="background-color: rgba(255,255,255,0.65); color: var(--color-primario);">
+                            <i class="fa-solid fa-check-double"></i>
+                        </div>
+                        <span class="badge-success" style="background-color: rgba(255,255,255,0.65); color: var(--color-secundario); padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem;">Hoy</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="stat-label" style="color: var(--color-secundario); font-weight: 500;">Citas Confirmadas</p>
+                        <h3 class="stat-value" style="color: var(--color-secundario);">8</h3>
+                        <div class="chart-container" style="height: 120px;">
+                            <canvas id="confirmedChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Por Agendar (Verde Claro) -->
+                <div class="card chart-card" id="card-por-agendar" style="background-color: #bbf7d0 !important;">
+                    <div class="card-header">
+                        <div class="icon-box" style="background-color: rgba(255,255,255,0.65); color: #16a34a;">
+                            <i class="fa-regular fa-clock"></i>
+                        </div>
+                        <span class="badge-pending"
+                            style="background-color: rgba(255,255,255,0.65); color: #15803d; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem;">Pendientes</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="stat-text">
+                            <p class="stat-label" style="color: #14532d; font-weight: 500;">Por Agendar</p>
+                            <h3 class="stat-value" style="color: #14532d;">4</h3>
+                        </div>
+                        <!-- Use a flexible container for centered donut/bar -->
+                        <div class="chart-container" style="height: 120px;">
+                            <canvas id="pendingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BOTTOM CONTENT: GRID 1 COL (Patient List Only) -->
+            <section class="bottom-grid">
+                <!-- COL 1: Weekly Follow-up (Full Width) -->
+                <div class="card list-card">
+                    <div class="card-title-row">
+                        <h3>Seguimiento Semanal</h3>
+                        <div class="week-nav-controls" style="display: flex; gap: 10px; align-items: center;">
+                            <button id="btnPrevWeek" class="arrow-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span id="currentWeekLabel"
+                                style="font-weight: 600; font-size: 0.9rem; min-width: 150px; text-align: center;">Semana
+                                Actual</span>
+                            <button id="btnNextWeek" class="arrow-btn"><i
+                                    class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div class="patient-list" id="patientList"
+                        style="max-height: 400px; overflow-y: auto; scrollbar-width: thin;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/JS/script.js"></script>
+
+    <!-- MODAL CONFIRMAR CERRAR SESIÓN -->
+    <div class="logout-confirm-overlay" id="logoutConfirmOverlay">
+        <div class="logout-confirm-box">
+            <div class="logout-confirm-icon">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+            <h3>¿Cerrar sesión?</h3>
+            <p>¿Estás seguro de que deseas cerrar tu sesión? Serás redirigido al inicio de sesión.</p>
+            <div class="logout-confirm-actions">
+                <button class="btn-cancelar-logout" onclick="cancelarLogout()">Cancelar</button>
+                <button class="btn-confirmar-logout" onclick="ejecutarLogout()">Sí, cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmarLogout() {
+            document.getElementById('logoutConfirmOverlay').classList.add('active');
+        }
+        function cancelarLogout() {
+            document.getElementById('logoutConfirmOverlay').classList.remove('active');
+        }
+        function ejecutarLogout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+        // Cerrar con ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') cancelarLogout();
+        });
+        // Cerrar clickeando fuera del cuadro
+        document.getElementById('logoutConfirmOverlay').addEventListener('click', function(e) {
+            if (e.target === this) cancelarLogout();
+        });
+    </script>
+</body>
+
+</html>

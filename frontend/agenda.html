@@ -1,0 +1,257 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depilarte - Agenda</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- FullCalendar & Select2 -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
+
+    <!-- STYLES -->
+    <link rel="stylesheet" href="css/styles.css"> <!-- Global Styles -->
+    <link rel="stylesheet" href="css/agenda.css"> <!-- Module Styles -->
+
+    <script>
+        const userCheck = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = (userCheck.rol || '').toLowerCase();
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = '/';
+        } else if (role === 'especialista') {
+            window.location.href = '/cabina.html';
+        }
+    </script>
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR (From Global Layout) -->
+        <!-- SIDEBAR -->
+<aside class="sidebar">
+            <div class="brand">
+                <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
+                    <h1 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 0; color: #0f172a; letter-spacing: -0.5px;">NOVUS</h1>
+                    <small style="font-size: 0.75rem; opacity: 0.7; font-weight: 500; color: #475569;">señu software</small>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="index.html" class="menu-item"><i class="fa-solid fa-border-all"></i> Inicio</a>
+                <a href="agenda.html" class="menu-item active"><i class="fa-regular fa-calendar"></i> Agenda</a>
+                <a href="servicios.html" class="menu-item"><i class="fa-solid fa-list-check"></i> Servicios</a>
+                <a href="pacientes.html" class="menu-item"><i class="fa-solid fa-users"></i> Pacientes</a>
+                <a href="cobranza.html" class="menu-item"><i class="fa-solid fa-money-bill-1-wave"></i> Cobranza</a>
+                <a href="inventario.html" class="menu-item"><i class="fa-solid fa-boxes-stacked"></i> Inventario</a>
+                <a href="personal.html" class="menu-item"><i class="fa-solid fa-user-doctor"></i> Personal</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="confirmarLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- OVERLAY FOR MOBILE -->
+        <div class="overlay" id="sidebarOverlay"></div>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- TOP HEADER (Clean for Agenda) -->
+            <header class="top-header"
+                style="justify-content: flex-end; /* Align hamburger to right if needed or just empty */">
+                <button class="menu-toggle-btn" id="menuToggle">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </header>
+
+            <!-- AGENDA CONTENT -->
+            <div class="p-3" style="min-height: 80vh;">
+                <!-- CUSTOM DAY HEADER (Hidden by default) -->
+                <div id="day-view-header" class="d-none d-flex align-items-center justify-content-between mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="btn-back-month" class="btn btn-light rounded-circle shadow-sm"
+                            style="width: 45px; height: 45px;">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <div>
+                            <h2 class="mb-0 fw-bold" id="day-header-title">Agenda - Hoy</h2>
+                            <small class="text-muted" id="day-header-subtitle">...</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger text-white rounded-pill px-4 py-2 fw-semibold shadow-sm"
+                        style="background-color: #FF8C8C; border: none;" onclick="openNewModal()">
+                        <i class="fa-solid fa-plus me-2"></i> Nueva Cita
+                    </button>
+                </div>
+
+                <!-- CALENDAR CONTAINER -->
+                <div id="calendar-container" class="bg-white p-4 rounded-4 shadow-sm">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL NUEVA CITA (Clean Structure) -->
+    <div class="modal fade" id="modalNew" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 p-4">
+                <div class="modal-header border-0 p-0 mb-4">
+                    <h5 class="modal-title fw-bold fs-4 text-dark">Nueva Cita</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <form id="formNewAppt">
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold mb-2">CLIENTE</label>
+                            <select id="cliente-select" class="form-select" style="width: 100%;">
+                                <!-- Loaded via JS -->
+                            </select>
+                        </div>
+
+
+
+                        <!-- SERVICIO (MULTIPLE) -->
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold mb-2">TRATAMIENTO(S)</label>
+                            <select id="servicio_id" class="form-select form-control-lg rounded-3 fs-6" multiple>
+                                <option value="">Seleccione...</option>
+                            </select>
+                        </div>
+
+                        <!-- HORA & DURACIÓN -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <label class="form-label text-muted small fw-bold mb-2">HORA INICIO</label>
+                                <select id="startSelect" class="form-select form-control-lg rounded-3 fs-6">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted small fw-bold mb-2">DURACIÓN</label>
+                                <select id="durationSelect" class="form-select form-control-lg rounded-3 fs-6">
+                                    <option value="1">20 min</option>
+                                    <option value="2">40 min</option>
+                                    <option value="3">60 min</option>
+                                    <option value="4">80 min</option>
+                                    <option value="5">100 min</option>
+                                    <option value="6">120 min</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- BOTONES -->
+                        <button type="button" class="btn btn-save-modal mb-3" id="saveAppt">
+                            Guardar Cita
+                        </button>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="button" class="btn btn-link text-danger text-decoration-none px-0 d-none"
+                                    id="btnCancelar">
+                                    <i class="fa-solid fa-trash"></i> Cancelar
+                                </button>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-link text-muted text-decoration-none"
+                                    data-bs-dismiss="modal">
+                                    Cerrar
+                                </button>
+
+                                <button type="button" class="btn btn-outline-success rounded-pill px-3 d-none"
+                                    id="btnConfirmar" style="font-size: 0.9rem;">
+                                    <i class="fa-solid fa-check"></i> Confirmar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ACTIONS (Simple View for Existing Appts) -->
+    <div class="modal fade" id="modalActions" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm"> <!-- Small & Centered -->
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-body p-4 text-center">
+                    <h5 class="modal-title fw-bold mb-1" id="actionClientName">Cliente</h5>
+                    <p class="text-muted small mb-3" id="actionServiceTime">Servicio • 00:00</p>
+
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success fw-bold py-2 rounded-3" id="btnActionConfirm">
+                            <i class="fa-solid fa-check"></i> CONFIRMAR ASISTENCIA
+                        </button>
+
+                        <button type="button" class="btn btn-outline-danger fw-bold py-2 rounded-3"
+                            id="btnActionCancel">
+                            <i class="fa-solid fa-ban"></i> CANCELAR CITA
+                        </button>
+
+                        <button type="button" class="btn btn-link text-muted text-decoration-none btn-sm mt-2"
+                            data-bs-dismiss="modal">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="JS/dialogs.js"></script>
+    <script src="JS/agenda.js?v=11"></script>
+
+    <!-- MODAL CONFIRMAR CERRAR SESIÓN -->
+    <div class="logout-confirm-overlay" id="logoutConfirmOverlay">
+        <div class="logout-confirm-box">
+            <div class="logout-confirm-icon">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+            <h3>¿Cerrar sesión?</h3>
+            <p>¿Estás seguro de que deseas cerrar tu sesión? Serás redirigido al inicio de sesión.</p>
+            <div class="logout-confirm-actions">
+                <button class="btn-cancelar-logout" onclick="cancelarLogout()">Cancelar</button>
+                <button class="btn-confirmar-logout" onclick="ejecutarLogout()">Sí, cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function confirmarLogout() {
+            document.getElementById('logoutConfirmOverlay').classList.add('active');
+        }
+        function cancelarLogout() {
+            document.getElementById('logoutConfirmOverlay').classList.remove('active');
+        }
+        function ejecutarLogout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') cancelarLogout();
+        });
+        document.getElementById('logoutConfirmOverlay').addEventListener('click', function(e) {
+            if (e.target === this) cancelarLogout();
+        });
+    </script>
+</body>
+
+</html>

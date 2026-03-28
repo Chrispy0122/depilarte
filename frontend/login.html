@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depilarte - Iniciar Sesión</title>
+
+    <!-- Font: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --color-primario: #06B6D4;
+            --color-secundario: #1A2639;
+            --color-fondo: #FDFBF7;
+            --color-tarjeta: #FFFFFF;
+            --color-texto-principal: #1E1E1E;
+            --color-texto-claro: #F8F9FA;
+            --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--color-fondo);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-texto-principal);
+        }
+
+        .login-card {
+            background: var(--color-tarjeta);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .brand-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: var(--color-primario);
+            font-weight: 800;
+            font-size: 2rem;
+            letter-spacing: -1px;
+            margin-bottom: 5px;
+        }
+
+        p.subtitle {
+            color: rgba(30, 30, 30, 0.6);
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            margin-left: 4px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            outline: none;
+            background-color: #F9FAFB;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary);
+            background-color: var(--white);
+            box-shadow: 0 0 0 4px rgba(255, 140, 148, 0.1);
+        }
+
+        .btn-login {
+            background-color: var(--color-primario);
+            color: var(--color-texto-claro);
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+        }
+
+        .btn-login:hover {
+            background-color: #0891b2; /* A slightly darker shade of primary */
+            transform: translateY(-1px);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .error-msg {
+            color: #EF4444;
+            font-size: 0.85rem;
+            margin-top: 20px;
+            display: none;
+            /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #FEF2F2;
+            padding: 10px;
+            border-radius: 8px;
+        }
+    </style>
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+
+<body>
+
+    <div class="login-card">
+        <div class="brand-icon" style="margin-bottom: 0;">
+            <img src="img/senu-logo.png" alt="NOVUS" style="width: 150px; height: auto; border-radius: 12px;">
+        </div>
+        <div style="line-height: 1.1; margin-bottom: 5px;">
+             <h1 style="font-weight: 800; font-size: 2.2rem; margin-bottom: 0; letter-spacing: -1px; color: var(--color-primario);">NOVUS</h1>
+             <small style="font-size: 0.85rem; opacity: 0.8; font-weight: 500; color: rgba(30, 30, 30, 0.6);">señu software</small>
+        </div>
+        <p class="subtitle" style="margin-top: 5px;">Bienvenido de nuevo</p>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" class="input-field" placeholder="Usuario" required>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" class="input-field" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-login">Ingresar</button>
+
+            <div class="error-msg" id="errorMsg">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                Credenciales incorrectas
+            </div>
+        </form>
+    </div>
+
+    <script src="/JS/login.js"></script>
+
+    <style>
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+    </style>
+</body>
+
+</html>

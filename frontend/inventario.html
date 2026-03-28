@@ -1,0 +1,311 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depilarte - Inventario</title>
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Security Check -->
+    <script>
+        const userCheck = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = (userCheck.rol || '').toLowerCase();
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = '/';
+        } else if (role === 'especialista') {
+            window.location.href = '/cabina.html';
+        }
+    </script>
+
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Inline styles for inventory specific components -->
+    <!-- Inline styles moved to styles.css -->
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+<aside class="sidebar">
+            <div class="brand">
+                <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
+                    <h1 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 0; color: #0f172a; letter-spacing: -0.5px;">NOVUS</h1>
+                    <small style="font-size: 0.75rem; opacity: 0.7; font-weight: 500; color: #475569;">señu software</small>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="index.html" class="menu-item"><i class="fa-solid fa-border-all"></i> Inicio</a>
+                <a href="agenda.html" class="menu-item"><i class="fa-regular fa-calendar"></i> Agenda</a>
+                <a href="servicios.html" class="menu-item"><i class="fa-solid fa-list-check"></i> Servicios</a>
+                <a href="pacientes.html" class="menu-item"><i class="fa-solid fa-users"></i> Pacientes</a>
+                <a href="cobranza.html" class="menu-item"><i class="fa-solid fa-money-bill-1-wave"></i> Cobranza</a>
+                <a href="inventario.html" class="menu-item active"><i class="fa-solid fa-boxes-stacked"></i> Inventario</a>
+                <a href="personal.html" class="menu-item"><i class="fa-solid fa-user-doctor"></i> Personal</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="confirmarLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- OVERLAY FOR MOBILE -->
+        <div class="overlay" id="sidebarOverlay"></div>
+
+        <main class="main-content">
+            <header class="top-header"
+                style="align-items: center; justify-content: space-between; display: flex; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- MOBILE HAMBURGER MENU BUTTON -->
+                    <button class="menu-toggle-btn d-md-none" id="menuToggle"
+                        style="background:none; border:none; font-size:1.5rem; color:var(--text-dark);">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h2 style="font-weight: 800; color: #be185d;">Inventario y Stock</h2>
+                        <p class="date-subtitle">Gestión inteligente de insumos y productos</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-primary" onclick="openProductModal()">
+                        <i class="fa-solid fa-plus"></i> Nuevo Producto
+                    </button>
+                    <button class="btn-secondary" onclick="openRecipeModal()"
+                        style="background: white; border: 1px solid #e2e8f0; color: #475569;">
+                        <i class="fa-solid fa-scroll"></i> Recetas
+                    </button>
+                    <!-- Botón Auditoría retirado temporalmente
+                    <button class="btn-secondary" onclick="openAuditModal()"
+                        style="background: white; border: 1px solid #e2e8f0; color: #475569;">
+                        <i class="fa-solid fa-clipboard-check"></i> Auditoría
+                    </button>
+                    -->
+                </div>
+            </header>
+
+            <!-- KPIs -->
+            <section
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: #ecfdf5; color: #10b981;">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </div>
+                    <div>
+                        <p style="color: #64748b; font-size: 0.9rem;">Valor Inventario</p>
+                        <h3 style="font-size: 1.5rem; margin: 0;" id="kpiValor">$0.00</h3>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: #fef2f2; color: #ef4444;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <p style="color: #64748b; font-size: 0.9rem;">Por Agotarse</p>
+                        <h3 style="font-size: 1.5rem; margin: 0;" id="kpiCriticos">0</h3>
+                    </div>
+                </div>
+                <!-- TODO: Add Chart Card if needed later -->
+            </section>
+
+            <!-- FILTERS -->
+            <div class="filters-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="searchInv" placeholder="Buscar producto...">
+                </div>
+                <select id="filterType"
+                    style="padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none;">
+                    <option value="">Todos los Tipos</option>
+                    <option value="uso_interno">Uso Interno (Cabina)</option>
+                    <option value="retail">Venta (Retail)</option>
+                </select>
+                <select id="filterCategory"
+                    style="padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; outline: none;">
+                    <option value="">Todas las Categorías</option>
+                    <!-- Populated via JS -->
+                </select>
+                <label
+                    style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #475569; cursor: pointer;">
+                    <input type="checkbox" id="checkLowStock"> Solo Stock Bajo
+                </label>
+            </div>
+
+            <!-- PRODUCT GRID -->
+            <div id="loadingInventory" style="text-align: center; padding: 40px; color: #94a3b8;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                <p style="margin-top: 10px;">Cargando inventario...</p>
+            </div>
+            <div class="inventory-grid" id="inventoryGrid">
+                <!-- Cards injected here -->
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL: PRODUCTO -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-box-open"></i> <span id="modalTitle">Nuevo Producto</span></h3>
+                <button class="close-modal" onclick="closeProductModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="prodId">
+                    <div class="form-group">
+                        <label>Nombre del Producto</label>
+                        <input type="text" id="prodName" required placeholder="Ej: Gel Conductor 500ml">
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>Categoría</label>
+                            <input type="text" id="prodCategory" list="catList" required>
+                            <datalist id="catList">
+                                <option value="Cabina">
+                                <option value="Retail">
+                                <option value="Desechables">
+                            </datalist>
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Tipo</label>
+                            <select id="prodType">
+                                <option value="uso_interno">Uso Interno</option>
+                                <option value="retail">Retail (Venta)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>Stock Actual</label>
+                            <input type="number" id="prodStock" step="0.01" required>
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Unidad</label>
+                            <select id="prodUnit">
+                                <option value="ml">Mililitros (ml)</option>
+                                <option value="g">Gramos (g)</option>
+                                <option value="unidades">Unidades (u)</option>
+                                <option value="litros">Litros (l)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>Stock Mínimo</label>
+                            <input type="number" id="prodMin" step="0.01">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Costo Unitario ($)</label>
+                            <input type="number" id="prodCost" step="0.01">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeProductModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveProduct()">Guardar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RECETA -->
+    <div class="modal-overlay" id="recipeModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-scroll"></i> Gestionar Receta</h3>
+                <button class="close-modal" onclick="closeRecipeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Seleccionar Servicio</label>
+                    <select id="recipeService" onchange="loadRecipe()">
+                        <option value="">Cargando servicios...</option>
+                    </select>
+                </div>
+
+                <h4 style="margin: 20px 0 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Ingredientes</h4>
+                <div id="ingredientsList" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
+                    <!-- Dynamic List -->
+                    <p style="color:#999; font-style:italic;">Selecciona un servicio para ver su receta.</p>
+                </div>
+
+                <div
+                    style="background: #f8f9fa; padding: 15px; border-radius: 8px; display: flex; gap: 10px; align-items: flex-end;">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Producto</label>
+                        <select id="newIngProduct">
+                            <option value="">Buscar producto...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Cantidad</label>
+                        <input type="number" id="newIngQty" step="0.01" placeholder="Ej: 10">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Unidad</label>
+                        <input type="text" id="newIngUnit" readonly style="background: #e9ecef;">
+                    </div>
+                    <button class="btn-primary" onclick="addIngredient()" style="margin-bottom: 15px;">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeRecipeModal()">Cerrar</button>
+                <button class="btn-primary" onclick="saveRecipe()">Guardar Receta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="JS/dialogs.js"></script>
+    <script src="JS/inventario.js"></script>
+
+    <!-- MODAL CONFIRMAR CERRAR SESIÓN -->
+    <div class="logout-confirm-overlay" id="logoutConfirmOverlay">
+        <div class="logout-confirm-box">
+            <div class="logout-confirm-icon">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+            <h3>¿Cerrar sesión?</h3>
+            <p>¿Estás seguro de que deseas cerrar tu sesión? Serás redirigido al inicio de sesión.</p>
+            <div class="logout-confirm-actions">
+                <button class="btn-cancelar-logout" onclick="cancelarLogout()">Cancelar</button>
+                <button class="btn-confirmar-logout" onclick="ejecutarLogout()">Sí, cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function confirmarLogout() {
+            document.getElementById('logoutConfirmOverlay').classList.add('active');
+        }
+        function cancelarLogout() {
+            document.getElementById('logoutConfirmOverlay').classList.remove('active');
+        }
+        function ejecutarLogout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') cancelarLogout();
+        });
+        document.getElementById('logoutConfirmOverlay').addEventListener('click', function(e) {
+            if (e.target === this) cancelarLogout();
+        });
+    </script>
+</body>
+
+</html>
