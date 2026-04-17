@@ -1,0 +1,298 @@
+/* FONTS */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #F8F9FA;
+}
+
+/* --- CALENDAR CONTAINER --- */
+#calendar-container {
+    background: white;
+    min-height: 85vh;
+}
+
+/* --- FORCE WHITE BACKGROUND (Emergency Fix) --- */
+.fc-view,
+.fc-view-harness,
+.fc-scrollgrid,
+.fc-timegrid-slot,
+.fc-timegrid-cols,
+.fc-col-header-cell {
+    background-color: #FFFFFF !important;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+    border: none !important;
+}
+
+/* Ensure Grid Lines are Visible */
+.fc-timegrid-slot {
+    border-bottom: 1px solid #f0f0f0 !important;
+}
+
+/* --- MONTH VIEW (Visual Replica) --- */
+
+/* Remove table borders */
+.fc-theme-standard td,
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid {
+    border: none !important;
+}
+
+/* Spacing between dates (Card Effect) */
+.fc-scrollgrid {
+    border-collapse: separate !important;
+    border-spacing: 15px !important;
+    /* Gaps */
+}
+
+/* Day Headers (Dom, Lun...) */
+.fc-col-header-cell-cushion {
+    text-transform: capitalize;
+    color: #A0AEC0;
+    font-weight: 600;
+    padding-bottom: 20px !important;
+    text-decoration: none !important;
+}
+
+/* Day Cards */
+.fc-daygrid-day-frame {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.02);
+    /* Soft shadow */
+    border: 1px solid #F1F5F9;
+    /* Very subtle border */
+    margin: 0 !important;
+    height: 100%;
+    min-height: 120px;
+    /* Tall cards */
+    transition: transform 0.2s;
+}
+
+.fc-daygrid-day-frame:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Number Styling */
+.fc-daygrid-day-number {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2D3748;
+    margin: 10px;
+    text-decoration: none !important;
+}
+
+/* TODAY Highlight (The Pink Border) */
+.fc-day-today .fc-daygrid-day-frame {
+    border: 2px solid #FF8C8C !important;
+    /* Salmon Border */
+    background-color: #FFF5F5 !important;
+    /* Very faint pink/white */
+}
+
+/* Non-Current Month Days */
+.fc-day-other .fc-daygrid-day-frame {
+    opacity: 0.4;
+    background-color: #FAFAFA;
+    box-shadow: none;
+}
+
+/* --- DAY VIEW (Visual Replica) --- */
+
+/* Time Axis */
+.fc .fc-timegrid-axis-frame,
+.fc-timegrid-axis,
+.fc-timegrid-slot-label {
+    min-width: 160px !important;
+    /* WIDER: 160px */
+    width: 160px !important;
+    max-width: 160px !important;
+    overflow: visible !important;
+}
+
+.fc-timegrid-slot {
+    height: 38px !important;
+    /* Compact Height */
+    border-bottom: 1px solid #f0f0f0 !important;
+    /* Subtle divider */
+}
+
+/* Vertical alignment of labels */
+.fc .fc-timegrid-slot-label-frame {
+    text-align: center !important;
+    /* Force Center */
+    padding-right: 0 !important;
+    /* Remove right padding */
+    display: flex;
+    align-items: center;
+    justify-content: center !important;
+    /* Force Center */
+    height: 100%;
+    width: 100%;
+}
+
+.fc-timegrid-slot-label-cushion {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* Events in Day View */
+.fc-timegrid-event {
+    background-color: #F0FFF4 !important;
+    /* Mint Pale */
+    border: none !important;
+    border-left: 5px solid #10B981 !important;
+    /* Tech Green Bar */
+    border-radius: 8px !important;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1) !important;
+    padding: 4px 8px;
+    margin: 2px 4px !important;
+}
+
+/* Event Content */
+.fc-event-main {
+    padding: 2px;
+    color: #064E3B !important;
+    /* Dark Green Text */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* STATUS STYLES */
+
+/* Pending (Agendado/Default) - RED */
+.evento-pendiente {
+    background-color: #FEF2F2 !important;
+    /* Red 50 */
+    border-left: 5px solid #EF4444 !important;
+    /* Red 500 */
+}
+
+.evento-pendiente .fc-event-main {
+    color: #991B1B !important;
+    /* Red 900 */
+}
+
+/* Confirmed - GREEN */
+.evento-confirmado {
+    background-color: #D1FAE5 !important;
+    /* Emerald 100 */
+    border-left: 5px solid #059669 !important;
+    /* Emerald 600 */
+}
+
+.evento-confirmado .fc-event-main {
+    color: #064E3B !important;
+    /* Emerald 900 */
+}
+
+.evento-confirmado .fc-event-title::before {
+    content: "✅ ";
+    font-size: 0.8rem;
+}
+
+/* MODAL CUSTOM STYLES */
+.modal-content {
+    border-radius: 24px !important;
+    /* Extra rounded */
+}
+
+.form-control,
+.form-select {
+    border-radius: 12px !important;
+    border: 1px solid #E5E7EB !important;
+    padding: 10px 12px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 3px rgba(255, 140, 140, 0.2) !important;
+    border-color: #FF8C8C !important;
+}
+
+/* Save Button (Salmon Block) */
+.btn-save-modal {
+    background-color: #FF8C8C !important;
+    /* Color Salmón */
+    border: none;
+    color: white;
+    width: 100%;
+    /* Botón ancho como en la foto */
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+    transition: all 0.2s;
+}
+
+.btn-save-modal:hover {
+    background-color: #F87171 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(248, 113, 113, 0.2);
+}
+
+/* Select2 Overrides for Modal */
+.select2-container .select2-selection--single {
+    height: 45px !important;
+    border-radius: 12px !important;
+    border: 1px solid #E5E7EB !important;
+    display: flex;
+    align-items: center;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    padding-left: 12px !important;
+    line-height: normal !important;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border-radius: 12px !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* HEADER TOOLBAR CUSTOMIZATION (Month View) */
+.fc-toolbar-title {
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    color: #1A202C;
+    text-transform: capitalize;
+}
+
+.fc-button-primary {
+    background-color: white !important;
+    color: #4A5568 !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-weight: 600;
+}
+
+.fc-button-primary:hover {
+    background-color: #F7FAFC !important;
+    color: #2D3748 !important;
+}
+
+.fc-icon {
+    font-size: 1.2rem;
+}
+
+/* Hide Default Header in Day View (We use custom one) */
+.day-view-active .fc-header-toolbar {
+    display: none !important;
+}
+
+/* Helper to hide scrollbar but allow scroll */
+.fc-scroller::-webkit-scrollbar {
+    width: 6px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+    background-color: #CBD5E0;
+    border-radius: 3px;
+}

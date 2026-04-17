@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depilarte - Pacientes</title>
+
+    <!-- Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/pacientes.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Classic Profile Header Styles */
+        .patient-classic-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Avatar styles removed */
+
+        .pch-info {
+            flex: 1;
+        }
+
+        .pch-wallet {
+            text-align: right;
+            background: #f8fafc;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Profile Data Grid Styles */
+        .profile-data-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .p-data-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 4px;
+        }
+
+        .p-data-item .label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .p-data-item .value {
+            color: #333;
+            font-weight: 600;
+            text-align: right;
+        }
+    </style>
+    <!-- Security Check (Immediate Redirect) -->
+    <script>
+        const userCheck = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = (userCheck.rol || '').toLowerCase();
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = '/';
+        } else if (role === 'especialista') {
+            window.location.href = '/cabina.html';
+        }
+    </script>
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
+                    <h1 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 0; color: #0f172a; letter-spacing: -0.5px;">NOVUS</h1>
+                    <small style="font-size: 0.75rem; opacity: 0.7; font-weight: 500; color: #475569;">señu software</small>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="index.html" class="menu-item">
+                    <i class="fa-solid fa-border-all"></i> Inicio
+                </a>
+                <a href="agenda.html" class="menu-item">
+                    <i class="fa-regular fa-calendar"></i> Agenda
+                </a>
+                <a href="servicios.html" class="menu-item">
+                    <i class="fa-solid fa-list-check"></i> Servicios
+                </a>
+                <a href="pacientes.html" class="menu-item active">
+                    <i class="fa-solid fa-users"></i> Pacientes
+                </a>
+                <a href="cobranza.html" class="menu-item">
+                    <i class="fa-solid fa-money-bill-1-wave"></i> Cobranza
+                </a>
+                <a href="inventario.html" class="menu-item">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
+                <a href="personal.html" class="menu-item">
+                    <i class="fa-solid fa-user-doctor"></i> Personal
+                </a>
+                <a href="#" class="menu-item" onclick="localStorage.clear(); window.location.href='/';" style="color: #ef4444; margin-top: 15px;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                </a>
+            </nav>
+
+
+        </aside>
+
+        <!-- OVERLAY FOR MOBILE -->
+        <div class="overlay" id="sidebarOverlay"></div>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- HEADER SECTION -->
+            <header class="top-header"
+                style="align-items: center; margin-bottom: 20px; display: flex; justify-content: space-between;">
+                <div class="header-left" style="display: flex; align-items: center; gap: 15px;">
+                    <button class="menu-toggle-btn d-md-none" id="menuToggle"
+                        style="background:none; border:none; font-size:1.5rem; color:var(--text-dark);">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h2 class="module-title"
+                            style="font-size: 1.5rem; font-weight: 700; color: var(--text-dark); margin:0;">Directorio
+                        </h2>
+                        <p class="module-subtitle d-none d-sm-block"
+                            style="color: var(--text-muted); margin:0; font-size: 0.9rem;">Gestión de Pacientes</p>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Desktop Button (Hidden on Mobile) -->
+                    <button class="btn-primary-add d-none d-md-flex" id="btnNewPatient">
+                        <i class="fa-solid fa-plus me-2"></i> Registrar Paciente
+                    </button>
+                </div>
+            </header>
+
+            <!-- WALLET SUMMARY CHART (Hidden by default) -->
+            <div id="walletSummaryContainer"
+                style="display: none; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 25px; align-items: center; gap: 30px; border: 1px solid #e2e8f0;">
+
+                <div style="flex: 1;">
+                    <h3
+                        style="margin: 0 0 10px 0; color: #64748b; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Total Abonado en Wallets</h3>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: #10b981;" id="totalWalletAmount">$0.00</div>
+                    <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 0.85rem;">Suma total de saldos a favor de
+                        <span id="walletCount">0</span> pacientes filtrados.
+                    </p>
+                </div>
+
+                <div style="width: 300px; height: 150px; position: relative;">
+                    <canvas id="walletChart"></canvas>
+                </div>
+
+            </div>
+
+            <!-- DEUDA SUMMARY CHART (Hidden by default) -->
+            <div id="deudaSummaryContainer"
+                style="display: none; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.15); margin-bottom: 25px; align-items: center; gap: 30px; border: 1px solid #fecaca;">
+
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="background: #fee2e2; color: #991b1b; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">⚠️ Cartera Vencida</span>
+                    </div>
+                    <h3
+                        style="margin: 0 0 10px 0; color: #b91c1c; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Total de Deudas Pendientes</h3>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: #dc2626;" id="totalDeudaAmount">$0.00</div>
+                    <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 0.85rem;">Saldo adeudado por
+                        <span id="deudaCount">0</span> pacientes con deuda activa.
+                    </p>
+                </div>
+
+                <div style="width: 300px; height: 150px; position: relative;">
+                    <canvas id="deudasChart"></canvas>
+                </div>
+
+            </div>
+
+            <!-- HERO SEARCH SECTION -->
+            <section class="hero-search-section">
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar por Nombre o N° de Historia..."
+                        autocomplete="off">
+                </div>
+
+                <div class="filters-row" id="filtersRow">
+                    <button class="filter-chip active" data-filter="all">Todos</button>
+                    <button class="filter-chip debt" data-filter="deuda">Con Deuda</button>
+                    <button class="filter-chip credit" data-filter="abono">Con Abono</button>
+                    <button class="filter-chip recent" data-filter="recientes">Nuevos (7 Días)</button>
+                </div>
+            </section>
+
+            <!-- PATIENT LIST GRID (Restored) -->
+            <section class="patient-grid-container" id="patientGrid">
+                <!-- Rendered by JS -->
+            </section>
+
+            <!-- FAB MOBILE (Floating Action Button) -->
+            <button class="fab-new-appt d-md-none" id="fabNewPatient">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </main>
+    </div>
+
+    <!-- PROFILE MODAL (RESTORED CLASSIC) -->
+    <div class="profile-modal-overlay" id="profileModal">
+        <div class="profile-modal-content" style="max-width: 800px;">
+
+            <div class="modal-header">
+                <h2>Ficha del Paciente</h2>
+                <button class="btn-close-modal" id="closeProfileBtn"><i class="fa-solid fa-times"></i></button>
+            </div>
+
+            <div class="modal-body-scroll" style="padding: 0;">
+
+                <!-- PROFILE TABS BAR -->
+                <div class="profile-tabs-bar"
+                    style="padding: 0 20px; margin-bottom: 0; border-bottom: 1px solid #e2e8f0;">
+                    <button class="tab-item active" data-tab="tab-limpieza">🌿 Historia Limpieza</button>
+                    <button class="tab-item" data-tab="tab-depilacion">💜 Historia Depilación</button>
+                    <button class="tab-item" data-tab="tab-historial">📜 Historial de visitas y pago</button>
+                </div>
+
+                <!-- ═══ TAB 1: HISTORIA LIMPIEZA (antes "Datos del Perfil") ═══ -->
+                <div id="tab-limpieza" class="tab-pane" style="padding: 20px;">
+
+                    <!-- 1. DATA HEADER (Clean Text Profile) -->
+                    <div class="patient-classic-header" style="display: block; text-align: left;">
+
+                        <!-- HIGH PRIORITY INFO -->
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                            <div>
+                                <h1 id="lbl-nombre" style="margin: 0; font-size: 2rem; color: #333; font-weight: 700;">
+                                    Nombre Paciente</h1>
+                                <div style="font-size: 1.1rem; color: #555; margin-top: 5px;">
+                                    <i class="fa-regular fa-id-card"></i> <span id="lbl-cedula"
+                                        style="font-weight: 600;">V-00.000.000</span>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div
+                                    style="background: #e0f2fe; color: #0369a1; padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; display: inline-block;">
+                                    N° HIST:
+                                    <!-- Modo Visualización -->
+                                    <span id="lbl-historia" style="font-size: 1.4rem;">000</span>
+                                    <button id="btn-editar-historia" title="Editar N° Historia"
+                                        style="background:none; border:none; cursor:pointer; color:#0369a1; font-size:0.95rem; margin-left:4px; padding:0 2px; vertical-align:middle;"
+                                        onclick="activarEdicionHistoria()">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <!-- Modo Edición (oculto por defecto) -->
+                                    <span id="wrap-editar-historia" style="display:none; align-items:center; gap:4px;">
+                                        <input id="input-historia" type="text"
+                                            style="font-size:1.1rem; font-weight:bold; border:2px solid #0369a1; border-radius:6px; padding:3px 8px; width:120px; letter-spacing:1px;"
+                                            placeholder="Ej: HIST-001">
+                                        <button title="Guardar" onclick="guardarNuevoHistoria()"
+                                            style="background:#0369a1; color:#fff; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.85rem;">
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
+                                        <button title="Cancelar" onclick="cancelarEdicionHistoria()"
+                                            style="background:#94a3b8; color:#fff; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.85rem;">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                                <div class="pch-wallet"
+                                    style="margin-top: 10px; border: none; background: none; padding: 0; text-align: right;">
+                                    <div style="font-size: 0.85rem; color: #888;">Saldo Wallet</div>
+                                    <div id="lbl-wallet" style="font-size: 1.3rem; font-weight: 700; color: #333;">$0.00
+                                    </div>
+                                </div>
+                                <!-- Botón Editar Datos Básicos -->
+                                <div style="margin-top: 12px;">
+                                    <button id="btn-editar-datos-basicos"
+                                        style="background: linear-gradient(135deg,#0369a1,#0ea5e9); color:#fff; border:none; border-radius:8px; padding:7px 16px; font-size:0.85rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 8px rgba(3,105,161,0.25); transition:transform 0.15s;"
+                                        onmouseover="this.style.transform='translateY(-1px)'"
+                                        onmouseout="this.style.transform='translateY(0)'">
+                                        ✏️ Editar Datos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CONTACT & PERSONAL INFO GRID -->
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <!-- Col 1 -->
+                            <div>
+                                <label
+                                    style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Teléfono</label>
+                                <div style="font-size: 1.1rem; color: #1e293b; margin-bottom: 10px;">
+                                    <i class="fa-solid fa-phone" style="color: #64748b; margin-right: 5px;"></i> <span
+                                        id="lbl-telefono">...</span>
+                                </div>
+
+                                <label
+                                    style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Correo
+                                    Electrónico</label>
+                                <div style="font-size: 1rem; color: #1e293b;">
+                                    <i class="fa-regular fa-envelope" style="color: #64748b; margin-right: 5px;"></i>
+                                    <span id="lbl-email">...</span>
+                                </div>
+                            </div>
+
+                            <!-- Col 2 -->
+                            <div>
+                                <label
+                                    style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Dirección</label>
+                                <div style="font-size: 1rem; color: #1e293b; margin-bottom: 10px;">
+                                    <i class="fa-solid fa-map-pin" style="color: #64748b; margin-right: 5px;"></i> <span
+                                        id="lbl-direccion">...</span>
+                                </div>
+
+                                <label
+                                    style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Detalles
+                                    Personales</label>
+                                <div style="font-size: 0.95rem; color: #1e293b;">
+                                    <i class="fa-solid fa-cake-candles" style="color: #64748b; margin-right: 5px;"></i>
+                                    <span id="lbl-nacimiento">...</span>
+                                </div>
+                                <div style="font-size: 0.95rem; color: #1e293b; margin-top:4px;">
+                                    <span id="lbl-sexo-civil">...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
+
+                    <!-- ═══ ESTADOS HISTORIA LIMPIEZA ═══ -->
+
+                    <!-- Estado: cargando -->
+                    <div id="limp-cargando" style="text-align:center; padding: 40px; color:#94a3b8;">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;"></i>
+                        <p style="margin-top:10px;">Cargando historia de limpieza...</p>
+                    </div>
+
+                    <!-- Estado: SIN historia -->
+                    <div id="limp-vacio" style="display:none; text-align:center; padding: 50px 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">🌿</div>
+                        <h3 style="color: #15803d; margin-bottom: 8px;">Sin Historia de Limpieza Facial</h3>
+                        <p style="color: #94a3b8; margin-bottom: 25px; font-size: 0.95rem;">
+                            Este paciente aún no tiene su historia clínica facial registrada.
+                        </p>
+                        <button id="btn-limp-agregar"
+                            style="background: linear-gradient(135deg,#15803d,#16a34a); color:#fff; border:none; border-radius:12px; padding:14px 32px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow: 0 4px 15px rgba(21,128,61,0.3); transition: transform 0.2s;"
+                            onmouseover="this.style.transform='translateY(-2px)'"
+                            onmouseout="this.style.transform='translateY(0)'">
+                            ➕ Crear Historia de Limpieza
+                        </button>
+                    </div>
+
+                    <!-- Estado: CON historia (resumen) -->
+                    <div id="limp-resumen" style="display:none;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                            <h3 style="margin:0; color:#15803d; font-size:1.1rem;">🌿 Historia Clínica de Limpieza
+                                Facial</h3>
+                            <button id="btn-limp-editar"
+                                style="background:#15803d; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:0.9rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                ✏️ Editar Historia de Limpieza
+                            </button>
+                        </div>
+
+                        <!-- Estilo de Vida -->
+                        <div
+                            style="margin-bottom:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#15803d; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                🏃 Estilo de Vida</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                <div class="p-data-item"><span class="label">Fuma:</span> <span class="value"
+                                        id="limp-fuma">-</span></div>
+                                <div class="p-data-item"><span class="label">Alcohol:</span> <span class="value"
+                                        id="limp-alcohol">-</span></div>
+                                <div class="p-data-item"><span class="label">Comida Chatarra:</span> <span class="value"
+                                        id="limp-chatarra">-</span></div>
+                                <div class="p-data-item"><span class="label">Agua Diaria:</span> <span class="value"
+                                        id="limp-agua">-</span></div>
+                                <div class="p-data-item"><span class="label">Horas Sueño:</span> <span class="value"
+                                        id="limp-sueno">-</span></div>
+                                <div class="p-data-item"><span class="label">Actividad Física:</span> <span
+                                        class="value" id="limp-actividad">-</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Antecedentes -->
+                        <div
+                            style="margin-bottom:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#15803d; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                ⚕️ Antecedentes Médicos</h4>
+                            <div id="limp-antecedentes-badges" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                        </div>
+
+                        <!-- Diagnóstico Facial -->
+                        <div style="background:#fdf2f8; border:1px solid #fbcfe8; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#be185d; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                🔍 Diagnóstico Facial</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                                <div class="p-data-item"><span class="label">Biotipo Cutáneo:</span> <span class="value"
+                                        id="limp-biotipo">-</span></div>
+                                <div class="p-data-item"><span class="label">Fototipo:</span> <span class="value"
+                                        id="limp-fototipo">-</span></div>
+                            </div>
+                            <div id="limp-patologias-badges"
+                                style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;"></div>
+                            <div class="p-data-item" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                                <span class="label">Observaciones:</span>
+                                <span id="limp-observaciones" style="font-style:italic; color:#555;">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- end tab-limpieza -->
+
+                <!-- ═══ TAB 2: HISTORIA DEPILACIÓN ═══ -->
+                <div id="tab-depilacion" class="tab-pane" style="display: none; padding: 20px;">
+                    <!-- Contenido renderizado por JS -->
+                    <div id="dep-cargando" style="text-align:center; padding: 40px; color:#94a3b8;">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;"></i>
+                        <p style="margin-top:10px;">Cargando historia de depilación...</p>
+                    </div>
+
+                    <!-- Estado: SIN historia -->
+                    <div id="dep-vacio" style="display:none; text-align:center; padding: 50px 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">💜</div>
+                        <h3 style="color: #7e22ce; margin-bottom: 8px;">Sin Historia de Depilación</h3>
+                        <p style="color: #94a3b8; margin-bottom: 25px; font-size: 0.95rem;">
+                            Este paciente aún no tiene su historia clínica de depilación registrada.
+                        </p>
+                        <button id="btn-dep-agregar"
+                            style="background: linear-gradient(135deg,#7e22ce,#9333ea); color:#fff; border:none; border-radius:12px; padding:14px 32px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow: 0 4px 15px rgba(126,34,206,0.3); transition: transform 0.2s;"
+                            onmouseover="this.style.transform='translateY(-2px)'"
+                            onmouseout="this.style.transform='translateY(0)'">
+                            ➕ Llenar Historia de Depilación
+                        </button>
+                    </div>
+
+                    <!-- Estado: CON historia (resumen) -->
+                    <div id="dep-resumen" style="display:none;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                            <h3 style="margin:0; color:#7e22ce; font-size:1.1rem;">💜 Historia Clínica de Depilación
+                            </h3>
+                            <button id="btn-dep-editar"
+                                style="background:#7e22ce; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:0.9rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                ✏️ Editar
+                            </button>
+                        </div>
+
+                        <!-- Bloque 2: Antecedentes -->
+                        <div
+                            style="margin-bottom:20px; background:#fdf4ff; border:1px solid #e9d5ff; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#7e22ce; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                ⚕️ Antecedentes Personales</h4>
+                            <div id="dep-antecedentes-badges" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                        </div>
+
+                        <!-- Bloque 3: Dermatológicos -->
+                        <div
+                            style="margin-bottom:20px; background:#f5f0ff; border:1px solid #ddd6fe; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#7e22ce; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                🔎 Dermatológicos</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                                <div class="p-data-item"><span class="label">Tipo Piel:</span> <span class="value"
+                                        id="dep-tipo-piel">-</span></div>
+                                <div class="p-data-item"><span class="label">Aspecto:</span> <span class="value"
+                                        id="dep-aspecto-piel">-</span></div>
+                            </div>
+                            <div id="dep-dermato-badges" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                        </div>
+
+                        <!-- Bloque 4: Observaciones -->
+                        <div style="background:#faf5ff; border:1px solid #e9d5ff; border-radius:12px; padding:16px;">
+                            <h4
+                                style="color:#7e22ce; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px;">
+                                📝 Observaciones</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                <div class="p-data-item"><span class="label">Medicamentos:</span> <span class="value"
+                                        id="dep-medicamentos">-</span></div>
+                                <div class="p-data-item"><span class="label">Anticonceptivo:</span> <span class="value"
+                                        id="dep-anticonceptivo">-</span></div>
+                                <div class="p-data-item"><span class="label">Método Depilación:</span> <span
+                                        class="value" id="dep-metodo">-</span></div>
+                                <div class="p-data-item"><span class="label">Otros:</span> <span class="value"
+                                        id="dep-otros">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- end tab-depilacion -->
+
+                <!-- ═══ TAB 3: HISTORIAL DE VISITAS Y PAGO ═══ -->
+                <div id="tab-historial" class="tab-pane" style="display: none; padding: 20px;">
+
+                    <!-- ── Paquetes Activos (solo lectura) ── -->
+                    <div id="prof-paq-wrapper" style="margin-bottom: 20px; display: none;">
+                        <div
+                            style="font-size:0.8rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px;">
+                            📦 Paquetes / Cuponeras
+                        </div>
+                        <div id="prof-paq-list"></div>
+                        <div style="font-size:0.78rem; color:#94a3b8; margin-top:6px; font-style:italic;">
+                            Para cobrar sesiones o vender un paquete, ve al módulo de Cobranza.
+                        </div>
+                    </div>
+
+                    <div class="history-section">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="refined-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Servicio / Motivo</th>
+                                        <th>Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbl-historial-body">
+                                    <!-- JS renders rows here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div> <!-- end tab-historial -->
+
+            </div> <!-- end modal-body-scroll -->
+        </div>
+    </div>
+
+    <!-- NEW PATIENT MODAL (TABBED CLINICAL HISTORY) -->
+    <div class="modal-overlay" id="modalNewPatient">
+        <div class="modal-card" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>Historia Clínica Digital</h2>
+            </div>
+
+            <!-- TABS NAVIGATION -->
+            <div class="profile-tabs-bar" style="margin-bottom: 25px;">
+                <button class="tab-item active" data-tab="tab-personal">Datos Personales</button>
+                <button class="tab-item" data-tab="tab-salud">Salud y Hábitos</button>
+                <button class="tab-item" data-tab="tab-facial">Diagnóstico Facial</button>
+                <!-- Solo visible cuando tipo = depilacion -->
+                <button class="tab-item" data-tab="tab-depform" id="btn-tab-depform"
+                    style="display:none; background:linear-gradient(135deg,#7e22ce,#9333ea); color:#fff;">💜 Historia
+                    Depilación</button>
+            </div>
+
+            <form id="formNewPatient">
+                <!-- WRAPPER FOR TABS CONTENT -->
+                <div class="tabs-content">
+
+                    <!-- TAB 1: PERSONAL DATA -->
+                    <div id="tab-personal" class="tab-pane active">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nombre</label>
+                                <input type="text" name="nombre" required placeholder="Ej: María">
+                            </div>
+                            <div class="form-group">
+                                <label>Apellido</label>
+                                <input type="text" name="apellido" placeholder="Ej: Pérez">
+                            </div>
+                            <div class="form-group">
+                                <label>Cédula/DNI</label>
+                                <input type="text" name="cedula" placeholder="Ej: V-12345678">
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha Nacimiento</label>
+                                <input type="date" name="fecha_nacimiento">
+                            </div>
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <select name="sexo">
+                                    <option value="F">Femenino</option>
+                                    <option value="M">Masculino</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Estado Civil</label>
+                                <select name="estado_civil">
+                                    <option value="Soltero">Soltero/a</option>
+                                    <option value="Casado">Casado/a</option>
+                                    <option value="Divorciado">Divorciado/a</option>
+                                    <option value="Viudo">Viudo/a</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono</label>
+                                <input type="tel" name="telefono" required placeholder="Ej: 0414 1234567">
+                            </div>
+                            <div class="form-group">
+                                <label>Nro. Historia (Único)</label>
+                                <input type="text" name="historia"
+                                    style="font-weight: bold; letter-spacing: 1px;" placeholder="Ej: HIST-001">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Dirección</label>
+                                <input type="text" name="direccion" placeholder="Ej: Av. Principal, Edif. A">
+                            </div>
+                            <div class="form-group">
+                                <label>Profesión / Ocupación</label>
+                                <input type="text" name="profesion">
+                            </div>
+                            <div class="form-group">
+                                <label>Hijos</label>
+                                <input type="number" name="hijos" min="0" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Referido Por</label>
+                                <select name="referido_por">
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="Google">Google / Web</option>
+                                    <option value="Amigo">Amigo / Recomendación</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Correo Electrónico</label>
+                                <input type="email" name="email" placeholder="cliente@email.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: HEALTH & HABITS -->
+                    <div id="tab-salud" class="tab-pane" style="display: none;">
+                        <h4 style="margin-bottom:15px; color:var(--primary); font-size:1rem;">Estilo de Vida</h4>
+                        <div class="form-grid" style="margin-bottom: 20px;">
+                            <div class="form-group" style="flex-direction: row; gap: 20px; align-items: center;">
+                                <label><input type="checkbox" name="fuma"> Fuma</label>
+                                <label><input type="checkbox" name="alcohol"> Alcohol</label>
+                                <label><input type="checkbox" name="comida_chatarra"> Comida Chatarra</label>
+                            </div>
+                            <div class="form-group">
+                                <label>Consumo Agua (Diario)</label>
+                                <input type="text" name="agua_diaria" placeholder="Ej: 2 Litros">
+                            </div>
+                            <div class="form-group">
+                                <label>Horas de Sueño</label>
+                                <input type="number" name="horas_sueno" placeholder="Ej: 7">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Actividad Física</label>
+                                <input type="text" name="actividad_fisica" placeholder="Ej: Gym 3 veces/sem">
+                            </div>
+                        </div>
+
+                        <h4 style="margin-bottom:15px; color:var(--primary); font-size:1rem;">Antecedentes (Check si
+                            aplica)</h4>
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #fafafa; padding: 15px; border-radius: 10px;">
+                            <label><input type="checkbox" name="ant_diabetes"> Diabetes (Fam)</label>
+                            <label><input type="checkbox" name="ant_hipertension"> Hipertensión (Fam)</label>
+                            <label><input type="checkbox" name="ant_alergias"> Alergias</label>
+                            <label><input type="checkbox" name="ant_ovarios"> Ovarios Poliquísticos</label>
+                            <label><input type="checkbox" name="ant_hormonas"> Problemas Hormonales</label>
+                            <label><input type="checkbox" name="ant_anticonceptivos"> Toma Anticonceptivos</label>
+                        </div>
+
+                        <h4 style="margin:15px 0; color:#EF4444; font-size:1rem;">⚠️ Antecedentes Estéticos</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <label style="color: #EF4444; font-weight: 600;"><input type="checkbox"
+                                    name="ant_biopolimeros"> Biopolímeros</label>
+                            <label><input type="checkbox" name="ant_implantes"> Implantes Metálicos</label>
+                            <label><input type="checkbox" name="ant_botox"> Botox Previo</label>
+                            <label><input type="checkbox" name="ant_hialuronico"> Ácido Hialurónico</label>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: DIAGNOSTIC -->
+                    <div id="tab-facial" class="tab-pane" style="display: none;">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Biotipo Cutáneo</label>
+                                <select name="biotipo" class="custom-select">
+                                    <option value="">Seleccione...</option>
+                                    <option value="Seca">Piel Seca</option>
+                                    <option value="Grasa">Piel Grasa</option>
+                                    <option value="Mixta">Piel Mixta</option>
+                                    <option value="Sensible">Piel Sensible</option>
+                                    <option value="Acneica">Piel Acneica</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fototipo (Fitzpatrick)</label>
+                                <select name="fototipo" class="custom-select">
+                                    <option value="">Seleccione...</option>
+                                    <option value="I">I (Muy Blanca)</option>
+                                    <option value="II">II (Blanca)</option>
+                                    <option value="III">III (Trigueña)</option>
+                                    <option value="IV">IV (Morena Clara)</option>
+                                    <option value="V">V (Morena Oscura)</option>
+                                    <option value="VI">VI (Negra)</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Patologías Visibles</label>
+                                <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                                    <label><input type="checkbox" name="pat_acne"> Acné Activo</label>
+                                    <label><input type="checkbox" name="pat_melasma"> Melasma</label>
+                                    <label><input type="checkbox" name="pat_rosacea"> Rosácea</label>
+                                    <label><input type="checkbox" name="pat_cicatrices"> Cicatrices</label>
+                                </div>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Observaciones Adicionales</label>
+                                <textarea name="observaciones" rows="3"
+                                    style="width:100%; border:2px solid #F0F0F0; border-radius:12px; padding:10px;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: HISTORIA DEPILACIÓN (visible solo cuando tipo=depilacion) -->
+                    <div id="tab-depform" class="tab-pane" style="display:none;">
+
+                        <!-- Bloque 2: Antecedentes Personales -->
+                        <h4
+                            style="color:#7e22ce;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;margin:0 0 10px;border-bottom:2px solid #e9d5ff;padding-bottom:6px;">
+                            ⚕️ Antecedentes Personales
+                        </h4>
+                        <div
+                            style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;background:#fdf4ff;padding:14px;border-radius:10px;margin-bottom:18px;font-size:0.9rem;">
+                            <label><input type="checkbox" name="new-dep-epilepsia"> Epilepsia</label>
+                            <label><input type="checkbox" name="new-dep-ovario_poliquistico"> Ovario
+                                Poliquístico</label>
+                            <label><input type="checkbox" name="new-dep-asma"> Asma</label>
+                            <label><input type="checkbox" name="new-dep-gastricos"> Gástricos</label>
+                            <label><input type="checkbox" name="new-dep-hipertension"> Hipertensión</label>
+                            <label><input type="checkbox" name="new-dep-hepaticos"> Hepáticos</label>
+                            <label><input type="checkbox" name="new-dep-alergias"> Alergias</label>
+                            <label><input type="checkbox" name="new-dep-hirsutismo"> Hirsutismo</label>
+                            <label><input type="checkbox" name="new-dep-respiratorios"> Respiratorios</label>
+                            <label><input type="checkbox" name="new-dep-diabetes"> Diabetes</label>
+                            <label><input type="checkbox" name="new-dep-artritis"> Artritis</label>
+                            <label><input type="checkbox" name="new-dep-cancer"> Cáncer</label>
+                            <label><input type="checkbox" name="new-dep-analgesicos"> Analgésicos</label>
+                            <label><input type="checkbox" name="new-dep-antibioticos"> Antibióticos</label>
+                        </div>
+
+                        <!-- Bloque 3: Dermatológicos -->
+                        <h4
+                            style="color:#7e22ce;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;margin:0 0 10px;border-bottom:2px solid #e9d5ff;padding-bottom:6px;">
+                            🔎 Dermatológicos
+                        </h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Tipo Piel</label>
+                                <select name="new-dep-tipo_piel" class="custom-select">
+                                    <option value="">Seleccione...</option>
+                                    <option value="Seca">Seca</option>
+                                    <option value="Grasa">Grasa</option>
+                                    <option value="Mixta">Mixta</option>
+                                    <option value="Sensible">Sensible</option>
+                                    <option value="Normal">Normal</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Aspecto Piel</label>
+                                <select name="new-dep-aspecto_piel" class="custom-select">
+                                    <option value="">Seleccione...</option>
+                                    <option value="Hidratada">H — Hidratada</option>
+                                    <option value="Deshidratada">D — Deshidratada</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div
+                            style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;background:#f5f0ff;padding:14px;border-radius:10px;margin-bottom:18px;font-size:0.9rem;">
+                            <label><input type="checkbox" name="new-dep-bronceado"> Bronceado</label>
+                            <label><input type="checkbox" name="new-dep-acne"> Acné</label>
+                            <label><input type="checkbox" name="new-dep-fuma"> Fuma</label>
+                            <label><input type="checkbox" name="new-dep-alcohol"> Alcohol</label>
+                            <label><input type="checkbox" name="new-dep-blanqueamientos_piel"> Blanqueamientos</label>
+                            <label><input type="checkbox" name="new-dep-biopolimeros" style="accent-color:#ef4444;"> ⚠️
+                                Biopolímeros</label>
+                            <label><input type="checkbox" name="new-dep-botox"> Botox</label>
+                            <label><input type="checkbox" name="new-dep-plasma"> Plasma</label>
+                            <label><input type="checkbox" name="new-dep-dermatitis"> Dermatitis</label>
+                            <label><input type="checkbox" name="new-dep-tatuajes"> Tatuajes</label>
+                            <label><input type="checkbox" name="new-dep-vitaminas"> Vitaminas</label>
+                            <label><input type="checkbox" name="new-dep-hilos_tensores"> Hilos Tensores</label>
+                            <label><input type="checkbox" name="new-dep-acido_hialuronico"> Ác. Hialurónico</label>
+                        </div>
+
+                        <!-- Bloque 4: Observaciones -->
+                        <h4
+                            style="color:#7e22ce;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;margin:0 0 10px;border-bottom:2px solid #e9d5ff;padding-bottom:6px;">
+                            📝 Observaciones
+                        </h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Medicamentos (Último Mes)</label>
+                                <input type="text" name="new-dep-medicamentos" placeholder="Ej: Ibuprofeno, NO">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Método Anticonceptivo</label>
+                                <input type="text" name="new-dep-metodo_anticonceptivo" placeholder="Ej: Pastillas, NO">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Método Depilación Utilizado</label>
+                                <input type="text" name="new-dep-metodo_depilacion" placeholder="Ej: Cera, Láser">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:0.85rem;font-weight:600;">Otros</label>
+                                <input type="text" name="new-dep-otros" placeholder="Observaciones adicionales">
+                            </div>
+                        </div>
+
+                    </div> <!-- end tab-depform -->
+
+                </div> <!-- End Tabs Wrapper -->
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" id="btnCancelNew">Cancelar</button>
+                    <button type="submit" class="btn-save" id="btnGuardarNuevoPaciente">Guardar Historia</button>
+                    <!-- Tipo de historia seleccionada (limpieza | depilacion) -->
+                    <input type="hidden" name="tipo_historia" id="inputTipoHistoria" value="limpieza">
+                </div>
+        </div>
+        </form>
+    </div>
+    </div>
+
+    <script src="JS/dialogs.js"></script>
+    <script src="JS/pacientes.js?v=14"></script>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL: HISTORIA DEPILACIÓN (Crear / Editar) -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalHistoriaDepilacion" style="z-index: 9999;">
+        <div class="modal-card" style="max-width: 780px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #7e22ce, #9333ea); padding: 18px 24px;">
+                <h2 style="color:#fff; margin:0; font-size:1.2rem;" id="dep-modal-titulo">💜 Historia de Depilación</h2>
+                <button onclick="document.getElementById('modalHistoriaDepilacion').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer; line-height:1;">✕</button>
+            </div>
+
+            <form id="formHistoriaDepilacion" style="padding: 22px; max-height: 76vh; overflow-y: auto;">
+
+                <!-- ── Bloque 2: Antecedentes Personales ── -->
+                <h4
+                    style="color:#7e22ce; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #e9d5ff; padding-bottom:6px;">
+                    ⚕️ 2. Antecedentes Personales
+                </h4>
+                <div
+                    style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; background:#fdf4ff; padding:14px; border-radius:10px; margin-bottom:18px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="epilepsia"> Epilepsia</label>
+                    <label><input type="checkbox" name="ovario_poliquistico"> Ovario Poliquístico</label>
+                    <label><input type="checkbox" name="asma"> Asma</label>
+                    <label><input type="checkbox" name="gastricos"> Gástricos</label>
+                    <label><input type="checkbox" name="hipertension"> Hipertensión</label>
+                    <label><input type="checkbox" name="hepaticos"> Hepáticos</label>
+                    <label><input type="checkbox" name="alergias"> Alergias</label>
+                    <label><input type="checkbox" name="hirsutismo"> Hirsutismo</label>
+                    <label><input type="checkbox" name="respiratorios"> Respiratorios</label>
+                    <label><input type="checkbox" name="diabetes"> Diabetes</label>
+                    <label><input type="checkbox" name="artritis"> Artritis</label>
+                    <label><input type="checkbox" name="cancer"> Cáncer</label>
+                    <label><input type="checkbox" name="analgesicos"> Analgésicos</label>
+                    <label><input type="checkbox" name="antibioticos"> Antibióticos</label>
+                </div>
+
+                <!-- ── Bloque 3: Dermatológicos ── -->
+                <h4
+                    style="color:#7e22ce; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #e9d5ff; padding-bottom:6px;">
+                    🔎 3. Dermatológicos (Especialista)
+                </h4>
+                <!-- Tipo Piel + Aspecto (selects) -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Tipo Piel</label>
+                        <select name="tipo_piel" class="custom-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Seca">Seca</option>
+                            <option value="Grasa">Grasa</option>
+                            <option value="Mixta">Mixta</option>
+                            <option value="Sensible">Sensible</option>
+                            <option value="Normal">Normal</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Aspecto Piel</label>
+                        <select name="aspecto_piel" class="custom-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Hidratada">H — Hidratada</option>
+                            <option value="Deshidratada">D — Deshidratada</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Checkboxes dermatológicos en grid 3 col -->
+                <div
+                    style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; background:#f5f0ff; padding:14px; border-radius:10px; margin-bottom:18px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="bronceado"> Bronceado</label>
+                    <label><input type="checkbox" name="acne"> Acné</label>
+                    <label><input type="checkbox" name="fuma"> Fuma</label>
+                    <label><input type="checkbox" name="alcohol"> Alcohol</label>
+                    <label><input type="checkbox" name="blanqueamientos_piel"> Blanqueamientos Piel</label>
+                    <label><input type="checkbox" name="biopolimeros" style="accent-color:#ef4444;"> ⚠️
+                        Biopolímeros</label>
+                    <label><input type="checkbox" name="botox"> Botox</label>
+                    <label><input type="checkbox" name="plasma"> Plasma</label>
+                    <label><input type="checkbox" name="dermatitis"> Dermatitis</label>
+                    <label><input type="checkbox" name="tatuajes"> Tatuajes</label>
+                    <label><input type="checkbox" name="vitaminas"> Vitaminas</label>
+                    <label><input type="checkbox" name="hilos_tensores"> Hilos Tensores</label>
+                    <label><input type="checkbox" name="acido_hialuronico"> Ác. Hialurónico</label>
+                </div>
+
+                <!-- ── Bloque 4: Observaciones ── -->
+                <h4
+                    style="color:#7e22ce; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #e9d5ff; padding-bottom:6px;">
+                    📝 4. Observaciones
+                </h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Medicamentos (Último Mes)</label>
+                        <input type="text" name="medicamentos_ultimo_mes" placeholder="Ej: Ibuprofeno, NO">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Método Anticonceptivo</label>
+                        <input type="text" name="metodo_anticonceptivo" placeholder="Ej: Pastillas, NO">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Método Depilación Utilizado</label>
+                        <input type="text" name="metodo_depilacion_utilizado" placeholder="Ej: Cera, Láser">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Otros</label>
+                        <input type="text" name="otros" placeholder="Observaciones adicionales">
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="margin-top:20px;">
+                    <button type="button" class="btn-cancel"
+                        onclick="document.getElementById('modalHistoriaDepilacion').classList.remove('active')">Cancelar</button>
+                    <button type="submit" class="btn-save" style="background:linear-gradient(135deg,#7e22ce,#9333ea);">
+                        💾 Guardar Historia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: SELECTOR TIPO HISTORIA (Limpieza vs Depilación) ═══ -->
+    <div class="modal-overlay" id="modalTipoHistoria" style="z-index: 10001;">
+        <div class="modal-card" style="max-width: 680px; text-align: center;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #0f172a, #1e3a5f); padding: 18px 24px;">
+                <h2 style="color:#fff; margin:0; font-size:1.15rem;">¿Qué historia clínica deseas registrar?</h2>
+                <button onclick="document.getElementById('modalTipoHistoria').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.15); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer;">✕</button>
+            </div>
+            <div style="padding: 30px 24px; display: flex; gap: 18px; justify-content: center;">
+
+                <!-- Opción: Express -->
+                <button id="btnTipoExpress"
+                    style="flex: 1; background: linear-gradient(135deg, #0ea5e9, #0284c7); color:#fff; border:none; border-radius:16px; padding: 28px 16px; cursor:pointer; font-size:1rem; font-weight:700; box-shadow: 0 6px 20px rgba(14,165,233,0.35); transition: transform 0.2s, box-shadow 0.2s;"
+                    onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 28px rgba(14,165,233,0.45)'"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 20px rgba(14,165,233,0.35)'">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">⚡</div>
+                    <div>Registro Express</div>
+                    <div style="font-size:0.75rem; font-weight:400; margin-top:6px; opacity:0.88;">Crea el perfil rápido.<br>Llénalo después.</div>
+                </button>
+
+                <!-- Opción 1: Limpieza Facial -->
+                <button id="btnTipoLimpieza"
+                    style="flex: 1; background: linear-gradient(135deg, #15803d, #16a34a); color:#fff; border:none; border-radius:16px; padding: 28px 16px; cursor:pointer; font-size:1rem; font-weight:700; box-shadow: 0 6px 20px rgba(21,128,61,0.35); transition: transform 0.2s, box-shadow 0.2s;"
+                    onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 28px rgba(21,128,61,0.45)'"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 20px rgba(21,128,61,0.35)'">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">🧖‍♀️</div>
+                    <div>Limpieza Facial</div>
+                    <div style="font-size:0.75rem; font-weight:400; margin-top:6px; opacity:0.88;">Historia Clínica
+                        Facial<br>Diagnóstico de piel y hábitos</div>
+                </button>
+
+                <!-- Opción 2: Depilación Corporal -->
+                <button id="btnTipoDepilacion"
+                    style="flex: 1; background: linear-gradient(135deg, #7e22ce, #9333ea); color:#fff; border:none; border-radius:16px; padding: 28px 16px; cursor:pointer; font-size:1rem; font-weight:700; box-shadow: 0 6px 20px rgba(126,34,206,0.35); transition: transform 0.2s, box-shadow 0.2s;"
+                    onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 28px rgba(126,34,206,0.45)'"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 20px rgba(126,34,206,0.35)'">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">🪒</div>
+                    <div>Depilación Corporal</div>
+                    <div style="font-size:0.75rem; font-weight:400; margin-top:6px; opacity:0.88;">Historia Clínica
+                        Corporal<br>Antecedentes y dermatológicos</div>
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL: HISTORIA LIMPIEZA (Crear / Editar) -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalHistoriaLimpieza" style="z-index: 9999;">
+        <div class="modal-card" style="max-width: 780px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #15803d, #16a34a); padding: 18px 24px;">
+                <h2 style="color:#fff; margin:0; font-size:1.2rem;" id="limp-modal-titulo">🌿 Historia de Limpieza
+                    Facial</h2>
+                <button onclick="document.getElementById('modalHistoriaLimpieza').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer; line-height:1;">✕</button>
+            </div>
+
+            <form id="formHistoriaLimpieza" style="padding: 22px; max-height: 76vh; overflow-y: auto;">
+
+                <!-- ── Estilo de Vida ── -->
+                <h4
+                    style="color:#15803d; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #bbf7d0; padding-bottom:6px;">
+                    🏃 1. Estilo de Vida
+                </h4>
+                <div
+                    style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; background:#f0fdf4; padding:14px; border-radius:10px; margin-bottom:12px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="limp-fuma"> Fuma</label>
+                    <label><input type="checkbox" name="limp-alcohol"> Alcohol</label>
+                    <label><input type="checkbox" name="limp-comida_chatarra"> Comida Chatarra</label>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:18px;">
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Agua Diaria</label>
+                        <input type="text" name="limp-agua_diaria" placeholder="Ej: 2 Litros">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Horas de Sueño</label>
+                        <input type="text" name="limp-horas_sueno" placeholder="Ej: 7">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Actividad Física</label>
+                        <input type="text" name="limp-actividad_fisica" placeholder="Ej: Gym, caminata">
+                    </div>
+                </div>
+
+                <!-- ── Antecedentes Médicos ── -->
+                <h4
+                    style="color:#15803d; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #bbf7d0; padding-bottom:6px;">
+                    ⚕️ 2. Antecedentes Médicos
+                </h4>
+                <div
+                    style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; background:#f0fdf4; padding:14px; border-radius:10px; margin-bottom:18px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="limp-diabetes"> Diabetes (Fam)</label>
+                    <label><input type="checkbox" name="limp-hipertension"> Hipertensión (Fam)</label>
+                    <label><input type="checkbox" name="limp-alergias"> Alergias</label>
+                    <label><input type="checkbox" name="limp-ovarios_poliquisticos"> Ovarios Poliquísticos</label>
+                    <label><input type="checkbox" name="limp-hormonas"> Prob. Hormonales</label>
+                    <label><input type="checkbox" name="limp-anticonceptivos"> Anticonceptivos</label>
+                    <label><input type="checkbox" name="limp-biopolimeros" style="accent-color:#ef4444;"> ⚠️
+                        Biopolímeros</label>
+                    <label><input type="checkbox" name="limp-implantes"> Implantes Metálicos</label>
+                    <label><input type="checkbox" name="limp-botox"> Botox Previo</label>
+                    <label><input type="checkbox" name="limp-acido_hialuronico"> Ác. Hialurónico</label>
+                </div>
+
+                <!-- ── Diagnóstico Facial ── -->
+                <h4
+                    style="color:#15803d; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; margin:0 0 10px; border-bottom:2px solid #bbf7d0; padding-bottom:6px;">
+                    🔍 3. Diagnóstico Facial
+                </h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Biotipo Cutáneo</label>
+                        <select name="limp-biotipo_cutaneo" class="custom-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Seca">Piel Seca</option>
+                            <option value="Grasa">Piel Grasa</option>
+                            <option value="Mixta">Piel Mixta</option>
+                            <option value="Sensible">Piel Sensible</option>
+                            <option value="Acneica">Piel Acneica</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size:0.85rem; font-weight:600;">Fototipo (Fitzpatrick)</label>
+                        <select name="limp-fototipo" class="custom-select">
+                            <option value="">Seleccione...</option>
+                            <option value="I">I (Muy Blanca)</option>
+                            <option value="II">II (Blanca)</option>
+                            <option value="III">III (Trigueña)</option>
+                            <option value="IV">IV (Morena Clara)</option>
+                            <option value="V">V (Morena Oscura)</option>
+                            <option value="VI">VI (Negra)</option>
+                        </select>
+                    </div>
+                </div>
+                <div
+                    style="display:grid; grid-template-columns:repeat(4,1fr); gap:9px; background:#f0fdf4; padding:14px; border-radius:10px; margin-bottom:12px; font-size:0.9rem;">
+                    <label><input type="checkbox" name="limp-pat_acne"> Acné Activo</label>
+                    <label><input type="checkbox" name="limp-pat_melasma"> Melasma</label>
+                    <label><input type="checkbox" name="limp-pat_rosacea"> Rosácea</label>
+                    <label><input type="checkbox" name="limp-pat_cicatrices"> Cicatrices</label>
+                </div>
+                <div class="form-group" style="margin:0 0 18px;">
+                    <label style="font-size:0.85rem; font-weight:600;">Observaciones Adicionales</label>
+                    <textarea name="limp-observaciones" rows="3"
+                        style="width:100%; border:2px solid #F0F0F0; border-radius:12px; padding:10px;"></textarea>
+                </div>
+
+                <div class="modal-actions" style="margin-top:20px;">
+                    <button type="button" class="btn-cancel"
+                        onclick="document.getElementById('modalHistoriaLimpieza').classList.remove('active')">Cancelar</button>
+                    <button type="submit" class="btn-save" style="background:linear-gradient(135deg,#15803d,#16a34a);">
+                        💾 Guardar Historia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL: EDITAR DATOS BÁSICOS DEL PACIENTE -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalEditarPacienteBase" style="z-index: 10002;">
+        <div class="modal-card" style="max-width: 680px; display: flex; flex-direction: column; max-height: 90vh !important;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #0369a1, #0ea5e9); padding: 18px 24px; flex-shrink: 0;">
+                <h2 style="color:#fff; margin:0; font-size:1.2rem;">✏️ Editar Datos del Paciente</h2>
+                <button type="button" onclick="document.getElementById('modalEditarPacienteBase').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1.1rem; cursor:pointer; line-height:1;">✕</button>
+            </div>
+
+            <form id="formEditarPacienteBase" style="display: flex; flex-direction: column; overflow: hidden; flex-grow: 1;">
+                <div style="padding: 24px; overflow-y: auto !important; flex-grow: 1 !important;">
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="edit-nombre_completo" placeholder="Ej: María Pérez" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Cédula / DNI</label>
+                        <input type="text" id="edit-cedula" placeholder="Ej: V-12345678" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="edit-telefono" placeholder="Ej: 0414-1234567">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="edit-email" placeholder="cliente@email.com">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Dirección</label>
+                        <input type="text" id="edit-direccion" placeholder="Ej: Av. Principal, Edif. A">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fecha de Nacimiento</label>
+                        <input type="date" id="edit-fecha_nacimiento">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sexo</label>
+                        <select id="edit-sexo" class="custom-select">
+                            <option value="F">Femenino</option>
+                            <option value="M">Masculino</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Estado Civil</label>
+                        <select id="edit-estado_civil" class="custom-select">
+                            <option value="Soltero">Soltero/a</option>
+                            <option value="Casado">Casado/a</option>
+                            <option value="Divorciado">Divorciado/a</option>
+                            <option value="Viudo">Viudo/a</option>
+                        </select>
+                    </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="padding: 16px 24px; border-top: 1px solid #e2e8f0; background: #fff; margin-top: 0; border-radius: 0 0 12px 12px; flex-shrink: 0; display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn-cancel"
+                        onclick="document.getElementById('modalEditarPacienteBase').classList.remove('active')">Cancelar</button>
+                    <button type="submit" class="btn-save" style="background: linear-gradient(135deg,#0369a1,#0ea5e9);">
+                        💾 Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+
+
+</html>

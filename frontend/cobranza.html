@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depilarte - Cobranza</title>
+
+    <!-- Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/cobranza.css">
+    <link rel="stylesheet" href="css/servicios.css">
+    <!-- Security Check (Immediate Redirect) -->
+    <script>
+        const userCheck = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = (userCheck.rol || '').toLowerCase();
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = '/';
+        } else if (role === 'especialista') {
+            window.location.href = '/cabina.html';
+        }
+    </script>
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <img src="img/senu-logo.png" alt="NOVUS" style="width: 110px; height: auto; border-radius: 8px;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
+                    <h1 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 0; color: #0f172a; letter-spacing: -0.5px;">NOVUS</h1>
+                    <small style="font-size: 0.75rem; opacity: 0.7; font-weight: 500; color: #475569;">señu software</small>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="index.html" class="menu-item">
+                    <i class="fa-solid fa-border-all"></i> Inicio
+                </a>
+                <a href="agenda.html" class="menu-item">
+                    <i class="fa-regular fa-calendar"></i> Agenda
+                </a>
+                <a href="servicios.html" class="menu-item">
+                    <i class="fa-solid fa-list-check"></i> Servicios
+                </a>
+                <a href="pacientes.html" class="menu-item">
+                    <i class="fa-solid fa-users"></i> Pacientes
+                </a>
+                <a href="cobranza.html" class="menu-item active">
+                    <i class="fa-solid fa-money-bill-1-wave"></i> Cobranza
+                </a>
+                <a href="inventario.html" class="menu-item">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
+                <a href="personal.html" class="menu-item">
+                    <i class="fa-solid fa-user-doctor"></i> Personal
+                </a>
+                <a href="#" class="menu-item" onclick="localStorage.clear(); window.location.href='/';" style="color: #ef4444; margin-top: 15px;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                </a>
+            </nav>
+
+
+        </aside>
+
+        <!-- OVERLAY FOR MOBILE -->
+        <div class="overlay" id="sidebarOverlay"></div>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- HEADER -->
+            <header class="top-header"
+                style="align-items: center; justify-content: space-between; display: flex; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- MOBILE HAMBURGER MENU BUTTON -->
+                    <button class="menu-toggle-btn d-md-none" id="menuToggle"
+                        style="background:none; border:none; font-size:1.5rem; color:var(--text-dark);">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <span class="greeting-subtitle">Gestión de Cobranzas</span>
+                        <h2>Panel de Caja</h2>
+                        <p class="date-subtitle" id="currentDateDisplay">Fecha: ...</p>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <button class="icon-btn" onclick="openServicesModal()" title="Ver Paquetes y Precios">
+                        <i class="fa-solid fa-list-check"></i>
+                    </button>
+                    <button class="icon-btn"><i class="fa-regular fa-bell"></i></button>
+                    <!-- Manual Charge Button REMOVED as per new business logic -->
+                </div>
+            </header>
+
+            <!-- CONFIRMED APPOINTMENTS SECTION (NEW) -->
+            <section class="patient-list-container" style="margin-bottom: 20px;">
+                <div class="card list-card">
+                    <div class="list-header-row"
+                        style="background: #e8f5e9; padding: 15px; border-radius: 8px 8px 0 0; border-bottom: 2px solid #2B7A58;">
+                        <h3 style="color: #2B7A58;"><i class="fa-solid fa-calendar-check"></i> Pacientes Confirmados de
+                            Hoy</h3>
+                        <span class="badge-count" id="confirmedCount">0</span>
+                    </div>
+
+                    <div style="width: 100%;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                            <thead>
+                                <tr
+                                    style="background: #ffffff; text-align: left; color: #555; border-bottom: 1px solid #eee;">
+                                    <th style="padding: 12px; width: 100px;">Hora</th>
+                                    <th style="padding: 12px;">Paciente</th>
+                                    <th style="padding: 12px;">Status</th>
+                                    <th style="padding: 12px; text-align: right;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="confirmedListBody">
+                                <!-- Populated by JS -->
+                                <tr>
+                                    <td colspan="4" style="padding: 20px; text-align: center; color: #888;">Cargando
+                                        lista de hoy...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TABS NAVIGATION -->
+            <div class="tabs-container"
+                style="margin-bottom: 20px; border-bottom: 2px solid #ddd; display: flex; gap: 10px;">
+                <button class="tab-btn active" onclick="switchTab('caja')" id="tab-caja"
+                    style="padding: 10px 20px; border: none; background: transparent; font-weight: 600; cursor: pointer; border-bottom: 3px solid #2B7A58; color: #333;">
+                    <i class="fa-solid fa-cash-register"></i> Caja de Hoy
+                </button>
+                <button class="tab-btn" onclick="switchTab('nomina')" id="tab-nomina"
+                    style="padding: 10px 20px; border: none; background: transparent; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: #888;">
+                    <i class="fa-solid fa-users-gear"></i> Reportes y Nómina
+                </button>
+            </div>
+
+            <!-- VIEW: CAJA DE HOY -->
+            <div id="view-caja" class="tab-content active">
+                <section class="patient-list-container">
+                    <div class="card list-card">
+                        <div class="list-header-row"
+                            style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #fff; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3>Caja Diaria</h3>
+                                <input type="date" id="fechaCaja" class="form-control"
+                                    style="width: auto; padding: 5px 10px; font-size: 0.9rem; border: 1px solid #ddd; border-radius: 4px;">
+
+                                <button onclick="exportToExcel()" class="btn-export" style="
+                                    background: #10B981; 
+                                    color: white; 
+                                    border: none; 
+                                    padding: 6px 12px; 
+                                    border-radius: 6px; 
+                                    font-size: 0.9rem; 
+                                    cursor: pointer; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    gap: 5px; 
+                                    transition: background 0.2s, transform 0.1s;
+                                    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+                                " onmouseover="this.style.background='#059669'"
+                                    onmouseout="this.style.background='#10B981'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        viewBox="0 0 16 16">
+                                        <path
+                                            d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                                        <path
+                                            d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+                                    </svg>
+                                    Exportar Excel
+                                </button>
+                                <span class="badge-count" id="todayCount">0</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="display:block; font-size: 0.8rem; color: #666;">Total del Día</span>
+                                <span id="totalTodayDisplay"
+                                    style="font-size: 1.2rem; font-weight: bold; color: #2B7A58;">$0.00</span>
+                            </div>
+                        </div>
+
+                        <div style="width: 100%; padding-top: 10px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                                <thead>
+                                    <tr style="background: #f8f9fa; text-align: left; color: #555;">
+                                        <th style="padding: 12px; width: 80px;">Hora</th>
+                                        <th style="padding: 12px;">Cliente</th>
+                                        <th style="padding: 12px;">Servicios</th>
+                                        <th style="padding: 12px; text-align: right;">Total Servicio</th>
+                                        <th style="padding: 12px; text-align: right; color: #2B7A58;">Abono a Wallet
+                                        </th>
+                                        <th style="padding: 12px;">Método</th>
+                                        <th style="padding: 12px;">Ref</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentHistoryBody">
+                                    <!-- Populated by JS -->
+                                    <tr>
+                                        <td colspan="6" style="padding: 20px; text-align: center; color: #888;">Cargando
+                                            caja de hoy...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- VIEW: NOMINA -->
+            <div id="view-nomina" class="tab-content" style="display: none;">
+                <div class="card list-card" style="margin-bottom: 20px; padding: 20px;">
+                    <div class="list-header-row"
+                        style="background: #f0f9ff; border-bottom: 2px solid #0284c7; padding: 10px; margin: -20px -20px 20px -20px; border-radius: 8px 8px 0 0;">
+                        <h3 style="color: #0284c7;"><i class="fa-solid fa-filter"></i> Filtros de Reporte</h3>
+                    </div>
+                    <div style="display: flex; gap: 20px; align-items: flex-end;">
+                        <div>
+                            <label
+                                style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px;">Fecha
+                                Inicio</label>
+                            <input type="date" id="dateStart" class="pay-input"
+                                style="width: 160px; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                        </div>
+                        <div>
+                            <label
+                                style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px;">Fecha
+                                Fin</label>
+                            <input type="date" id="dateEnd" class="pay-input"
+                                style="width: 160px; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                        </div>
+                        <button onclick="fetchNomina()"
+                            style="background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            <i class="fa-solid fa-magnifying-glass"></i> Consultar Nómina
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card list-card">
+                    <div class="list-header-row" style="padding: 15px;">
+                        <h3>Nómina por Empleado (Comisiones)</h3>
+                    </div>
+                    <div style="width: 100%;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                            <thead>
+                                <tr style="background: #f1f5f9; text-align: left; color: #475569;">
+                                    <th style="padding: 12px;">ID</th>
+                                    <th style="padding: 12px;">Empleado</th>
+                                    <th style="padding: 12px; width: 120px;">Rol</th>
+                                    <th style="padding: 12px; text-align: center;">Zonas Dep.</th>
+                                    <th style="padding: 12px; text-align: center;">Limpiezas</th>
+                                    <th style="padding: 12px; text-align: center;">Masajes</th>
+                                    <th style="padding: 12px; text-align: right;">Total Comisiones ($)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nominaBody">
+                                <tr>
+                                    <td colspan="7" style="padding: 20px; text-align: center; color: #888;">Seleccione
+                                        fechas para consultar.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- CHECKOUT MODAL (Restore original rich structure) -->
+    <div class="modal-overlay" id="checkoutModal">
+        <div class="modal-content-ref">
+            <div class="modal-top-bar">
+                <div class="back-link" onclick="closeModal()">
+                    <i class="fa-solid fa-arrow-left"></i> Volver a Pacientes
+                </div>
+                <div class="modal-date">
+                    <span>Fecha de Sesión</span>
+                    <h4>Hoy</h4>
+                </div>
+            </div>
+
+            <h1 class="modal-main-title">Registro de Sesión y Cobro</h1>
+
+            <!-- PATIENT CARD (Horizontal) -->
+            <div class="patient-card-horizontal">
+                <div class="p-card-left">
+                    <!-- Avatar Removed -->
+                    <div class="p-card-info">
+                        <div class="name-row">
+                            <!-- CLIENT SELECTOR (Restored for Urgent Fix) -->
+                            <select id="clientSelect" class="pay-select"
+                                style="font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; width: 100%;">
+                                <option value="" disabled selected>Cargando pacientes...</option>
+                            </select>
+                            <span class="vip-badge">Cliente VIP</span>
+                        </div>
+                        <div class="p-card-details">
+                            <span><i class="fa-solid fa-user"></i> ID Cliente</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-card-right">
+                    <div class="wallet-display-box">
+                        <div class="w-label">
+                            SALDO A FAVOR
+                            <span>Disponible</span>
+                        </div>
+                        <div class="w-amount">
+                            <i class="fa-solid fa-wallet"></i> <span id="walletAmount">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="paq-panel" style="display:none; margin: 0 0 16px;">
+                <!-- Contenedor dinámico para la lista de paquetes activos -->
+                <div id="paq-list-container" style="display:flex; flex-direction:column; gap:10px;">
+                </div>
+            </div>
+
+            <!-- ── SIN PAQUETE: solo botón vender ── -->
+            <div id="paq-panel-empty" style="display:none; margin: 0 0 12px; text-align:right;">
+                <button id="btn-nuevo-paquete-empty"
+                    style="background:#e2e8f0; color:#334155; border:1px solid #cbd5e1; border-radius:8px; padding:6px 14px; font-size:0.8rem; font-weight:600; cursor:pointer;">
+                    + Vender Paquete a este Paciente
+                </button>
+            </div>
+
+            <!-- MAIN GRID (2 Columns) -->
+            <div class="modal-grid">
+                <!-- COL 1: SERVICE SELECTION -->
+                <div class="col-zones card-panel">
+                    <div class="panel-header">
+                        <div class="icon-circle"><i class="fa-solid fa-list-check"></i></div>
+                        <h3>Selección de Servicio</h3>
+                    </div>
+
+                    <!-- SERVICE SELECTOR -->
+                    <div class="service-selector-container" style="margin-top: 15px;">
+                        <label style="display:block; margin-bottom: 5px; font-weight: 500;">Buscar Tratamiento</label>
+                        <select id="serviceSelect" class="pay-select" style="margin-bottom: 20px;">
+                            <option value="">Seleccione un servicio...</option>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+
+
+
+                    <!-- RADIO BUTTONS FOR SALE TYPE (HIDDEN BY DEFAULT) -->
+                    <div id="saleTypeContainer"
+                        style="display: none; background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom: 10px; font-weight: 600; color: var(--primary);">Tipo
+                            de Venta</label>
+
+                        <div class="sale-type-options" style="display: flex; flex-direction: column; gap: 10px;">
+                            <label class="radio-option"
+                                style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="radio" name="saleType" value="session" checked>
+                                    <span>Sesión Individual</span>
+                                </div>
+                                <span id="priceDisplaySession" style="font-weight: 700;">$0.00</span>
+                            </label>
+
+                            <label class="radio-option"
+                                style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="radio" name="saleType" value="package">
+                                    <span>Paquete (4 Sesiones)</span>
+                                </div>
+                                <span id="priceDisplayPackage"
+                                    style="font-weight: 700; color: var(--primary);">$0.00</span>
+                            </label>
+
+                            <label class="radio-option"
+                                style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="radio" name="saleType" value="promotion">
+                                    <span>Promoción (Precio Libre)</span>
+                                </div>
+                                <span style="font-size: 0.8rem; color: #888;">Manual</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ADD BUTTON -->
+                    <button id="btnAddService" class="btn-add-service"
+                        style="width: 100%; background: #2B7A58; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px;">
+                        <i class="fa-solid fa-plus"></i> Agregar a la Lista
+                    </button>
+
+                    <!-- CART LIST CONTAINER -->
+                    <div id="cartItemsContainer" style="border-top: 2px dashed #eee; padding-top: 15px;">
+                        <h4 style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Servicios Agregados:</h4>
+                        <div id="cartList" style="display: flex; flex-direction: column; gap: 8px;">
+                            <!-- Items will be injected here JS -->
+                            <div style="text-align: center; color: #999; font-size: 0.85rem; font-style: italic;">
+                                Ningún servicio agregado aún.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="subtotal-row" style="margin-top: 20px;">
+                        <span>Precio a Cobrar</span>
+                        <span id="subtotalDisplay">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- COL 2: PAYMENT -->
+                <div class="col-payment card-panel">
+                    <div class="panel-header">
+                        <div class="icon-circle salmon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        <h3>Procesar Pago</h3>
+                    </div>
+
+                    <div class="payment-body">
+                        <!-- 1. WALLET USA -->
+                        <div class="wallet-toggle-card" style="margin-bottom: 15px;">
+                            <div class="wt-info">
+                                <strong>Usar Saldo a Favor</strong>
+                                <span id="walletAvailableText">Disponible: $0.00</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="useWalletCheck">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+
+                        <!-- DEDUCTION -->
+                        <div class="deduction-row" id="deductionRow" style="display:none; margin-bottom: 20px;">
+                            <span><i class="fa-solid fa-circle-minus"></i> Deducción de Saldo</span>
+                            <span id="deductionAmount">-$0.00</span>
+                        </div>
+
+                        <!-- 2. FINANCE INPUTS -->
+
+
+                        <!-- DISCRETE ABONO TOGGLE -->
+                        <div style="margin-bottom: 15px;">
+                            <label
+                                style="display: flex; align-items: center; cursor: pointer; font-size: 0.9rem; color: var(--primary);">
+                                <input type="checkbox" id="check-abono-wallet"
+                                    style="margin-right: 8px; accent-color: var(--primary);">
+                                ¿Abonar monto extra a Wallet?
+                            </label>
+                        </div>
+
+                        <!-- HIDDEN ABONO EXTRA (WALLET) -->
+                        <div id="div-abono-extra" style="display: none; margin-bottom: 15px; animation: fadeIn 0.3s;">
+                            <label style="font-size: 0.85rem;">Monto Abono Extra a Wallet ($)</label>
+                            <input type="number" id="inp-abono-wallet" class="pay-input" value="0.00" step="0.01"
+                                style="border-color: var(--primary); background: #fdf2f8;">
+                        </div>
+
+                        <div class="form-group-pay" style="margin-bottom: 20px;">
+                            <label>Método de Pago</label>
+                            <select id="paymentMethodSelect" class="pay-select">
+                                <option value="Efectivo" selected>Efectivo ($)</option>
+                                <option value="Pago Movil">Pago Móvil (Bs)</option>
+                                <option value="Zelle">Zelle</option>
+                                <option value="Tarjeta">Punto de Venta</option>
+                                <option value="wallet">WALLET</option>
+                            </select>
+                        </div>
+
+                        <!-- REFERENCIA INPUT (ADDED) -->
+                        <div class="form-group-pay">
+                            <label>Ref. / Nro. Transacción (Opcional)</label>
+                            <input type="text" id="inp-referencia" class="pay-input" placeholder="Ej: 123456"
+                                style="font-family: 'Poppins';">
+                        </div>
+
+                        <!-- 3. DATE INPUT (MANDATORY) -->
+                        <div style="margin-bottom: 20px; padding-top: 15px; border-top: 1px dashed #eee;">
+                            <label
+                                style="display:block; font-size:0.9rem; font-weight:600; color:var(--text-dark); margin-bottom:8px;">
+                                <i class="fa-regular fa-calendar-check" style="color:var(--primary);"></i> Próxima Cita
+                                (Dra.)
+                            </label>
+                            <input type="date" id="inp-fecha-proxima"
+                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins';">
+                        </div>
+
+                        <!-- 4. TOTAL -->
+                        <div style="text-align: right; margin-bottom: 20px;">
+                            <span style="font-size: 0.9rem; color: #555;">Total a Cobrar</span>
+                            <div id="txt-total-pagar" style="font-weight: bold; font-size: 1.6rem; color: #333;">$0.00
+                            </div>
+                            <div class="bs-display" id="bsConversionDisplay" style="font-size: 0.9rem;">Bs 0.00</div>
+                        </div>
+
+                        <button class="btn-finalize" id="btnProcessPayment">
+                            Confirmar y Procesar <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SERVICES REFERENCE MODAL -->
+    <div class="modal-overlay" id="servicesModal">
+        <div class="modal-content-ref" style="max-width: 900px;">
+            <div class="modal-top-bar">
+                <div class="back-link" onclick="closeServicesModal()">
+                    <i class="fa-solid fa-arrow-left"></i> Volver a Cobranza
+                </div>
+                <h3>Lista de Precios y Paquetes</h3>
+            </div>
+
+            <div style="padding: 20px; overflow-y: auto; max-height: 70vh;">
+                <div class="header-actions" style="margin-bottom: 15px;">
+                    <button class="filter-tab active" data-category="all"
+                        onclick="filterServicesModal('all', this)">Todos</button>
+                    <button class="filter-tab" data-category="depilacion"
+                        onclick="filterServicesModal('depilacion', this)">Depilación</button>
+                    <button class="filter-tab" data-category="facial"
+                        onclick="filterServicesModal('facial', this)">Facial</button>
+                    <button class="filter-tab" data-category="corporal"
+                        onclick="filterServicesModal('corporal', this)">Corporal</button>
+                </div>
+
+                <table class="services-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Cód</th>
+                            <th>Tratamiento</th>
+                            <th>Sesión</th>
+                            <th>Paquete (4)</th>
+                            <th>Nº Zonas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalServicesBody">
+                        <!-- JS populated -->
+                        <tr>
+                            <td colspan="5" style="text-align:center;">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="JS/dialogs.js"></script>
+    <script src="JS/cobranza.js?v=4"></script>
+
+
+    <!-- MODAL: VENDER NUEVO PAQUETE -->
+    <div class="modal-overlay" id="modalVenderPaquete" style="z-index:10003;">
+        <div
+            style="background:#fff; border-radius:16px; padding:0; max-width:460px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2); overflow:hidden;">
+            <div
+                style="background:linear-gradient(135deg,#15803d,#16a34a); padding:18px 24px; display:flex; align-items:center; justify-content:space-between;">
+                <h2 style="color:#fff; margin:0; font-size:1.1rem;">📦 Vender Paquete / Cuponera</h2>
+                <button onclick="document.getElementById('modalVenderPaquete').classList.remove('active')"
+                    style="color:#fff; background:rgba(255,255,255,0.2); border:none; border-radius:6px; width:30px; height:30px; font-size:1rem; cursor:pointer;">✕</button>
+            </div>
+            <form id="formVenderPaquete" style="padding:24px;">
+                <div style="margin-bottom:14px;">
+                    <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">Nombre del
+                        Paquete</label>
+                    <input type="text" id="vp-nombre" placeholder="Ej: Paquete Depilación 4 Sesiones"
+                        style="width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-family:inherit; box-sizing:border-box;"
+                        required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                    <div>
+                        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">Total
+                            Sesiones</label>
+                        <input type="number" id="vp-sesiones" min="1" value="4"
+                            style="width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-family:inherit; box-sizing:border-box;"
+                            required>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">Costo Total
+                            ($)</label>
+                        <input type="number" id="vp-costo" step="0.01" min="0" value="32.00"
+                            style="width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-family:inherit; box-sizing:border-box;"
+                            required>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+                    <button type="button"
+                        onclick="document.getElementById('modalVenderPaquete').classList.remove('active')"
+                        style="padding:9px 18px; border:1px solid #ddd; border-radius:8px; background:#f8f9fa; cursor:pointer; font-weight:600;">Cancelar</button>
+                    <button type="submit"
+                        style="padding:9px 18px; border:none; border-radius:8px; background:linear-gradient(135deg,#15803d,#16a34a); color:#fff; font-weight:700; cursor:pointer;">💾
+                        Guardar Paquete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

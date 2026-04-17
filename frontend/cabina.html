@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depilarte - Cabina</title>
+    <!-- Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-primario: #06B6D4;
+            --color-secundario: #1A2639;
+            --color-fondo: #FDFBF7;
+            --color-tarjeta: #FFFFFF;
+            --color-texto-principal: #1E1E1E;
+            --color-texto-claro: #F8F9FA;
+            --shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.1);
+            --card-radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--color-fondo);
+            color: var(--color-texto-principal);
+            min-height: 100vh;
+            padding-bottom: 30px;
+        }
+
+        header {
+            background-color: var(--color-tarjeta);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-primario);
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: var(--color-texto-principal);
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .welcome-section {
+            margin-bottom: 25px;
+        }
+
+        .welcome-section h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .date-badge {
+            background: #E0F2FE;
+            color: #0369A1;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .appointment-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .appointment-card {
+            background: var(--color-tarjeta);
+            padding: 20px;
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            border: 1px solid #F3F4F6;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .appointment-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .time-box {
+            text-align: center;
+            min-width: 70px;
+            border-right: 1px solid #EEE;
+            padding-right: 15px;
+        }
+
+        .time-box .time {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: block;
+        }
+
+        .time-box .label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .info-box {
+            flex: 1;
+        }
+
+        .patient-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .treatment-name {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-indicator {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: var(--color-primario);
+        }
+
+        .status-indicator.confirmada { background: #10B981; }
+        .status-indicator.asistio { background: #3B82F6; }
+        .status-indicator.pendiente { background: #F59E0B; }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        /* --- MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: flex-end; /* Mobile: start from bottom */
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background: var(--color-tarjeta);
+            width: 100%;
+            max-width: 100%;
+            height: 90vh;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header-rich {
+            padding: 20px;
+            border-bottom: 1px solid #EEE;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header-rich h2 { font-size: 1.1rem; font-weight: 700; color: var(--color-primario); }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px;
+            border-bottom: 1px solid #EEE;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .tabs-nav::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            padding: 12px 15px;
+            border: none;
+            background: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--color-primario);
+            border-bottom-color: var(--color-primario);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .data-item { display: flex; flex-direction: column; }
+        .data-item .label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .data-item .value { font-size: 0.95rem; font-weight: 500; }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 20px 0 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .badge {
+            background: #F3F4F6;
+            color: #374151;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge.danger { background: #FEE2E2; color: #991B1B; }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .history-table th { text-align: left; padding: 10px; color: var(--text-muted); border-bottom: 1px solid #EEE; }
+        .history-table td { padding: 12px 10px; border-bottom: 1px solid #F9FAFB; }
+
+        .cabin-input, .cabin-select, .cabin-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-top: 4px;
+            background: #FAFAFA;
+        }
+        .cabin-textarea { height: 80px; resize: none; }
+        
+        .btn-save-cabin {
+            width: 100%;
+            background: var(--color-primario);
+            color: var(--color-texto-claro);
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+        }
+
+        .data-item.full-width { grid-column: 1 / -1; }
+
+        @media (min-width: 768px) {
+            .modal-card {
+                max-width: 600px;
+                height: 80vh;
+                border-radius: 20px;
+            }
+            .modal-overlay { align-items: center; }
+        }
+    </style>
+    <!-- Security Check -->
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = '/';
+        } else if (user.rol !== 'especialista' && user.rol !== 'admin' && user.rol !== 'ambos') {
+            // If somehow another role gets here, but specialists are the main target
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="img/senu-logo.png" alt="NOVUS" style="width: 96px; height: auto; border-radius: 6px;">
+            <div style="line-height: 1.1;">
+                <h1 style="font-weight: 800; font-size: 1.25rem; margin-bottom: 0; color: var(--color-primario);">NOVUS <span style="font-weight: 500; font-size: 1rem; color: var(--color-texto-principal);">Cabina</span></h1>
+                <small style="font-size: 0.7rem; opacity: 0.7; font-weight: 500; color: var(--color-texto-principal);">señu software</small>
+            </div>
+        </div>
+        <button class="btn-logout" id="btnLogout" title="Cerrar Sesión">
+            <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+    </header>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h2 id="welcomeMsg">¡Hola!</h2>
+            <div class="date-badge" id="currentDate">Hoy, 15 de Marzo</div>
+        </div>
+
+        <h3 style="margin-bottom:15px; font-size:1.1rem; color:var(--text-muted);">Mis Citas de Hoy</h3>
+        <div class="appointment-list" id="appointmentList">
+            <!-- Cargando... -->
+            <div class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Cargando citas...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ficha Paciente -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-card">
+            <div class="modal-header-rich">
+                <h2 id="modalPatientName">Ficha del Paciente</h2>
+                <button class="btn-logout" id="closeModal" style="font-size: 1.5rem;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="tab-general">General</button>
+                <button class="tab-btn" data-tab="tab-historia">H. Clínica</button>
+                <button class="tab-btn" data-tab="tab-visitas">Visitas</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- General -->
+                <div id="tab-general" class="tab-content active">
+                    <div class="section-title"><i class="fa-solid fa-user"></i> Datos Personales</div>
+                    <div class="data-grid">
+                        <div class="data-item"><span class="label">Cédula</span><span class="value" id="val-cedula">-</span></div>
+                        <div class="data-item"><span class="label">Teléfono</span><span class="value" id="val-telefono">-</span></div>
+                        <div class="data-item"><span class="label">Edad</span><span class="value" id="val-edad">-</span></div>
+                        <div class="data-item"><span class="label">Profesión</span><span class="value" id="val-profesion">-</span></div>
+                    </div>
+                </                <!-- Historia Clínica (Dinámica) -->
+                <div id="tab-historia" class="tab-content">
+                    <form id="formHistoriaClinica">
+                        <!-- CAMPOS UNIVERSALES -->
+                        <div class="section-title">⚕️ Antecedentes Generales</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f0fdf4; padding:10px; border-radius:10px; margin-bottom:15px;">
+                            <label style="font-size:0.8rem;"><input type="checkbox" name="fuma"> Fuma</label>
+                            <label style="font-size:0.8rem;"><input type="checkbox" name="alcohol"> Alcohol</label>
+                            <label style="font-size:0.8rem;"><input type="checkbox" name="alergias"> Alergias</label>
+                            <label style="font-size:0.8rem;"><input type="checkbox" name="diabetes"> Diabetes</label>
+                            <label style="font-size:0.8rem;"><input type="checkbox" name="hipertension"> HTA</label>
+                        </div>
+                        <textarea name="observaciones" placeholder="Observaciones generales..." class="cabin-textarea" style="margin-bottom:10px;"></textarea>
+
+                        <!-- CONTENEDOR LASER -->
+                        <div id="form-laser" style="display: none; border-top:1px solid #eee; padding-top:15px;">
+                            <div class="section-title">✨ Específico Láser</div>
+                            <div class="data-grid">
+                                <div class="data-item">
+                                    <span class="label">Fototipo</span>
+                                    <select name="fototipo" class="cabin-select">
+                                        <option value="">-</option>
+                                        <option value="I">I</option><option value="II">II</option><option value="III">III</option>
+                                        <option value="IV">IV</option><option value="V">V</option><option value="VI">VI</option>
+                                    </select>
+                                </div>
+                                <div class="data-item">
+                                    <span class="label">Tipo Piel</span>
+                                    <select name="tipo_piel_laser" class="cabin-select">
+                                        <option value="">-</option>
+                                        <option value="Seca">Seca</option><option value="Grasa">Grasa</option>
+                                        <option value="Mixta">Mixta</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0; background:#f5f0ff; padding:10px; border-radius:10px;">
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="bronceado"> Bronceado Reciente</label>
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="fotosensibilidad"> Fotosensibilidad a Luz</label>
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="medicamentos_fotosensibles"> Medicamentos Fotosensibles</label>
+                            </div>
+                        </div>
+
+                        <!-- CONTENEDOR BELLEZA -->
+                        <div id="form-belleza" style="display: none; border-top:1px solid #eee; padding-top:15px;">
+                            <div class="section-title">💅 Específico Belleza (Salón)</div>
+                            <div class="data-grid">
+                                <div class="data-item">
+                                    <span class="label">Tipo Cabello</span>
+                                    <select name="tipo_cabello" class="cabin-select">
+                                        <option value="">-</option>
+                                        <option value="Liso">Liso</option><option value="Ondulado">Ondulado</option><option value="Rizado">Rizado</option><option value="Afro">Afro</option>
+                                    </select>
+                                </div>
+                                <div class="data-item">
+                                    <span class="label">Estado Uñas</span>
+                                    <select name="estado_unas" class="cabin-select">
+                                        <option value="">-</option>
+                                        <option value="Sanas">Sanas</option><option value="Quebradizas">Quebradizas</option><option value="Con Hongos">Signos de Hongos</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0; background:#fff1f2; padding:10px; border-radius:10px;">
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="tintes_previos"> Tintes Previos (Decoloración)</label>
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="keratina"> Alisado/Keratina</label>
+                                <label style="font-size:0.8rem;"><input type="checkbox" name="alergia_quimicos"> Alergia a Químicos</label>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:20px;">
+                            <button type="submit" class="btn-save-cabin">💾 Guardar Historia Clínica</button>
+                        </div>
+                    </form>
+                </div>           </form>
+                </div>
+
+                <!-- Visitas -->
+                <div id="tab-visitas" class="tab-content">
+                    <div class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Últimas Visitas</div>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Servicio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="val-historial-body">
+                            <!-- JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/JS/cabina.js"></script>
+</body>
+</html>
