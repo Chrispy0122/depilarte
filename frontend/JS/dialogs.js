@@ -305,3 +305,48 @@ window.dpConfirm = function (options = {}) {
         overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
     });
 };
+
+// ─── LOGOUT MODAL ─────────────────────────────────────────────────────────────
+// Injects a logout confirm overlay if it doesn't already exist in the DOM,
+// then shows it. This way personal.html (which has its own) and other pages
+// that don't define it work the same way.
+window.confirmarLogout = function () {
+    let overlay = document.getElementById('logoutConfirmOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'logoutConfirmOverlay';
+        overlay.className = 'logout-confirm-overlay';
+        overlay.innerHTML = `
+            <div class="logout-confirm-box">
+                <div class="logout-confirm-icon">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </div>
+                <h3>¿Cerrar sesión?</h3>
+                <p>¿Estás seguro de que deseas cerrar tu sesión? Serás redirigido al inicio de sesión.</p>
+                <div class="logout-confirm-actions">
+                    <button class="btn-cancelar-logout" onclick="cancelarLogout()">Cancelar</button>
+                    <button class="btn-confirmar-logout" onclick="ejecutarLogout()">Sí, cerrar sesión</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) cancelarLogout();
+        });
+    }
+    overlay.classList.add('active');
+};
+
+window.cancelarLogout = function () {
+    const overlay = document.getElementById('logoutConfirmOverlay');
+    if (overlay) overlay.classList.remove('active');
+};
+
+window.ejecutarLogout = function () {
+    localStorage.clear();
+    window.location.href = '/';
+};
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') window.cancelarLogout && cancelarLogout();
+});

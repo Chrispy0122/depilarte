@@ -239,8 +239,6 @@ def registrar_movimiento(
 # IMPORTANTE: usar flush() en lugar de commit() para preservar atomicidad.
     # El llamador (crear_cobro / endpoint de movimiento) es quien hace el commit final.
     db.flush()
-
-db.commit()
     db.refresh(movimiento)
     
     return movimiento
